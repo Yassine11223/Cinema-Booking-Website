@@ -1,0 +1,178 @@
+Cinema-Website/
+│
+├── 📄 .env.example
+├── 📄 .env (in backend/)
+├── 📄 .gitignore
+├── 📄 CONTRIBUTING.md
+├── 📄 FILE_STRUCTURE_PLAN.md
+├── 📄 LICENSE
+├── 📄 README.md
+├── 📄 package.json
+│
+├── 📁 frontend/
+│   ├── 📄 index.html
+│   ├── 📄 movies.html
+│   ├── 📄 movie-detail.html
+│   ├── 📄 booking.html
+│   ├── 📄 cart.html
+│   ├── 📄 login.html
+│   ├── 📄 register.html
+│   ├── 📄 profile.html
+│   ├── 📄 payment.html
+│   │
+│   ├── 📁 assets/
+│   │   ├── 📁 css/
+│   │   │   ├── 📄 style.css
+│   │   │   ├── 📄 responsive.css
+│   │   │   └── 📄 animations.css
+│   │   │
+│   │   ├── 📁 js/
+│   │   │   ├── 📄 main.js
+│   │   │   ├── 📄 movies.js
+│   │   │   ├── 📄 booking.js
+│   │   │   ├── 📄 payment.js
+│   │   │   ├── 📄 auth.js
+│   │   │   ├── 📄 cart.js
+│   │   │   └── 📄 api.js
+│   │   │
+│   │   ├── 📁 images/
+│   │   │   ├── 📁 posters/
+│   │   │   └── 📁 banners/
+│   │   │
+│   │   └── 📁 data/
+│   │       └── 📄 movies.json
+│   │
+│   └── 📁 pages/
+│       ├── 📄 about.html
+│       ├── 📄 contact.html
+│       └── 📄 faq.html
+│
+├── 📁 backend/
+│   ├── 📄 server.js
+│   ├── 📄 .env
+│   │
+│   ├── 📁 config/
+│   │   ├── 📄 database.js
+│   │   ├── 📄 env.js
+│   │   └── 📄 constants.js
+│   │
+│   ├── 📁 routes/
+│   │   ├── 📄 movies.js
+│   │   ├── 📄 bookings.js
+│   │   ├── 📄 users.js
+│   │   ├── 📄 payments.js
+│   │   ├── 📄 shows.js
+│   │   └── 📄 theaters.js
+│   │
+│   ├── 📁 controllers/
+│   │   ├── 📄 movieController.js
+│   │   ├── 📄 bookingController.js
+│   │   ├── 📄 userController.js
+│   │   ├── 📄 paymentController.js
+│   │   └── 📄 showController.js
+│   │
+│   ├── 📁 models/
+│   │   ├── 📄 User.js
+│   │   ├── 📄 Movie.js
+│   │   ├── 📄 Booking.js
+│   │   ├── 📄 Show.js
+│   │   ├── 📄 Theater.js
+│   │   ├── 📄 Seat.js
+│   │   └── 📄 Payment.js
+│   │
+│   ├── 📁 middleware/
+│   │   ├── 📄 auth.js
+│   │   ├── 📄 validation.js
+│   │   └── 📄 errorHandler.js
+│   │
+│   ├── 📁 utils/
+│   │   ├── 📄 email.js
+│   │   ├── 📄 validators.js
+│   │   ├── 📄 logger.js
+│   │   └── 📄 helpers.js
+│   │
+│   └── 📁 seeds/
+│       ├── 📄 seed.js
+│       └── 📄 sample-data.json
+│
+├── 📁 admin/
+│   ├── 📄 index.html
+│   ├── 📄 movies-manage.html
+│   ├── 📄 shows-manage.html
+│   ├── 📄 bookings-list.html
+│   ├── 📄 theaters-manage.html
+│   ├── 📄 users-list.html
+│   ├── 📄 reports.html
+│   │
+│   ├── 📁 assets/
+│   │   ├── 📁 css/
+│   │   │   └── 📄 admin-style.css
+│   │   │
+│   │   └── 📁 js/
+│   │       ├── 📄 admin.js
+│   │       ├── 📄 movies-admin.js
+│   │       └── 📄 reports.js
+│   │
+│   └── 📁 components/
+│       ├── 📄 navbar.html
+│       ├── 📄 sidebar.html
+│       └── 📄 table-template.html
+│
+├── 📁 database/
+│   ├── 📁 migrations/
+│   │   ├── 📄 001_create_users.sql
+│   │   ├── 📄 002_create_movies.sql
+│   │   ├── 📄 003_create_shows.sql
+│   │   ├── 📄 004_create_bookings.sql
+│   │   ├── 📄 005_create_theaters.sql
+│   │   ├── 📄 006_create_seats.sql
+│   │   └── 📄 007_create_payments.sql
+│   │
+│   ├── 📄 schema.sql
+│   └── 📄 sample-data.sql
+│
+├── 📁 docs/
+│   ├── 📄 API_DOCUMENTATION.md
+│   ├── 📄 SETUP.md
+│   ├── 📄 DATABASE.md
+│   ├── 📄 FEATURES.md
+│   └── 📄 ARCHITECTURE.md
+│
+├── 📁 tests/
+│   ├── 📁 unit/
+│   │   ├── 📄 movies.test.js
+│   │   ├── 📄 bookings.test.js
+│   │   └── 📄 users.test.js
+│   │
+│   ├── 📁 integration/
+│   │   ├── 📄 api.test.js
+│   │   └── 📄 booking-flow.test.js
+│   │
+│   └── 📁 e2e/
+│       └── 📄 user-journey.test.js
+│
+├── 📁 public/
+│   └── 📁 uploads/
+│
+└── 📁 .git/
+    └── (Git repository files)
+
+
+═══════════════════════════════════════════════════════════════════
+
+SUMMARY:
+────────────────────────────────────────────────────────────────
+
+Total Directories: 24
+Total Files: 90+
+
+BREAKDOWN BY SECTION:
+─────────────────────
+
+Frontend Files:     26 files (9 HTML + 3 CSS + 7 JS + 3 pages + data)
+Backend Files:      38 files (1 server + 6 routes + 5 controllers + 7 models + 3 middleware + 4 utils + seeds)
+Admin Files:        14 files (7 HTML + 1 CSS + 3 JS + 3 components)
+Database Files:     9 files (7 migrations + schema + sample data)
+Documentation:      5 files
+Tests:              6 files (3 unit + 2 integration + 1 e2e)
+Config Files:       6 root-level files

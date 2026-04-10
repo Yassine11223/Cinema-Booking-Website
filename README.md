@@ -1,1 +1,1 @@
-# Cinema-Website
+# Cinema Management System
