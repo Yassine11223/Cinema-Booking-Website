@@ -1,1 +1,0 @@
--- Create Bookings Table

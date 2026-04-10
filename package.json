@@ -2,12 +2,13 @@
   "name": "cinema-booking-system",
   "version": "1.0.0",
   "description": "A complete cinema management and booking website",
-  "main": "backend/server.js",
+  "private": true,
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js",
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
     "test": "jest",
-    "seed": "node backend/seeds/seed.js"
+    "seed": "cd backend && npm run seed",
+    "install:backend": "cd backend && npm install"
   },
   "keywords": [
     "cinema",
@@ -15,12 +16,5 @@
     "movies"
   ],
   "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.1",
-    "express": "^5.2.1",
-    "mongoose": "^9.4.1",
-    "nodemon": "^3.1.14"
-  }
+  "license": "MIT"
 }
