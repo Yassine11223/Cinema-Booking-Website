@@ -1,2 +1,392 @@
-<!-- User Login Page -->
-<P>TEST</P>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scene Cinemas - Login to your account">
+    <title>Login | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Login Page Specific Styles */
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: var(--nav-height);
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.1) 0%, rgba(10, 10, 10, 0.95) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 1000px;
+            height: 1000px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(183, 28, 28, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: var(--space-lg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-top: 2px solid var(--primary-light);
+            border-radius: var(--radius-lg);
+            padding: var(--space-2xl);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(183, 28, 28, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .login-logo {
+            font-family: var(--font-display);
+            font-size: 32px;
+            letter-spacing: 3px;
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+        }
+
+        .login-logo .logo-red {
+            color: var(--primary-light);
+        }
+
+        .login-logo .logo-white {
+            color: var(--text-primary);
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            letter-spacing: 1px;
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-lg);
+        }
+
+        .form-label {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .form-input.error {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+        }
+
+        .form-input.success {
+            border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.05);
+        }
+
+        .error-message {
+            display: none;
+            font-size: 12px;
+            color: #ff6b6b;
+            margin-top: 6px;
+            font-family: var(--font-body);
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+            font-size: 13px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .forgot-password:hover {
+            color: var(--accent);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(183, 28, 28, 0.5);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+        }
+
+        .login-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            text-align: center;
+            margin: var(--space-lg) 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border-subtle);
+        }
+
+        .divider-text {
+            background: var(--glass-bg);
+            padding: 0 var(--space-md);
+            color: var(--text-muted);
+            font-size: 12px;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .signup-section {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .signup-section a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .signup-section a:hover {
+            color: var(--accent);
+        }
+
+        .validation-info {
+            background: rgba(183, 28, 28, 0.05);
+            border: 1px solid rgba(183, 28, 28, 0.15);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: var(--space-lg);
+        }
+
+        .validation-info strong {
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .login-wrapper {
+                padding-top: calc(var(--nav-height) + var(--space-lg));
+            }
+
+            .login-container {
+                padding: var(--space-md);
+            }
+
+            .login-card {
+                padding: var(--space-xl);
+            }
+
+            .login-logo {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+            <ul class="nav-links right"></ul>
+        </div>
+    </nav>
+
+    <!-- ========================================
+         LOGIN SECTION
+         ======================================== -->
+    <section class="login-wrapper">
+        <div class="login-container">
+            <div class="login-card">
+                <!-- Header -->
+                <div class="login-header">
+                    <div class="login-logo">
+                        <span class="logo-red">TEST</span><span class="logo-white">LOGIN</span>
+                    </div>
+                    <p class="login-subtitle">WELCOME BACK TO SCENE CINEMAS</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="login-form" novalidate>
+                    <!-- Email Input -->
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="your@email.com"
+                            required
+                            autocomplete="email"
+                        >
+                        <div class="error-message" id="emailError"></div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <div class="error-message" id="passwordError"></div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="forgot-password">Forgot Password?</a>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="login-btn" id="loginBtn">
+                        SIGN IN
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span class="divider-text">OR</span>
+                </div>
+
+                <!-- Sign Up Link -->
+                <div class="signup-section">
+                    Don't have an account? <a href="register.html">Sign up here</a>
+                </div>
+
+                <!-- Validation Info -->
+                <div class="validation-info">
+                    <strong>Password Requirements:</strong><br>
+                    • Minimum 8 characters<br>
+                    • At least 1 uppercase letter (A-Z)<br>
+                    • At least 1 lowercase letter (a-z)<br>
+                    • At least 1 number (0-9)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/auth.js"></script>
+</body>
+
+</html>
