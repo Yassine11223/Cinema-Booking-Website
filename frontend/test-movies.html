@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Movies - Scene Cinemas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #d32f2f;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .movie-card {
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .movie-card:hover {
+            border-color: #d32f2f;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(211, 47, 47, 0.3);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 200px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #999;
+            overflow: hidden;
+        }
+
+        .movie-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .movie-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .movie-info {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        .movie-rating {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .movie-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .btn-book {
+            background: #d32f2f;
+             color: white;
+        }
+
+        .btn-book:hover {
+            background: #f44336;
+        }
+
+        .btn-details {
+            background: transparent;
+            border: 1px solid #d32f2f;
+            color: #d32f2f;
+        }
+
+        .btn-details:hover {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .debug-info {
+            background: #1a1a1a;
+            border: 1px solid #666;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎬 Cinema Booking - Test Page</h1>
+
+        <div class="debug-info">
+            <div><span class="success">✅</span> Page loaded successfully</div>
+            <div id="debug-message">Loading movies...</div>
+        </div>
+
+        <div class="movies-grid" id="movies-grid">
+            <!-- Movies will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        console.log('🎬 TEST PAGE LOADED');
+
+        // Mock movie data
+        const MOCK_MOVIES = [
+            {
+                id: 1,
+                title: "Dune: Part Two",
+                description: "Epic sci-fi adventure across the desert planet",
+                genre: "Sci-Fi",
+                rating: 8.5,
+                release_date: "2024-02-28"
+            },
+            {
+                id: 2,
+                title: "Oppenheimer",
+                description: "The story of the atomic bomb creator",
+                genre: "Drama",
+                rating: 8.4,
+                release_date: "2023-07-21"
+            },
+            {
+                id: 3,
+                title: "The Dark Knight",
+                description: "Batman faces the Joker menace",
+                genre: "Action",
+                rating: 9.0,
+                release_date: "2008-07-18"
+            },
+            {
+                id: 4,
+                title: "Inception",
+                description: "A thief steals secrets from dreams",
+                genre: "Sci-Fi",
+                rating: 8.8,
+                release_date: "2010-07-16"
+            },
+            {
+                id: 5,
+                title: "Interstellar",
+                description: "Journey through a wormhole to save humanity",
+                genre: "Sci-Fi",
+                rating: 8.6,
+                release_date: "2014-11-07"
+            },
+            {
+                id: 6,
+                title: "Fight Club",
+                description: "An underground fight club becomes something more",
+                genre: "Drama",
+                rating: 8.8,
+                release_date: "1999-10-15"
+            }
+        ];
+
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📄 DOM Content Loaded');
+            loadAndRenderMovies();
+        });
+
+        function loadAndRenderMovies() {
+            console.log('🎯 Starting to load and render movies...');
+
+            const moviesGrid = document.getElementById('movies-grid');
+            const debugDiv = document.getElementById('debug-message');
+
+            if (!moviesGrid) {
+                console.error('❌ movies-grid element not found!');
+                debugDiv.innerHTML = '<span class="error">❌ Error: movies-grid element not found</span>';
+                return;
+            }
+
+            console.log('✅ Found movies-grid element');
+            debugDiv.innerHTML = '<span class="success">✅ Found grid element</span><br>';
+
+            // Clear loading message
+            moviesGrid.innerHTML = '';
+
+            console.log('📚 Starting to render', MOCK_MOVIES.length, 'movies...');
+
+            // Render each movie
+            MOCK_MOVIES.forEach((movie, index) => {
+                console.log(`🎬 Rendering movie ${index + 1}/${MOCK_MOVIES.length}: ${movie.title}`);
+
+                const year = new Date(movie.release_date).getFullYear();
+                const html = `
+                    <div class="movie-card" data-movie-id="${movie.id}">
+                        <div class="movie-poster">
+                            <div style="text-align: center; width: 100%;">
+                                <div style="font-size: 40px; margin-bottom: 5px;">🎬</div>
+                                <div>${movie.title}</div>
+                            </div>
+                        </div>
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-info">
+                            <span class="movie-rating">⭐ ${movie.rating}</span> • ${year} • ${movie.genre}
+                        </div>
+                        <p style="font-size: 12px; color: #999; margin-bottom: 10px;">${movie.description}</p>
+                        <div class="movie-buttons">
+                            <button class="btn btn-details" onclick="alert('View details for: ${movie.title}')">Details</button>
+                            <button class="btn btn-book" onclick="alert('Book now for: ${movie.title}')">Book</button>
+                        </div>
+                    </div>
+                `;
+
+                moviesGrid.innerHTML += html;
+            });
+
+            console.log('✅ All movies rendered!');
+            debugDiv.innerHTML += '<span class="success">✅ All ' + MOCK_MOVIES.length + ' movies rendered successfully!</span>';
+
+            // Add click handlers
+            setupClickHandlers();
+        }
+
+        function setupClickHandlers() {
+            console.log('⚙️ Setting up click handlers...');
+
+            const cards = document.querySelectorAll('.movie-card');
+            console.log('Found', cards.length, 'movie cards');
+
+            cards.forEach((card, index) => {
+                card.addEventListener('click', () => {
+                    const movieId = card.getAttribute('data-movie-id');
+                    const movie = MOCK_MOVIES.find(m => m.id == movieId);
+                    console.log('📽️ Clicked movie:', movie.title);
+                    console.log('Will redirect to: movie-detail.html?id=' + movieId);
+                    // Uncomment to actually navigate:
+                    // window.location.href = `movie-detail.html?id=${movieId}`;
+                });
+            });
+
+            console.log('✅ Click handlers setup complete');
+        }
+
+        // Log any errors
+        window.addEventListener('error', (e) => {
+            console.error('🚨 Error occurred:', e.message);
+        });
+    </script>
+
+</body>
+</html>
