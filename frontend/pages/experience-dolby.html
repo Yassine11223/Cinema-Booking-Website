@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene Cinemas | Dolby Cinema</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../css/experiences.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar" style="background-color: var(--color-bg-light); border-bottom: 1px solid #333;">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger active">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a>
+            </div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="experience-header">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #fff;">DOLBY CINEMA</h1>
+        <p style="color: #e50914; font-size: 1.2rem;">Spectacular Visuals and Sound</p>
+    </div>
+    
+    <div class="experience-content">
+        <div class="experience-video">
+            <video controls autoplay muted loop src="../assets/videos/dolby.mp4" style="width: 100%; height: 100%; object-fit: cover; border: none;"></video>
+        </div>
+        <p class="experience-description">
+            Dolby Cinema is specially designed to elevate every type of movie experience. Spectacular Dolby Vision dual-laser projection brings the story alive with ultra-vivid colors, dramatically enhanced contrast, and deeper darks. Combined with Dolby Atmos immersive sound that flows around you, you'll feel like you're inside the movie. From the moment you enter, every detail is engineered to deliver a truly captivating cinematic event.
+        </p>
+
+        <div class="feature-container">
+            <div class="feature-row">
+                <div class="feature-image">
+                    <!-- Atmos Sphere -->
+                    <img src="../assets/images/dolby_1.jpg" alt="Dolby Vision Projection">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-eye"></i> HDR VISUALS</span>
+                    <h3>Dolby Vision® Dual-Laser Projection</h3>
+                    <p>An ultra-vivid picture that brings the story to life with incredible brightness, stunning contrast, and captivating color that makes you feel like you are inside the movie.</p>
+                </div>
+            </div>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <!-- Space Scene Screen -->
+                    <img src="../assets/images/dolby_3.png" alt="Dolby Atmos Sound">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-volume-high"></i> 3D AUDIO</span>
+                    <h3>Dolby Atmos® Immersive Sound</h3>
+                    <p>Powerful, moving audio that flows all around you—even overhead. Every sound is precisely placed in the three-dimensional space to completely immerse you in the action.</p>
+                </div>
+            </div>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <!-- Black Theater Screen -->
+                    <img src="../assets/images/dolby_2.png" alt="Premium Comfort">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-couch"></i> VIP LEVEL</span>
+                    <h3>Premium Cinema Seating</h3>
+                    <p>Experience ultimate comfort with spacious, fully-reclining leather seats. Intelligently designed sightlines guarantee an unobstructed, perfect view of the screen from anywhere.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scene Cinemas | IMAX Experience</title>
+    <!-- Relative paths updated for the pages directory -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../css/experiences.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar" style="background-color: var(--color-bg-light); border-bottom: 1px solid #333;">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger active">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a>
+            </div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="experience-header">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #fff;">IMAX CINEMA</h1>
+        <p style="color: #e50914; font-size: 1.2rem;">The Ultimate Immersive Experience</p>
+    </div>
+    
+    <div class="experience-content">
+        <div class="experience-video">
+            <video controls autoplay muted loop src="../assets/videos/imax.mp4" style="width: 100%; height: 100%; object-fit: cover; border: none;"></video>
+        </div>
+        <p class="experience-description">
+            Experience movies like never before. IMAX transports you into new worlds with its proprietary, larger-than-life screens and state-of-the-art projection technology. With laser-aligned audio and images that offer incredible clarity and brightness, every element in an IMAX theatre is planned, designed, and positioned to exact standards to create the most intense, immersive movie experience on the planet. Get ready to feel every moment.
+        </p>
+
+        <div class="feature-container">
+            <div class="feature-row">
+                <div class="feature-image">
+                    <!-- High-tech action GIF -->
+                    <img src="../assets/images/imax_1.png" alt="Crystal Clear IMAX Laser Projection">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-video"></i> LASER PROJECTION</span>
+                    <h3>Crystal Clear IMAX Laser Projection</h3>
+                    <p>Increased resolution, sharper and brighter images, deeper contrasts, as well as the widest range of colors available to filmmakers to deliver the most life-like visuals for moviegoers.</p>
+                </div>
+            </div>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <img src="../assets/images/imax_2.png" alt="Next Generation IMAX Precision Sound">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-music"></i> PRECISION AUDIO</span>
+                    <h3>Next Generation IMAX Precision Sound</h3>
+                    <p>Patented sound technology delivers striking clarity and depth alongside perfected tuned sound and evenly distributed audio throughout the theatre.</p>
+                </div>
+            </div>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <img src="../assets/images/imax_3.jpg" alt="IMAX Immersion by Design">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-expand"></i> IMMERSIVE SCREEN</span>
+                    <h3>IMAX Immersion by Design</h3>
+                    <p>Custom-designed theatres with stadium seating for clear vantage points at every seat, as well as custom screens for the brightest images perfectly expanding your field of view.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="../js/main.js"></script>
+</body>
+</html>

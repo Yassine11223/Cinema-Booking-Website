@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta name="theme-color" content="#723E9D" />
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon-16x16.svg" />
+    <link rel="icon" sizes="32x32" href="/assets/img/favicon-32x32.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicon-96x96.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link rel="preconnect" href="https://msap.emaar.com" crossorigin="use-credentials" />
+    <link rel="dns-prefetch" href="https://edt.reelcinemas.com" />
+
+    <link rel="preconnect" href="https://storage.googleapis.com" crossorigin />
+
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+    <link
+      rel="preload"
+      as="image"
+      href="https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/assets/images/logo/logo.png"
+      fetchpriority="high"
+    />
+
+    <!-- Critical fonts - load with font-display: swap for better FCP -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+      media="print"
+      onload="this.media = 'all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap"
+      />
+    </noscript>
+
+    <!-- Additional font weights - load after initial render -->
+    <script>
+      // Load additional font weights after page load to avoid blocking render
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(function () {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href =
+            'https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;800&family=Inter:wght@300;700;800&display=swap';
+          document.head.appendChild(link);
+        });
+      } else {
+        window.addEventListener('load', function () {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href =
+            'https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;800&family=Inter:wght@300;700;800&display=swap';
+          document.head.appendChild(link);
+        });
+      }
+    </script>
+    <!-- <script src="/theme-init.js"></script> -->
+    <!-- TODO: uncomment theme-init for dark mode and use ThemeProvider in app.tsx -->
+    <script type="module" crossorigin src="/assets/index-B71Qlnup.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-3k77a3bn.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-utils-D976QeCj.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-mui-tF3pEN9C.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-redux-D99NFmcu.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-B5lJDJ0E.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
