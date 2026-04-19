@@ -1,5 +1,6 @@
 /**
  * User Model - SQL Queries
+ * Includes login tracking: last_login, login_count
  */
 
 const { query } = require('../config/database');
@@ -7,12 +8,20 @@ const bcrypt = require('bcryptjs');
 
 const User = {
     async findAll() {
-        const result = await query('SELECT id, name, email, phone, role, created_at FROM users ORDER BY created_at DESC');
+        const result = await query(
+            `SELECT id, name, email, phone, role, created_at, last_login, login_count
+             FROM users
+             ORDER BY created_at DESC`
+        );
         return result.rows;
     },
 
     async findById(id) {
-        const result = await query('SELECT id, name, email, phone, role, created_at FROM users WHERE id = $1', [id]);
+        const result = await query(
+            `SELECT id, name, email, phone, role, created_at, last_login, login_count
+             FROM users WHERE id = $1`,
+            [id]
+        );
         return result.rows[0];
     },
 
@@ -24,7 +33,9 @@ const User = {
     async create({ name, email, password, phone, role = 'customer' }) {
         const hashedPassword = await bcrypt.hash(password, 12);
         const result = await query(
-            'INSERT INTO users (name, email, password, phone, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, phone, role, created_at',
+            `INSERT INTO users (name, email, password, phone, role, login_count)
+             VALUES ($1, $2, $3, $4, $5, 0)
+             RETURNING id, name, email, phone, role, created_at, last_login, login_count`,
             [name, email, hashedPassword, phone, role]
         );
         return result.rows[0];
@@ -35,7 +46,9 @@ const User = {
         const values = Object.values(fields);
         const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
         const result = await query(
-            `UPDATE users SET ${setClause}, updated_at = NOW() WHERE id = $${keys.length + 1} RETURNING id, name, email, phone, role`,
+            `UPDATE users SET ${setClause}, updated_at = NOW()
+             WHERE id = $${keys.length + 1}
+             RETURNING id, name, email, phone, role, last_login, login_count`,
             [...values, id]
         );
         return result.rows[0];
@@ -43,6 +56,22 @@ const User = {
 
     async delete(id) {
         await query('DELETE FROM users WHERE id = $1', [id]);
+    },
+
+    /**
+     * Called on every successful login to bump counter and record timestamp
+     */
+    async recordLogin(id) {
+        const result = await query(
+            `UPDATE users
+             SET last_login   = NOW(),
+                 login_count  = COALESCE(login_count, 0) + 1,
+                 updated_at   = NOW()
+             WHERE id = $1
+             RETURNING id, last_login, login_count`,
+            [id]
+        );
+        return result.rows[0];
     },
 
     async comparePassword(plainPassword, hashedPassword) {
