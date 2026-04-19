@@ -1,392 +1,456 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Scene Cinemas - Login to your account">
-    <title>Login | Scene Cinemas</title>
+    <meta name="description" content="Sign in to Scene Cinemas — book tickets, manage your account">
+    <title>Sign In | Scene Cinemas</title>
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        /* Login Page Specific Styles */
-        .login-wrapper {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-top: var(--nav-height);
-            background: linear-gradient(135deg, rgba(139, 0, 0, 0.1) 0%, rgba(10, 10, 10, 0.95) 100%);
-            position: relative;
-            overflow: hidden;
+        /* ---- Auth Page Layout ---- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #b71c1c;
+            --primary-light: #d32f2f;
+            --primary-dark: #8b0000;
+            --dark-bg: #0a0a0a;
+            --dark-surface: #141414;
+            --glass-bg: rgba(10,10,10,0.95);
+            --glass-blur: blur(20px);
+            --border-subtle: rgba(255,255,255,0.07);
+            --text-primary: #fff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.38);
+            --font-display: 'Oswald', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --primary-glow: rgba(183,28,28,0.3);
+            --accent: #ff1744;
+            --nav-height: 72px;
         }
 
-        .login-wrapper::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 1000px;
-            height: 1000px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(183, 28, 28, 0.15) 0%, transparent 70%);
+        body {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background blobs */
+        .auth-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
             pointer-events: none;
         }
 
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: var(--space-lg);
-            position: relative;
-            z-index: 1;
+        .auth-bg::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 700px;
+            height: 700px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(183,28,28,0.18) 0%, transparent 70%);
+            animation: blobFloat 8s ease-in-out infinite alternate;
         }
 
-        .login-card {
+        .auth-bg::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            left: -15%;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(100,20,20,0.12) 0%, transparent 70%);
+            animation: blobFloat 10s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes blobFloat {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(30px,20px) scale(1.05); }
+        }
+
+        /* Film strip decoration */
+        .film-strip {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100vh;
+            background: rgba(183,28,28,0.06);
+            border-right: 1px solid rgba(183,28,28,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 10px 7px;
+            z-index: 0;
+        }
+
+        .film-hole {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(183,28,28,0.2);
+            flex-shrink: 0;
+        }
+
+        /* ---- Page wrapper ---- */
+        .auth-page {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        /* ---- Top brand link ---- */
+        .auth-brand {
+            font-family: var(--font-display);
+            font-size: 22px;
+            letter-spacing: 4px;
+            text-decoration: none;
+            margin-bottom: 32px;
+        }
+
+        .auth-brand .brand-r { color: var(--primary-light); }
+        .auth-brand .brand-w { color: #fff; }
+
+        /* ---- Card ---- */
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
             background: var(--glass-bg);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-subtle);
             border-top: 2px solid var(--primary-light);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(183, 28, 28, 0.1);
+            border-radius: 16px;
+            padding: 40px 36px 36px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 50px rgba(183,28,28,0.08);
         }
 
-        .login-header {
+        .card-header {
             text-align: center;
-            margin-bottom: var(--space-2xl);
+            margin-bottom: 28px;
         }
 
-        .login-logo {
-            font-family: var(--font-display);
-            font-size: 32px;
-            letter-spacing: 3px;
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-        }
-
-        .login-logo .logo-red {
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, rgba(183,28,28,0.25), rgba(139,0,0,0.15));
+            border: 1px solid rgba(183,28,28,0.3);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
             color: var(--primary-light);
+            margin: 0 auto 16px;
         }
 
-        .login-logo .logo-white {
-            color: var(--text-primary);
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 26px;
+            letter-spacing: 2px;
+            font-weight: 600;
+            color: #fff;
         }
 
-        .login-subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            letter-spacing: 1px;
-            margin-bottom: var(--space-lg);
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            letter-spacing: 0.3px;
         }
 
-        .form-group {
-            margin-bottom: var(--space-lg);
+        /* ---- Form elements ---- */
+        .field-group {
+            margin-bottom: 18px;
+            position: relative;
         }
 
-        .form-label {
+        .field-label {
             display: block;
             font-family: var(--font-display);
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--text-secondary);
-            margin-bottom: var(--space-sm);
+            margin-bottom: 7px;
+        }
+
+        .field-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .field-icon {
+            position: absolute;
+            left: 13px;
+            color: var(--text-muted);
+            font-size: 13px;
+            pointer-events: none;
+            transition: color 0.2s;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 11px 14px 11px 38px;
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             color: var(--text-primary);
             font-family: var(--font-body);
             font-size: 14px;
-            transition: var(--transition);
+            transition: all 0.2s ease;
+            -webkit-text-fill-color: var(--text-primary);
         }
 
-        .form-input::placeholder {
-            color: var(--text-muted);
-        }
+        .form-input::placeholder { color: var(--text-muted); }
 
         .form-input:focus {
             outline: none;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary-light);
+            background: rgba(255,255,255,0.07);
+            border-color: var(--primary-dark);
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
-        .form-input.error {
-            border-color: #ff4444;
-            background: rgba(255, 68, 68, 0.05);
-        }
+        .form-input:focus + .field-icon,
+        .field-wrap:focus-within .field-icon { color: var(--primary-light); }
 
-        .form-input.success {
-            border-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.05);
-        }
+        .form-input.error   { border-color: #ef5350; background: rgba(239,83,80,0.06); }
+        .form-input.success { border-color: #4caf50; background: rgba(76,175,80,0.06); }
 
-        .error-message {
+        /* password toggle */
+        .pass-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px;
+            transition: color 0.15s;
+        }
+        .pass-toggle:hover { color: var(--text-secondary); }
+
+        .error-msg {
             display: none;
-            font-size: 12px;
-            color: #ff6b6b;
-            margin-top: 6px;
-            font-family: var(--font-body);
+            font-size: 11.5px;
+            color: #ef9a9a;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+        .error-msg.show { display: flex; }
+        .error-msg i { font-size: 11px; }
 
-        .error-message.show {
-            display: block;
-        }
-
+        /* ---- Form actions row ---- */
         .form-actions {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: var(--space-lg);
-            font-size: 13px;
+            margin-bottom: 20px;
+            font-size: 12.5px;
         }
 
-        .remember-me {
+        .remember-label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .remember-label input[type="checkbox"] {
+            accent-color: var(--primary);
             cursor: pointer;
         }
 
-        .remember-me input {
-            cursor: pointer;
-        }
-
-        .forgot-password {
+        .forgot-link {
             color: var(--primary-light);
             text-decoration: none;
-            transition: var(--transition);
+            font-size: 12.5px;
+            transition: color 0.15s;
         }
+        .forgot-link:hover { color: var(--accent); }
 
-        .forgot-password:hover {
-            color: var(--accent);
-        }
-
-        .login-btn {
+        /* ---- Submit button ---- */
+        .submit-btn {
             width: 100%;
-            padding: 14px 16px;
+            padding: 13px;
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
             border: none;
             border-radius: var(--radius-md);
-            color: var(--text-primary);
+            color: #fff;
             font-family: var(--font-display);
-            font-size: 13px;
+            font-size: 13.5px;
             letter-spacing: 1.5px;
             text-transform: uppercase;
-            cursor: pointer;
-            transition: var(--transition);
             font-weight: 600;
-            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 18px rgba(183,28,28,0.35);
         }
 
-        .login-btn:hover:not(:disabled) {
+        .submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(183, 28, 28, 0.5);
+            box-shadow: 0 8px 28px rgba(183,28,28,0.5);
             background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
         }
 
-        .login-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
+        .submit-btn:active:not(:disabled) { transform: translateY(0); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
+        /* ---- Divider ---- */
         .divider {
-            text-align: center;
-            margin: var(--space-lg) 0;
-            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
         }
 
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: var(--border-subtle);
-        }
+        .divider-line { flex: 1; height: 1px; background: var(--border-subtle); }
+        .divider-text { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
 
-        .divider-text {
-            background: var(--glass-bg);
-            padding: 0 var(--space-md);
-            color: var(--text-muted);
-            font-size: 12px;
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .signup-section {
+        /* ---- Bottom link ---- */
+        .auth-footer-link {
             text-align: center;
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--text-muted);
         }
 
-        .signup-section a {
+        .auth-footer-link a {
             color: var(--primary-light);
             text-decoration: none;
             font-weight: 600;
-            transition: var(--transition);
+            transition: color 0.15s;
         }
 
-        .signup-section a:hover {
-            color: var(--accent);
-        }
+        .auth-footer-link a:hover { color: var(--accent); }
 
-        .validation-info {
-            background: rgba(183, 28, 28, 0.05);
-            border: 1px solid rgba(183, 28, 28, 0.15);
-            border-radius: var(--radius-md);
-            padding: var(--space-md);
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: var(--space-lg);
-        }
-
-        .validation-info strong {
-            color: var(--text-primary);
-        }
-
-        @media (max-width: 768px) {
-            .login-wrapper {
-                padding-top: calc(var(--nav-height) + var(--space-lg));
-            }
-
-            .login-container {
-                padding: var(--space-md);
-            }
-
-            .login-card {
-                padding: var(--space-xl);
-            }
-
-            .login-logo {
-                font-size: 24px;
-            }
+        /* ---- Responsive ---- */
+        @media (max-width: 480px) {
+            .auth-card { padding: 28px 20px; }
+            .film-strip { display: none; }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- ========================================
-         NAVBAR
-         ======================================== -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <ul class="nav-links left">
-                <li><a href="index.html" class="nav-link">HOME</a></li>
-                <li class="dropdown">
-                    <a href="movies.html" class="nav-link dropdown-trigger">
-                        MOVIES <span class="dropdown-arrow"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
-                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <div class="logo">
-                <a href="index.html">
-                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
-                </a>
+    <!-- Background -->
+    <div class="auth-bg"></div>
+
+    <!-- Film strip -->
+    <div class="film-strip" aria-hidden="true">
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    </div>
+
+    <!-- Main -->
+    <div class="auth-page">
+
+        <!-- Brand -->
+        <a href="index.html" class="auth-brand" aria-label="Scene Cinemas home">
+            <span class="brand-r">SCENE</span><span class="brand-w"> CINEMAS</span>
+        </a>
+
+        <!-- Card -->
+        <div class="auth-card" role="main">
+
+            <!-- Header -->
+            <div class="card-header">
+                <div class="card-icon"><i class="fas fa-film"></i></div>
+                <h1 class="card-title">WELCOME BACK</h1>
+                <p class="card-subtitle">Sign in to your account to book tickets</p>
             </div>
-            <ul class="nav-links right"></ul>
-        </div>
-    </nav>
 
-    <!-- ========================================
-         LOGIN SECTION
-         ======================================== -->
-    <section class="login-wrapper">
-        <div class="login-container">
-            <div class="login-card">
-                <!-- Header -->
-                <div class="login-header">
-                    <div class="login-logo">
-                        <span class="logo-red">TEST</span><span class="logo-white">LOGIN</span>
-                    </div>
-                    <p class="login-subtitle">WELCOME BACK TO SCENE CINEMAS</p>
-                </div>
+            <!-- Login Form -->
+            <form id="loginForm" novalidate>
 
-                <!-- Login Form -->
-                <form id="loginForm" class="login-form" novalidate>
-                    <!-- Email Input -->
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
+                <!-- Email -->
+                <div class="field-group">
+                    <label class="field-label" for="email">Email Address</label>
+                    <div class="field-wrap">
                         <input
-                            type="email"
-                            id="email"
-                            class="form-input"
-                            placeholder="your@email.com"
-                            required
-                            autocomplete="email"
-                        >
-                        <div class="error-message" id="emailError"></div>
+                            type="email" id="email" class="form-input"
+                            placeholder="your@email.com" required autocomplete="email">
+                        <i class="fas fa-envelope field-icon"></i>
                     </div>
+                    <div class="error-msg" id="emailError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+                </div>
 
-                    <!-- Password Input -->
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
+                <!-- Password -->
+                <div class="field-group">
+                    <label class="field-label" for="password">Password</label>
+                    <div class="field-wrap">
                         <input
-                            type="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="Enter your password"
-                            required
-                            autocomplete="current-password"
-                        >
-                        <div class="error-message" id="passwordError"></div>
+                            type="password" id="password" class="form-input"
+                            placeholder="Enter your password" required autocomplete="current-password">
+                        <i class="fas fa-lock field-icon"></i>
+                        <button type="button" class="pass-toggle" id="togglePassword" tabindex="-1" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
                     </div>
-
-                    <!-- Form Actions -->
-                    <div class="form-actions">
-                        <label class="remember-me">
-                            <input type="checkbox" id="rememberMe">
-                            <span>Remember me</span>
-                        </label>
-                        <a href="#" class="forgot-password">Forgot Password?</a>
-                    </div>
-
-                    <!-- Login Button -->
-                    <button type="submit" class="login-btn" id="loginBtn">
-                        SIGN IN
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="divider">
-                    <span class="divider-text">OR</span>
+                    <div class="error-msg" id="passwordError"><i class="fas fa-exclamation-circle"></i><span></span></div>
                 </div>
 
-                <!-- Sign Up Link -->
-                <div class="signup-section">
-                    Don't have an account? <a href="register.html">Sign up here</a>
+                <!-- Actions -->
+                <div class="form-actions">
+                    <label class="remember-label">
+                        <input type="checkbox" id="rememberMe"> Remember me
+                    </label>
+                    <a href="#" class="forgot-link">Forgot Password?</a>
                 </div>
 
-                <!-- Validation Info -->
-                <div class="validation-info">
-                    <strong>Password Requirements:</strong><br>
-                    • Minimum 8 characters<br>
-                    • At least 1 uppercase letter (A-Z)<br>
-                    • At least 1 lowercase letter (a-z)<br>
-                    • At least 1 number (0-9)
-                </div>
+                <!-- Submit -->
+                <button type="submit" class="submit-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> SIGN IN
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">OR</span>
+                <div class="divider-line"></div>
             </div>
+
+            <!-- Footer -->
+            <div class="auth-footer-link">
+                Don't have an account? <a href="register.html">Create one free</a>
+            </div>
+
         </div>
-    </section>
+    </div>
 
     <script src="js/auth.js"></script>
 </body>
-
 </html>

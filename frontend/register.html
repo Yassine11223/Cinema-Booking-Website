@@ -1,475 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Scene Cinemas - Create your account">
-    <title>Register | Scene Cinemas</title>
+    <meta name="description" content="Create your Scene Cinemas account — book tickets and manage your profile">
+    <title>Create Account | Scene Cinemas</title>
+
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        /* Registration Page Specific Styles */
-        .register-wrapper {
+        /* Same base as login.html */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #b71c1c;
+            --primary-light: #d32f2f;
+            --primary-dark: #8b0000;
+            --dark-bg: #0a0a0a;
+            --glass-bg: rgba(10,10,10,0.95);
+            --glass-blur: blur(20px);
+            --border-subtle: rgba(255,255,255,0.07);
+            --text-primary: #fff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.38);
+            --font-display: 'Oswald', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --radius-md: 8px;
+            --primary-glow: rgba(183,28,28,0.3);
+            --accent: #ff1744;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: var(--font-body);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-top: var(--nav-height);
-            background: linear-gradient(135deg, rgba(139, 0, 0, 0.1) 0%, rgba(10, 10, 10, 0.95) 100%);
-            position: relative;
+            overflow-x: hidden;
+        }
+
+        .auth-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
             overflow: hidden;
         }
-
-        .register-wrapper::before {
+        .auth-bg::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 1000px;
-            height: 1000px;
+            top: -30%; right: -20%;
+            width: 700px; height: 700px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(183, 28, 28, 0.15) 0%, transparent 70%);
-            pointer-events: none;
+            background: radial-gradient(circle, rgba(183,28,28,0.18) 0%, transparent 70%);
+            animation: blobFloat 8s ease-in-out infinite alternate;
+        }
+        .auth-bg::after {
+            content: '';
+            position: absolute;
+            bottom: -20%; left: -15%;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(100,20,20,0.12) 0%, transparent 70%);
+            animation: blobFloat 10s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes blobFloat {
+            from { transform: translate(0,0) scale(1); }
+            to   { transform: translate(30px,20px) scale(1.05); }
         }
 
-        .register-container {
-            width: 100%;
-            max-width: 480px;
-            padding: var(--space-lg);
+        .film-strip {
+            position: fixed; top: 0; left: 0;
+            width: 40px; height: 100vh;
+            background: rgba(183,28,28,0.06);
+            border-right: 1px solid rgba(183,28,28,0.1);
+            display: flex; flex-direction: column;
+            gap: 12px; padding: 10px 7px; z-index: 0;
+        }
+        .film-hole {
+            width: 100%; aspect-ratio: 1;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(183,28,28,0.2);
+            flex-shrink: 0;
+        }
+
+        .auth-page {
             position: relative;
             z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
         }
 
-        .register-card {
+        .auth-brand {
+            font-family: var(--font-display);
+            font-size: 22px;
+            letter-spacing: 4px;
+            text-decoration: none;
+            margin-bottom: 32px;
+        }
+        .brand-r { color: var(--primary-light); }
+        .brand-w { color: #fff; }
+
+        .auth-card {
+            width: 100%;
+            max-width: 480px;
             background: var(--glass-bg);
             backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
             border: 1px solid var(--border-subtle);
             border-top: 2px solid var(--primary-light);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(183, 28, 28, 0.1);
+            border-radius: 16px;
+            padding: 40px 36px 36px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 50px rgba(183,28,28,0.08);
         }
 
-        .register-header {
-            text-align: center;
-            margin-bottom: var(--space-2xl);
+        .card-header { text-align: center; margin-bottom: 28px; }
+
+        .card-icon {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, rgba(183,28,28,0.25), rgba(139,0,0,0.15));
+            border: 1px solid rgba(183,28,28,0.3);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; color: var(--primary-light); margin: 0 auto 16px;
         }
 
-        .register-logo {
-            font-family: var(--font-display);
-            font-size: 32px;
-            letter-spacing: 3px;
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-        }
+        .card-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 2px; font-weight: 600; }
+        .card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
 
-        .register-logo .logo-red {
-            color: var(--primary-light);
-        }
+        /* Fields */
+        .field-group { margin-bottom: 16px; }
 
-        .register-logo .logo-white {
-            color: var(--text-primary);
-        }
-
-        .register-subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            letter-spacing: 1px;
-            margin-bottom: var(--space-lg);
-        }
-
-        .form-group {
-            margin-bottom: var(--space-lg);
-        }
-
-        .form-label {
+        .field-label {
             display: block;
-            font-family: var(--font-display);
-            font-size: 12px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-sm);
+            font-family: var(--font-display); font-size: 11px;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--text-secondary); margin-bottom: 7px;
         }
 
-        .required {
-            color: var(--accent);
+        .field-wrap { position: relative; display: flex; align-items: center; }
+
+        .field-icon {
+            position: absolute; left: 13px;
+            color: var(--text-muted); font-size: 13px;
+            pointer-events: none; transition: color 0.2s;
         }
 
         .form-input {
             width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 11px 14px 11px 38px;
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             color: var(--text-primary);
-            font-family: var(--font-body);
-            font-size: 14px;
-            transition: var(--transition);
+            font-family: var(--font-body); font-size: 14px;
+            transition: all 0.2s ease;
         }
 
-        .form-input::placeholder {
-            color: var(--text-muted);
-        }
+        .form-input::placeholder { color: var(--text-muted); }
 
         .form-input:focus {
             outline: none;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary-light);
+            background: rgba(255,255,255,0.07);
+            border-color: var(--primary-dark);
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
-        .form-input.error {
-            border-color: #ff4444;
-            background: rgba(255, 68, 68, 0.05);
-        }
+        .field-wrap:focus-within .field-icon { color: var(--primary-light); }
 
-        .form-input.success {
-            border-color: #2ecc71;
-            background: rgba(46, 204, 113, 0.05);
-        }
+        .form-input.error   { border-color: #ef5350; background: rgba(239,83,80,0.06); }
+        .form-input.success { border-color: #4caf50; background: rgba(76,175,80,0.06); }
 
-        .error-message {
+        .pass-toggle {
+            position: absolute; right: 12px;
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-size: 13px; padding: 4px; transition: color 0.15s;
+        }
+        .pass-toggle:hover { color: var(--text-secondary); }
+
+        .error-msg {
+            font-size: 11.5px; color: #ef9a9a;
+            margin-top: 5px;
             display: none;
-            font-size: 12px;
-            color: #ff6b6b;
-            margin-top: 6px;
-            font-family: var(--font-body);
+            align-items: center; gap: 5px;
         }
+        .error-msg.show { display: flex; }
+        .error-msg i { font-size: 11px; }
 
-        .error-message.show {
-            display: block;
-        }
+        /* Form row for two columns */
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-        .password-strength {
-            margin-top: 8px;
-            font-size: 12px;
-        }
-
+        /* Password strength */
+        .strength-wrap { margin-top: 7px; }
         .strength-bar {
             height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-bottom: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px; overflow: hidden; margin-bottom: 5px;
         }
+        .strength-fill { height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 2px; }
+        .strength-fill.weak   { width: 33%; background: #ef5350; }
+        .strength-fill.medium { width: 66%; background: #ffb74d; }
+        .strength-fill.strong { width: 100%; background: #4caf50; }
+        .strength-text { font-size: 11.5px; color: var(--text-muted); }
 
-        .strength-fill {
-            height: 100%;
-            width: 0%;
-            transition: all 0.3s ease;
-            border-radius: 2px;
-        }
+        /* Terms */
+        .terms-block { margin: 16px 0; font-size: 12.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 9px; }
+        .terms-row { display: flex; align-items: flex-start; gap: 9px; }
+        .terms-row input[type="checkbox"] { accent-color: var(--primary); margin-top: 2px; cursor: pointer; flex-shrink: 0; }
+        .terms-row a { color: var(--primary-light); text-decoration: none; transition: color 0.15s; }
+        .terms-row a:hover { color: var(--accent); }
 
-        .strength-fill.weak {
-            width: 33%;
-            background: #ff4444;
-        }
-
-        .strength-fill.medium {
-            width: 66%;
-            background: #ffaa00;
-        }
-
-        .strength-fill.strong {
-            width: 100%;
-            background: #2ecc71;
-        }
-
-        .strength-text {
-            color: var(--text-secondary);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--space-md);
-        }
-
-        .register-btn {
-            width: 100%;
-            padding: 14px 16px;
+        /* Submit */
+        .submit-btn {
+            width: 100%; padding: 13px;
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
-            border: none;
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-family: var(--font-display);
-            font-size: 13px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: var(--transition);
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
-            margin-top: var(--space-md);
+            border: none; border-radius: var(--radius-md);
+            color: #fff; font-family: var(--font-display);
+            font-size: 13.5px; letter-spacing: 1.5px;
+            text-transform: uppercase; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 18px rgba(183,28,28,0.35);
+            margin-top: 4px;
         }
-
-        .register-btn:hover:not(:disabled) {
+        .submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(183, 28, 28, 0.5);
+            box-shadow: 0 8px 28px rgba(183,28,28,0.5);
             background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
         }
+        .submit-btn:active:not(:disabled) { transform: translateY(0); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .register-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .register-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .terms-section {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-lg);
-        }
-
-        .terms-checkbox {
+        /* Perks strip */
+        .perks-strip {
             display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 8px;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
         }
-
-        .terms-checkbox input {
-            margin-top: 3px;
-            cursor: pointer;
+        .perk-item {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 12px; color: var(--text-muted);
         }
+        .perk-item i { color: var(--primary-light); font-size: 13px; }
 
-        .terms-checkbox a {
-            color: var(--primary-light);
-            text-decoration: none;
-            transition: var(--transition);
-        }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+        .divider-line { flex: 1; height: 1px; background: var(--border-subtle); }
+        .divider-text { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; }
 
-        .terms-checkbox a:hover {
-            color: var(--accent);
-        }
+        .auth-footer-link { text-align: center; font-size: 13px; color: var(--text-muted); }
+        .auth-footer-link a { color: var(--primary-light); text-decoration: none; font-weight: 600; transition: color 0.15s; }
+        .auth-footer-link a:hover { color: var(--accent); }
 
-        .divider {
-            text-align: center;
-            margin: var(--space-lg) 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: var(--border-subtle);
-        }
-
-        .divider-text {
-            background: var(--glass-bg);
-            padding: 0 var(--space-md);
-            color: var(--text-muted);
-            font-size: 12px;
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .login-section {
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .login-section a {
-            color: var(--primary-light);
-            text-decoration: none;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-
-        .login-section a:hover {
-            color: var(--accent);
-        }
-
-        @media (max-width: 768px) {
-            .register-wrapper {
-                padding-top: calc(var(--nav-height) + var(--space-lg));
-            }
-
-            .register-container {
-                padding: var(--space-md);
-            }
-
-            .register-card {
-                padding: var(--space-xl);
-            }
-
-            .register-logo {
-                font-size: 24px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 480px) {
+            .auth-card { padding: 28px 18px; }
+            .field-row { grid-template-columns: 1fr; }
+            .film-strip { display: none; }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- ========================================
-         NAVBAR
-         ======================================== -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <ul class="nav-links left">
-                <li><a href="index.html" class="nav-link">HOME</a></li>
-                <li class="dropdown">
-                    <a href="movies.html" class="nav-link dropdown-trigger">
-                        MOVIES <span class="dropdown-arrow"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
-                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <div class="logo">
-                <a href="index.html">
-                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
-                </a>
-            </div>
-            <ul class="nav-links right"></ul>
-        </div>
-    </nav>
+    <div class="auth-bg"></div>
 
-    <!-- ========================================
-         REGISTRATION SECTION
-         ======================================== -->
-    <section class="register-wrapper">
-        <div class="register-container">
-            <div class="register-card">
-                <!-- Header -->
-                <div class="register-header">
-                    <div class="register-logo">
-                        <span class="logo-red">TEST</span><span class="logo-white">REGISTER</span>
+    <div class="film-strip" aria-hidden="true">
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+        <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    </div>
+
+    <div class="auth-page">
+
+        <a href="index.html" class="auth-brand" aria-label="Scene Cinemas home">
+            <span class="brand-r">SCENE</span><span class="brand-w"> CINEMAS</span>
+        </a>
+
+        <!-- Perks -->
+        <div class="perks-strip">
+            <div class="perk-item"><i class="fas fa-ticket-alt"></i> Book Instantly</div>
+            <div class="perk-item"><i class="fas fa-chair"></i> Choose Your Seat</div>
+            <div class="perk-item"><i class="fas fa-history"></i> Booking History</div>
+        </div>
+
+        <div class="auth-card" role="main">
+
+            <div class="card-header">
+                <div class="card-icon"><i class="fas fa-user-plus"></i></div>
+                <h1 class="card-title">CREATE ACCOUNT</h1>
+                <p class="card-subtitle">Join Scene Cinemas — it's free</p>
+            </div>
+
+            <form id="registerForm" novalidate>
+
+                <!-- Full Name -->
+                <div class="field-group">
+                    <label class="field-label" for="fullName">Full Name <span style="color:#d32f2f;">*</span></label>
+                    <div class="field-wrap">
+                        <input type="text" id="fullName" class="form-input"
+                               placeholder="e.g. Sarah Mitchell" required autocomplete="name">
+                        <i class="fas fa-user field-icon"></i>
                     </div>
-                    <p class="register-subtitle">JOIN SCENE CINEMAS TODAY</p>
+                    <div class="error-msg" id="fullNameError"><i class="fas fa-exclamation-circle"></i><span></span></div>
                 </div>
 
-                <!-- Registration Form -->
-                <form id="registerForm" class="register-form" novalidate>
-                    <!-- Full Name Input -->
-                    <div class="form-group">
-                        <label for="fullName" class="form-label">Full Name <span class="required">*</span></label>
-                        <input
-                            type="text"
-                            id="fullName"
-                            class="form-input"
-                            placeholder="John Doe"
-                            required
-                            autocomplete="name"
-                        >
-                        <div class="error-message" id="fullNameError"></div>
+                <!-- Email -->
+                <div class="field-group">
+                    <label class="field-label" for="email">Email Address <span style="color:#d32f2f;">*</span></label>
+                    <div class="field-wrap">
+                        <input type="email" id="email" class="form-input"
+                               placeholder="your@email.com" required autocomplete="email">
+                        <i class="fas fa-envelope field-icon"></i>
                     </div>
+                    <div class="error-msg" id="emailError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+                </div>
 
-                    <!-- Email Input -->
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email Address <span class="required">*</span></label>
-                        <input
-                            type="email"
-                            id="email"
-                            class="form-input"
-                            placeholder="your@email.com"
-                            required
-                            autocomplete="email"
-                        >
-                        <div class="error-message" id="emailError"></div>
+                <!-- Phone (optional) -->
+                <div class="field-group">
+                    <label class="field-label" for="phone">Phone <span style="color:var(--text-muted);font-size:9px;">(Optional)</span></label>
+                    <div class="field-wrap">
+                        <input type="tel" id="phone" class="form-input"
+                               placeholder="+1 (555) 123-4567" autocomplete="tel">
+                        <i class="fas fa-phone field-icon"></i>
                     </div>
+                    <div class="error-msg" id="phoneError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+                </div>
 
-                    <!-- Phone Input (Optional) -->
-                    <div class="form-group">
-                        <label for="phone" class="form-label">Phone Number (Optional)</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            class="form-input"
-                            placeholder="+1 (555) 123-4567"
-                            autocomplete="tel"
-                        >
-                        <div class="error-message" id="phoneError"></div>
-                    </div>
-
-                    <!-- Password Input -->
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password <span class="required">*</span></label>
-                        <input
-                            type="password"
-                            id="password"
-                            class="form-input"
-                            placeholder="Create a strong password"
-                            required
-                            autocomplete="new-password"
-                        >
-                        <div class="password-strength" id="passwordStrength">
-                            <div class="strength-bar">
-                                <div class="strength-fill" id="strengthFill"></div>
-                            </div>
+                <!-- Passwords side by side -->
+                <div class="field-row">
+                    <!-- Password -->
+                    <div class="field-group">
+                        <label class="field-label" for="password">Password <span style="color:#d32f2f;">*</span></label>
+                        <div class="field-wrap">
+                            <input type="password" id="password" class="form-input"
+                                   placeholder="Create password" required autocomplete="new-password">
+                            <i class="fas fa-lock field-icon"></i>
+                            <button type="button" class="pass-toggle" id="togglePassword" tabindex="-1">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="strength-wrap">
+                            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
                             <span class="strength-text" id="strengthText"></span>
                         </div>
-                        <div class="error-message" id="passwordError"></div>
+                        <div class="error-msg" id="passwordError"><i class="fas fa-exclamation-circle"></i><span></span></div>
                     </div>
 
-                    <!-- Confirm Password Input -->
-                    <div class="form-group">
-                        <label for="confirmPassword" class="form-label">Confirm Password <span class="required">*</span></label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            class="form-input"
-                            placeholder="Confirm your password"
-                            required
-                            autocomplete="new-password"
-                        >
-                        <div class="error-message" id="confirmPasswordError"></div>
-                    </div>
-
-                    <!-- Terms & Conditions -->
-                    <div class="terms-section">
-                        <div class="terms-checkbox">
-                            <input type="checkbox" id="termsAgree" required>
-                            <span>
-                                I agree to the <a href="#" target="_blank">Terms of Service</a> and
-                                <a href="#" target="_blank">Privacy Policy</a>
-                            </span>
+                    <!-- Confirm Password -->
+                    <div class="field-group">
+                        <label class="field-label" for="confirmPassword">Confirm <span style="color:#d32f2f;">*</span></label>
+                        <div class="field-wrap">
+                            <input type="password" id="confirmPassword" class="form-input"
+                                   placeholder="Repeat password" required autocomplete="new-password">
+                            <i class="fas fa-lock field-icon"></i>
+                            <button type="button" class="pass-toggle" id="toggleConfirmPassword" tabindex="-1">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
                         </div>
-                        <div class="terms-checkbox">
-                            <input type="checkbox" id="subscribeEmail">
-                            <span>Subscribe to our newsletter for movie updates and special offers</span>
-                        </div>
+                        <div class="error-msg" id="confirmPasswordError"><i class="fas fa-exclamation-circle"></i><span></span></div>
                     </div>
-
-                    <!-- Register Button -->
-                    <button type="submit" class="register-btn" id="registerBtn">
-                        CREATE ACCOUNT
-                    </button>
-                </form>
-
-                <!-- Divider -->
-                <div class="divider">
-                    <span class="divider-text">OR</span>
                 </div>
 
-                <!-- Login Link -->
-                <div class="login-section">
-                    Already have an account? <a href="login.html">Sign in here</a>
+                <!-- Terms -->
+                <div class="terms-block">
+                    <div class="terms-row">
+                        <input type="checkbox" id="termsAgree" required>
+                        <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                    </div>
+                    <div class="terms-row">
+                        <input type="checkbox" id="subscribeEmail">
+                        <span>Send me deals, new releases &amp; exclusive offers</span>
+                    </div>
                 </div>
+
+                <!-- Submit -->
+                <button type="submit" class="submit-btn" id="registerBtn">
+                    <i class="fas fa-user-plus"></i> CREATE ACCOUNT
+                </button>
+
+            </form>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">OR</span>
+                <div class="divider-line"></div>
             </div>
+
+            <div class="auth-footer-link">
+                Already have an account? <a href="login.html">Sign in here</a>
+            </div>
+
         </div>
-    </section>
+    </div>
 
     <script src="js/auth.js"></script>
 </body>
-
 </html>
