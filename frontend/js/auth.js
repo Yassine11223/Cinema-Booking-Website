@@ -9,46 +9,46 @@ const API_BASE = 'http://localhost:5000/api';
 // REGEX PATTERNS
 // ============================================
 const REGEX_PATTERNS = {
-    email:         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    password:      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/,
-    strongPassword:/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-    fullName:      /^[a-zA-Z\s]{2,}$/,
-    phone:         /^[+]?[\d\s\-()]{7,}$/,
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    password: /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/,
+    strongPassword: /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    fullName: /^[a-zA-Z\s]{2,}$/,
+    phone: /^[+]?[\d\s\-()]{7,}$/,
 };
 
 // ============================================
 // VALIDATION FUNCTIONS
 // ============================================
 function validateEmail(email) {
-    if (!email)                          return { valid: false, message: 'Email address is required' };
+    if (!email) return { valid: false, message: 'Email address is required' };
     if (!REGEX_PATTERNS.email.test(email)) return { valid: false, message: 'Please enter a valid email (e.g. user@example.com)' };
     return { valid: true, message: '' };
 }
 
 function validatePassword(password) {
-    if (!password)                        return { valid: false, message: 'Password is required' };
-    if (password.length < 8)             return { valid: false, message: 'Password must be at least 8 characters' };
-    if (!/[A-Z]/.test(password))          return { valid: false, message: 'Add at least one uppercase letter' };
-    if (!/[a-z]/.test(password))          return { valid: false, message: 'Add at least one lowercase letter' };
-    if (!/\d/.test(password))             return { valid: false, message: 'Add at least one number' };
+    if (!password) return { valid: false, message: 'Password is required' };
+    if (password.length < 8) return { valid: false, message: 'Password must be at least 8 characters' };
+    if (!/[A-Z]/.test(password)) return { valid: false, message: 'Add at least one uppercase letter' };
+    if (!/[a-z]/.test(password)) return { valid: false, message: 'Add at least one lowercase letter' };
+    if (!/\d/.test(password)) return { valid: false, message: 'Add at least one number' };
     return { valid: true, message: '' };
 }
 
 function validateFullName(fullName) {
-    if (!fullName)                                     return { valid: false, message: 'Full name is required' };
+    if (!fullName) return { valid: false, message: 'Full name is required' };
     if (!REGEX_PATTERNS.fullName.test(fullName.trim())) return { valid: false, message: 'Name must be letters only (2+ characters)' };
     return { valid: true, message: '' };
 }
 
 function validatePhone(phone) {
-    if (!phone || phone.trim() === '')              return { valid: true, message: '' }; // optional
-    if (!REGEX_PATTERNS.phone.test(phone.trim()))   return { valid: false, message: 'Please enter a valid phone number' };
+    if (!phone || phone.trim() === '') return { valid: true, message: '' }; // optional
+    if (!REGEX_PATTERNS.phone.test(phone.trim())) return { valid: false, message: 'Please enter a valid phone number' };
     return { valid: true, message: '' };
 }
 
 function validateConfirmPassword(confirm, password) {
-    if (!confirm)              return { valid: false, message: 'Please confirm your password' };
-    if (confirm !== password)  return { valid: false, message: 'Passwords do not match' };
+    if (!confirm) return { valid: false, message: 'Please confirm your password' };
+    if (confirm !== password) return { valid: false, message: 'Passwords do not match' };
     return { valid: true, message: '' };
 }
 
@@ -56,12 +56,12 @@ function calculatePasswordStrength(password) {
     let s = 0;
     if (/[a-z]/.test(password)) s++;
     if (/[A-Z]/.test(password)) s++;
-    if (/\d/.test(password))    s++;
+    if (/\d/.test(password)) s++;
     if (/[@$!%*?&]/.test(password)) s++;
     if (password.length >= 12) s++;
-    if (s < 2) return { level: 'weak',   label: 'Weak' };
+    if (s < 2) return { level: 'weak', label: 'Weak' };
     if (s < 4) return { level: 'medium', label: 'Medium' };
-    return       { level: 'strong', label: 'Strong' };
+    return { level: 'strong', label: 'Strong' };
 }
 
 // ============================================
@@ -69,10 +69,10 @@ function calculatePasswordStrength(password) {
 // ============================================
 function setFieldStatus(fieldId, isValid, message = '') {
     const field = document.getElementById(fieldId);
-    const err   = document.getElementById(`${fieldId}Error`);
+    const err = document.getElementById(`${fieldId}Error`);
     if (!field) return;
-    field.classList.toggle('error',   !isValid);
-    field.classList.toggle('success',  isValid);
+    field.classList.toggle('error', !isValid);
+    field.classList.toggle('success', isValid);
     if (err) {
         // Support both plain text and icon+span structure
         const span = err.querySelector('span');
@@ -84,7 +84,7 @@ function setFieldStatus(fieldId, isValid, message = '') {
 
 function clearFieldStatus(fieldId) {
     const field = document.getElementById(fieldId);
-    const err   = document.getElementById(`${fieldId}Error`);
+    const err = document.getElementById(`${fieldId}Error`);
     if (!field) return;
     field.classList.remove('error', 'success');
     if (err) { err.textContent = ''; err.classList.remove('show'); }
@@ -124,23 +124,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initLoginForm(form) {
-    const emailEl   = form.querySelector('#email');
-    const passEl    = form.querySelector('#password');
-    const loginBtn  = form.querySelector('#loginBtn');
-    const toggler   = form.querySelector('#togglePassword');
+    const emailEl = form.querySelector('#email');
+    const passEl = form.querySelector('#password');
+    const loginBtn = form.querySelector('#loginBtn');
+    const toggler = form.querySelector('#togglePassword');
 
     // Show/hide password
     toggler?.addEventListener('click', () => {
         const isText = passEl.type === 'text';
-        passEl.type           = isText ? 'password' : 'text';
-        toggler.innerHTML     = `<i class="fas fa-eye${isText ? '' : '-slash'}"></i>`;
+        passEl.type = isText ? 'password' : 'text';
+        toggler.innerHTML = `<i class="fas fa-eye${isText ? '' : '-slash'}"></i>`;
     });
 
     // Blur validation
-    emailEl?.addEventListener('blur',  e => setFieldStatus('email',    validateEmail(e.target.value).valid,    validateEmail(e.target.value).message));
-    passEl ?.addEventListener('blur',  e => setFieldStatus('password', validatePassword(e.target.value).valid, validatePassword(e.target.value).message));
+    emailEl?.addEventListener('blur', e => setFieldStatus('email', validateEmail(e.target.value).valid, validateEmail(e.target.value).message));
+    passEl?.addEventListener('blur', e => setFieldStatus('password', validatePassword(e.target.value).valid, validatePassword(e.target.value).message));
     emailEl?.addEventListener('focus', () => clearFieldStatus('email'));
-    passEl ?.addEventListener('focus', () => clearFieldStatus('password'));
+    passEl?.addEventListener('focus', () => clearFieldStatus('password'));
 
     // Pre-fill remembered email
     const remembered = localStorage.getItem('scene_remember_email');
@@ -154,21 +154,21 @@ function initLoginForm(form) {
         e.preventDefault();
         hideGlobalError();
 
-        const email    = emailEl.value.trim();
+        const email = emailEl.value.trim();
         const password = passEl.value;
 
         const ev = validateEmail(email);
         const pv = validatePassword(password);
 
-        setFieldStatus('email',    ev.valid, ev.message);
+        setFieldStatus('email', ev.valid, ev.message);
         setFieldStatus('password', pv.valid, pv.message);
         if (!ev.valid || !pv.valid) return;
 
-        loginBtn.disabled     = true;
-        loginBtn.innerHTML    = '<i class="fas fa-spinner fa-spin"></i> SIGNING IN…';
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SIGNING IN…';
 
         try {
-            const res  = await fetch(`${API_BASE}/users/login`, {
+            const res = await fetch(`${API_BASE}/users/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -177,7 +177,7 @@ function initLoginForm(form) {
 
             if (res.ok) {
                 // Store auth data
-                localStorage.setItem('authToken',  data.token);
+                localStorage.setItem('authToken', data.token);
                 localStorage.setItem('scene_user', JSON.stringify(data.user));
 
                 // Also store as admin_token if user is admin
@@ -202,7 +202,7 @@ function initLoginForm(form) {
         } catch (_) {
             showGlobalError('Could not reach the server. Is the backend running on port 5000?');
         } finally {
-            loginBtn.disabled  = false;
+            loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> SIGN IN';
         }
     });
@@ -212,18 +212,18 @@ function initLoginForm(form) {
 // REGISTER FORM
 // ============================================
 function initRegisterForm(form) {
-    const nameEl     = form.querySelector('#fullName');
-    const emailEl    = form.querySelector('#email');
-    const phoneEl    = form.querySelector('#phone');
-    const passEl     = form.querySelector('#password');
-    const confEl     = form.querySelector('#confirmPassword');
-    const regBtn     = form.querySelector('#registerBtn');
-    const toggler    = form.querySelector('#togglePassword');
-    const toggler2   = form.querySelector('#toggleConfirmPassword');
-    const termsChk   = form.querySelector('#termsAgree');
+    const nameEl = form.querySelector('#fullName');
+    const emailEl = form.querySelector('#email');
+    const phoneEl = form.querySelector('#phone');
+    const passEl = form.querySelector('#password');
+    const confEl = form.querySelector('#confirmPassword');
+    const regBtn = form.querySelector('#registerBtn');
+    const toggler = form.querySelector('#togglePassword');
+    const toggler2 = form.querySelector('#toggleConfirmPassword');
+    const termsChk = form.querySelector('#termsAgree');
 
     // Show/hide passwords
-    toggler ?.addEventListener('click', () => {
+    toggler?.addEventListener('click', () => {
         const t = passEl.type === 'text' ? 'password' : 'text';
         passEl.type = t;
         toggler.innerHTML = `<i class="fas fa-eye${t === 'password' ? '-slash' : ''}"></i>`;
@@ -240,11 +240,11 @@ function initRegisterForm(form) {
     });
 
     // Blur validations
-    nameEl ?.addEventListener('blur', e => setFieldStatus('fullName', validateFullName(e.target.value).valid, validateFullName(e.target.value).message));
-    emailEl?.addEventListener('blur', e => setFieldStatus('email',    validateEmail(e.target.value).valid,    validateEmail(e.target.value).message));
-    phoneEl?.addEventListener('blur', e => setFieldStatus('phone',    validatePhone(e.target.value).valid,    validatePhone(e.target.value).message));
-    passEl ?.addEventListener('blur', e => setFieldStatus('password', validatePassword(e.target.value).valid, validatePassword(e.target.value).message));
-    confEl ?.addEventListener('blur', e => setFieldStatus('confirmPassword', validateConfirmPassword(e.target.value, passEl.value).valid, validateConfirmPassword(e.target.value, passEl.value).message));
+    nameEl?.addEventListener('blur', e => setFieldStatus('fullName', validateFullName(e.target.value).valid, validateFullName(e.target.value).message));
+    emailEl?.addEventListener('blur', e => setFieldStatus('email', validateEmail(e.target.value).valid, validateEmail(e.target.value).message));
+    phoneEl?.addEventListener('blur', e => setFieldStatus('phone', validatePhone(e.target.value).valid, validatePhone(e.target.value).message));
+    passEl?.addEventListener('blur', e => setFieldStatus('password', validatePassword(e.target.value).valid, validatePassword(e.target.value).message));
+    confEl?.addEventListener('blur', e => setFieldStatus('confirmPassword', validateConfirmPassword(e.target.value, passEl.value).valid, validateConfirmPassword(e.target.value, passEl.value).message));
 
     // Clear on focus
     [['fullName', nameEl], ['email', emailEl], ['phone', phoneEl], ['password', passEl], ['confirmPassword', confEl]].forEach(([id, el]) => {
@@ -255,11 +255,11 @@ function initRegisterForm(form) {
         e.preventDefault();
         hideGlobalError();
 
-        const name     = nameEl.value.trim();
-        const email    = emailEl.value.trim();
-        const phone    = phoneEl?.value.trim() || '';
+        const name = nameEl.value.trim();
+        const email = emailEl.value.trim();
+        const phone = phoneEl?.value.trim() || '';
         const password = passEl.value;
-        const confirm  = confEl.value;
+        const confirm = confEl.value;
 
         // Validate
         const nv = validateFullName(name);
@@ -268,11 +268,11 @@ function initRegisterForm(form) {
         const pv = validatePassword(password);
         const cv = validateConfirmPassword(confirm, password);
 
-        setFieldStatus('fullName',       nv.valid,  nv.message);
-        setFieldStatus('email',          ev.valid,  ev.message);
-        setFieldStatus('phone',          phv.valid, phv.message);
-        setFieldStatus('password',       pv.valid,  pv.message);
-        setFieldStatus('confirmPassword',cv.valid,  cv.message);
+        setFieldStatus('fullName', nv.valid, nv.message);
+        setFieldStatus('email', ev.valid, ev.message);
+        setFieldStatus('phone', phv.valid, phv.message);
+        setFieldStatus('password', pv.valid, pv.message);
+        setFieldStatus('confirmPassword', cv.valid, cv.message);
 
         if (!nv.valid || !ev.valid || !phv.valid || !pv.valid || !cv.valid) return;
 
@@ -281,11 +281,11 @@ function initRegisterForm(form) {
             return;
         }
 
-        regBtn.disabled  = true;
+        regBtn.disabled = true;
         regBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CREATING ACCOUNT…';
 
         try {
-            const res  = await fetch(`${API_BASE}/users/register`, {
+            const res = await fetch(`${API_BASE}/users/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, phone: phone || null, password }),
@@ -294,7 +294,7 @@ function initRegisterForm(form) {
 
             if (res.ok) {
                 // Store token and redirect to login with success message
-                localStorage.setItem('authToken',  data.token);
+                localStorage.setItem('authToken', data.token);
                 localStorage.setItem('scene_user', JSON.stringify(data.user));
                 localStorage.setItem('scene_register_success', name);
 
@@ -313,7 +313,7 @@ function initRegisterForm(form) {
         } catch (_) {
             showGlobalError('Could not reach the server. Is the backend running on port 5000?');
         } finally {
-            regBtn.disabled  = false;
+            regBtn.disabled = false;
             regBtn.innerHTML = '<i class="fas fa-user-plus"></i> CREATE ACCOUNT';
         }
     });
@@ -328,7 +328,7 @@ function updateStrengthBar(password) {
     if (!fill || !text) return;
     if (!password) { fill.className = 'strength-fill'; text.textContent = ''; return; }
     const s = calculatePasswordStrength(password);
-    fill.className   = `strength-fill ${s.level}`;
+    fill.className = `strength-fill ${s.level}`;
     text.textContent = `Strength: ${s.label}`;
 }
 

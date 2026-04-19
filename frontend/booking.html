@@ -8,6 +8,17 @@
     <title>Choose Seats | Cinema Booking</title>
     <link rel="stylesheet" href="css/booking.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Auth guard: redirect to login if not signed in -->
+    <script>
+        (function () {
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData');
+            if (!token || !userData) {
+                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.replace('login.html?redirect=' + returnUrl);
+            }
+        })();
+    </script>
 </head>
 
 <body>
