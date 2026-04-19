@@ -6,6 +6,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     initNavbar();
+    updateNavbarAuth();
 });
 
 /* ============================================
@@ -22,6 +23,33 @@ function initNavbar() {
             navbar.classList.remove('scrolled');
         }
     });
+}
+
+/* ============================================
+   NAVBAR AUTH AWARENESS
+   Updates the LOGIN link to show user profile
+   icon when the user is logged in.
+   ============================================ */
+function updateNavbarAuth() {
+    const authNavLink = document.getElementById('auth-nav-link');
+    if (!authNavLink) return;
+
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+
+    if (token && userData) {
+        try {
+            const user = JSON.parse(userData);
+            const firstName = user.name ? user.name.split(' ')[0] : 'Profile';
+
+            // Replace LOGIN link with profile link
+            authNavLink.href = 'profile.html';
+            authNavLink.innerHTML = `<i class="fa-solid fa-user"></i> ${firstName.toUpperCase()}`;
+            authNavLink.classList.add('logged-in');
+        } catch (e) {
+            // Invalid userData, keep login link
+        }
+    }
 }
 
 /* ============================================

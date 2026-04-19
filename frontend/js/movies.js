@@ -981,9 +981,34 @@ function handleBookNow() {
     // Store selected show in session
     sessionStorage.setItem('selectedShow', JSON.stringify(selectedShow));
     if (currentMovieData) {
+        // Build genre string from TMDB genres array or genre_ids
+        let genre = 'Movie';
+        if (currentMovieData.genres && currentMovieData.genres.length > 0) {
+            genre = currentMovieData.genres.slice(0, 2).map(g => g.name).join(' • ');
+        } else if (currentMovieData.genre_ids && currentMovieData.genre_ids.length > 0) {
+            genre = buildMovieGenreString(currentMovieData.genre_ids);
+        }
+
+        // Build duration string
+        let duration = 'N/A';
+        if (currentMovieData.runtime) {
+            const h = Math.floor(currentMovieData.runtime / 60);
+            const m = currentMovieData.runtime % 60;
+            duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        }
+
+        // Build rating
+        let rating = 'NR';
+        if (currentMovieData.vote_average && currentMovieData.vote_average > 0) {
+            rating = parseFloat(currentMovieData.vote_average).toFixed(1);
+        }
+
         sessionStorage.setItem('selectedMovie', JSON.stringify({
             id: currentMovieData.id,
-            title: currentMovieData.title
+            title: currentMovieData.title,
+            genre: genre,
+            duration: duration,
+            rating: rating
         }));
     }
 

@@ -23,14 +23,30 @@
     };
 
     // ============================================
-    // MOCK DATA
+    // MOVIE DATA (from sessionStorage or fallback)
     // ============================================
-    const MOVIE = {
-        title: 'Dune: Part Three',
-        genre: 'Sci-Fi • Adventure',
-        rating: 'PG-13',
-        duration: '2h 46m',
-    };
+    function loadMovieData() {
+        try {
+            const stored = sessionStorage.getItem('selectedMovie');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return {
+                    title: parsed.title || 'Unknown Movie',
+                    genre: parsed.genre || 'Movie',
+                    rating: parsed.rating || 'NR',
+                    duration: parsed.duration || 'N/A',
+                };
+            }
+        } catch (_) { }
+        // Fallback only if no movie was selected
+        return {
+            title: 'Dune: Part Three',
+            genre: 'Sci-Fi • Adventure',
+            rating: 'PG-13',
+            duration: '2h 46m',
+        };
+    }
+    const MOVIE = loadMovieData();
 
     const PRICING = {
         IMAX: 320,
@@ -580,9 +596,9 @@
     function showSuccessModal() {
         D.modalBox.innerHTML = `
             <div class="modal-icon modal-icon--success"><i class="fas fa-check"></i></div>
-            <h3 class="modal-title">Booking Confirmed!</h3>
-            <p class="modal-text">Your seats are locked and your booking is confirmed. You would now proceed to payment.</p>
-            <button class="modal-btn modal-btn--green" id="modal-close">Continue</button>
+            <h3 class="modal-title">Seats Reserved!</h3>
+            <p class="modal-text">Your seats are locked. Redirecting you to payment...</p>
+            <div class="modal-spinner"><i class="fas fa-spinner fa-spin"></i></div>
         `;
         D.modalOvl.classList.add('active');
     }
@@ -677,8 +693,26 @@
         save();
         renderBottomBar();
         renderTimer();
+
+        // Save booking summary for payment page (user info comes from localStorage)
+        const st = S.showtime;
+        const date = S.dates.find(d => d.key === S.dateKey);
+        sessionStorage.setItem('bookingSummary', JSON.stringify({
+            movie: MOVIE,
+            seats: S.selected.slice(),
+            showtime: st,
+            date: date ? date.full : S.dateKey,
+            experience: S.stType,
+            pricePerSeat: S.price,
+            total: S.total,
+            currency: CFG.CURRENCY,
+        }));
+
         showSuccessModal();
-        toast('Booking confirmed!', 'success');
+        // Redirect to payment after a short delay so the user sees the confirmation
+        setTimeout(() => {
+            window.location.href = 'payment.html';
+        }, 1800);
     }
 
     function onChangeDateTime() {
