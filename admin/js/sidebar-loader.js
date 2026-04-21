@@ -15,7 +15,6 @@
         'theaters-manage.html':  'nav-theaters',
         'bookings-list.html':    'nav-bookings',
         'users-list.html':       'nav-users',
-        'reports.html':          'nav-reports',
     };
 
     /**

@@ -15,8 +15,12 @@ const validateRegistration = (req, res, next) => {
         errors.push('Valid email is required');
     }
 
-    if (!password || password.length < 6) {
-        errors.push('Password must be at least 6 characters');
+    if (!password || password.length < 8) {
+        errors.push('Password must be at least 8 characters');
+    } else {
+        if (!/[A-Z]/.test(password)) errors.push('Password must contain an uppercase letter');
+        if (!/[a-z]/.test(password)) errors.push('Password must contain a lowercase letter');
+        if (!/\d/.test(password)) errors.push('Password must contain a number');
     }
 
     if (errors.length > 0) {

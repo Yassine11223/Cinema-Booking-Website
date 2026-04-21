@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
     password      VARCHAR(255) NOT NULL,
     phone         VARCHAR(20),
     role          VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
+    last_login    TIMESTAMP,
+    login_count   INTEGER DEFAULT 0,
     created_at    TIMESTAMP DEFAULT NOW(),
     updated_at    TIMESTAMP DEFAULT NOW()
 );

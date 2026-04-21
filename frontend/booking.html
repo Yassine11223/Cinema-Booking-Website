@@ -12,7 +12,7 @@
     <script>
         (function () {
             var token = localStorage.getItem('authToken');
-            var userData = localStorage.getItem('userData');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
             if (!token || !userData) {
                 var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
                 window.location.replace('login.html?redirect=' + returnUrl);

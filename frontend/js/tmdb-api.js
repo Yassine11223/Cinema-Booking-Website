@@ -10,7 +10,7 @@ const TMDB_CONFIG = {
     BASE_URL: 'https://api.themoviedb.org/3',
     IMAGE_BASE: 'https://image.tmdb.org/t/p',
     POSTER_SIZE: '/w500',
-    BACKDROP_SIZE: '/original',
+    BACKDROP_SIZE: '/w1280',
     PROFILE_SIZE: '/w185',
 };
 
@@ -416,10 +416,128 @@ function showError(message) {
 }
 
 /* ============================================
+   CHECK ADMIN CATALOG (localStorage)
+   If admin has added/edited/deleted movies,
+   use those instead of calling TMDB.
+   ============================================ */
+function getAdminCatalog() {
+    try {
+        const stored = localStorage.getItem('scene_movies_catalog');
+        if (!stored) return null;
+        const movies = JSON.parse(stored);
+        // Only use catalog if it has now_showing movies
+        const nowShowing = movies.filter(m => m.status === 'now_showing');
+        if (nowShowing.length === 0) return null;
+        // Convert admin format to TMDB-like format for rendering
+        return nowShowing.map(m => ({
+            id: m.id,
+            title: m.title,
+            overview: m.description || '',
+            poster_path: null,  // Will use poster_url directly
+            backdrop_path: null,
+            poster_url: m.poster_url || null,
+            backdrop_url: m.poster_url || null, // Use poster as fallback
+            genre_ids: [],
+            genre_name: m.genre || '',
+            vote_average: 0,
+            release_date: m.release_date || '',
+            runtime: m.duration || 0,
+            _fromCatalog: true, // Flag to use poster_url directly
+        }));
+    } catch (e) {
+        return null;
+    }
+}
+
+/* ============================================
+   POPULATE FROM ADMIN CATALOG
+   ============================================ */
+async function populateFromCatalog(catalogMovies) {
+    const slider = document.getElementById('hero-slider');
+    const grid = document.querySelector('#now-showing .movies-grid');
+    
+    // Hide loading
+    const heroLoading = document.getElementById('hero-loading');
+    if (heroLoading) heroLoading.style.display = 'none';
+
+    // --- Hero Slider ---
+    if (slider) {
+        const existingSlides = slider.querySelectorAll('.slide');
+        existingSlides.forEach(slide => slide.remove());
+        const existingDots = slider.querySelector('.slider-dots');
+        if (existingDots) existingDots.remove();
+
+        const heroMovies = catalogMovies.filter(m => m.poster_url).slice(0, 5);
+        heroMovies.forEach((movie, index) => {
+            const genreStr = (movie.genre_name || 'MOVIE').toUpperCase();
+            const slide = document.createElement('div');
+            slide.className = 'slide' + (index === 0 ? ' active' : '');
+            slide.setAttribute('data-index', index);
+            slide.innerHTML = `
+                <img src="${movie.poster_url}" 
+                     alt="${movie.title}" 
+                     class="slide-bg"
+                     style="object-position: center 20%;"
+                     loading="${index === 0 ? 'eager' : 'lazy'}">
+                <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <span class="slide-genre">${genreStr}</span>
+                    <h1 class="slide-title">${movie.title.toUpperCase()}</h1>
+                    <p class="slide-overview">${movie.overview ? movie.overview.substring(0, 150) + '...' : ''}</p>
+                    <div class="slide-actions">
+                        <a href="movie-detail.html?id=${movie.id}" class="btn btn-primary">BOOK NOW</a>
+                    </div>
+                </div>
+            `;
+            const prevBtn = slider.querySelector('.slider-arrow.prev');
+            if (prevBtn) slider.insertBefore(slide, prevBtn);
+            else slider.appendChild(slide);
+        });
+        if (heroMovies.length > 0) initHeroSlider();
+    }
+
+    // --- Now Showing Grid ---
+    if (grid) {
+        grid.innerHTML = '';
+        const gridMovies = catalogMovies.slice(0, 12);
+        gridMovies.forEach(movie => {
+            const pUrl = movie.poster_url || 'https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster';
+            const genreStr = (movie.genre_name || 'Movie');
+            const card = document.createElement('a');
+            card.href = `movie-detail.html?id=${movie.id}`;
+            card.className = 'movie-card';
+            card.innerHTML = `
+                <div class="movie-card-image-wrapper">
+                    <div class="movie-card-rating">NR</div>
+                    <img src="${pUrl}" alt="${movie.title}" class="movie-card-image" loading="lazy">
+                    <div class="movie-card-overlay">
+                        <span class="btn btn-primary">BOOK NOW</span>
+                    </div>
+                </div>
+                <div class="movie-card-info">
+                    <h3 class="movie-card-title">${movie.title}</h3>
+                    <p class="movie-card-genre">${genreStr}</p>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+}
+
+/* ============================================
    INITIALIZATION
    ============================================ */
 async function initTMDB() {
-    // Check if API key is configured
+    // FIRST: Check if admin has curated a movie catalog in localStorage
+    const catalogMovies = getAdminCatalog();
+    if (catalogMovies && catalogMovies.length > 0) {
+        console.log(`✅ Using admin catalog (${catalogMovies.length} movies)`);
+        showLoadingState();
+        await populateFromCatalog(catalogMovies);
+        return;
+    }
+
+    // FALLBACK: Fetch from TMDB API
     if (TMDB_CONFIG.API_KEY === 'YOUR_TMDB_API_KEY_HERE' || !TMDB_CONFIG.API_KEY) {
         console.warn('⚠️  TMDB API key not configured.');
         console.info('👉 Get your free API key at: https://www.themoviedb.org/settings/api');
@@ -463,3 +581,4 @@ async function initTMDB() {
 document.addEventListener('DOMContentLoaded', () => {
     initTMDB();
 });
+
