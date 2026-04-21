@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Movie details, trailers, and booking at Scene Cinemas.">
+    <title>Movie Details | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+
+            <!-- Left Nav Links -->
+            <ul class="nav-links left">
+                <li>
+                    <a href="index.html" class="nav-link">HOME</a>
+                </li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a>
+                </li>
+            </ul>
+
+            <!-- Center Logo -->
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+
+            <!-- Right Nav -->
+            <ul class="nav-links right">
+                <li>
+                    <a href="login.html" class="login-btn" id="auth-nav-link">
+                        <i class="fa-regular fa-user"></i> LOGIN
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+    <!-- ========================================
+         MOVIE HERO SECTION
+         ======================================== -->
+    <div class="movie-hero" id="movie-hero">
+        <div class="hero-content">
+            <div class="loading-spinner">
+                <i class="fas fa-circle-notch"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         MOVIE DETAILS CONTENT
+         ======================================== -->
+    <main class="container movie-details" id="movie-details">
+
+        <!-- Synopsis Section -->
+        <section class="detail-section" id="synopsis-section" style="display: none;">
+            <h2 class="section-title">Synopsis</h2>
+            <p class="synopsis" id="movie-synopsis"></p>
+        </section>
+
+        <!-- Trailer Section -->
+        <section class="detail-section" id="trailer-section" style="display: none;">
+            <h2 class="section-title">
+                <i class="fas fa-play-circle" style="color: var(--primary); margin-right: var(--space-sm);"></i>
+                Trailer
+            </h2>
+            <div class="trailer-wrapper" id="trailer-wrapper">
+                <!-- YouTube iframe injected by JS -->
+            </div>
+        </section>
+
+        <!-- Showtime & Booking Section -->
+        <section class="detail-section" id="booking-section" style="display: none;">
+            <h2 class="section-title">
+                <i class="fas fa-ticket-alt" style="color: var(--primary); margin-right: var(--space-sm);"></i>
+                Select Showtime
+            </h2>
+
+            <!-- Date Selection -->
+            <div class="date-selector" id="date-selector">
+                <!-- Date buttons injected by JS -->
+            </div>
+
+            <!-- Time Slots Grid -->
+            <div class="show-times" id="show-times-grid">
+                <p style="color: var(--text-muted); padding: var(--space-lg) 0;">Select a date to view available
+                    showtimes</p>
+            </div>
+
+            <!-- Booking CTA -->
+            <div class="booking-cta" id="booking-cta" style="display: none;">
+                <div class="booking-summary" id="booking-summary">
+                    <!-- Selected show summary injected by JS -->
+                </div>
+                <div class="booking-actions">
+                    <button class="btn btn-primary btn-book-now" id="btn-book-now" disabled>
+                        <i class="fas fa-ticket-alt"></i> BOOK NOW
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-alert" style="display: none;"></div>
+    </main>
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer" id="footer">
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <!-- Get in Touch -->
+                <div class="footer-col">
+                    <h4 class="footer-title">GET IN TOUCH</h4>
+                    <div class="footer-links">
+                        <a href="pages/contact.html">Contact Us</a>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="footer-col">
+                    <h4 class="footer-title">ABOUT TEST CINEMAS</h4>
+                    <div class="footer-links">
+                        <a href="pages/about.html">About Us</a>
+                        <a href="pages/experience-imax.html">IMAX Cinema</a>
+                        <a href="pages/experience-dolby.html">Dolby Cinema</a>
+                        <a href="pages/experience-standard.html">Standard & Deluxe</a>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="footer-col">
+                    <h4 class="footer-title">LEGAL</h4>
+                    <div class="footer-links">
+                        <a href="pages/faq.html">FAQs</a>
+                        <a href="pages/terms.html">Terms & Conditions</a>
+                        <a href="pages/privacy.html">Privacy Policy</a>
+                        <a href="pages/support.html">Support</a>
+                    </div>
+                </div>
+
+                <!-- Follow Us -->
+                <div class="footer-col">
+                    <h4 class="footer-title">FOLLOW US</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Scene Cinemas. All rights reserved.</p>
+            </div>
+
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/movies.js"></script>
+
+</body>
+
+</html>

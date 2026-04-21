@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Get in touch with Scene Cinemas. Contact us for inquiries, feedback, or support.">
+    <title>Contact Us | Scene Cinemas</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .contact-hero {
+            position: relative; padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-surface) 0%, rgba(139,0,0,0.18) 50%, var(--dark-surface) 100%);
+            overflow: hidden;
+        }
+        .contact-hero::before { content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%); width:800px; height:800px; border-radius:50%; background:radial-gradient(circle,rgba(183,28,28,0.12) 0%,transparent 60%); pointer-events:none; }
+        .contact-hero-content { position:relative; z-index:1; }
+        .contact-hero-icon { font-size:48px; margin-bottom:var(--space-lg); display:inline-block; animation:floatI 3s ease-in-out infinite; }
+        @keyframes floatI { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        .contact-hero h1 { font-family:var(--font-display); font-size:52px; font-weight:700; text-transform:uppercase; letter-spacing:4px; margin-bottom:var(--space-md); background:linear-gradient(135deg,#fff 0%,var(--primary-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .contact-hero p { font-size:16px; color:var(--text-secondary); letter-spacing:1px; max-width:600px; margin:0 auto; }
+
+        .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3xl); padding:var(--space-3xl) 0; }
+
+        /* Form */
+        .contact-form-wrap { background:var(--dark-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:var(--space-2xl); }
+        .contact-form-title { font-family:var(--font-display); font-size:24px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--text-primary); margin-bottom:var(--space-xl); }
+        .form-group { margin-bottom:var(--space-lg); }
+        .form-group label { display:block; font-family:var(--font-display); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted); margin-bottom:var(--space-sm); }
+        .form-group input, .form-group select, .form-group textarea {
+            width:100%; padding:14px 16px; background:var(--dark-elevated); border:1px solid var(--border-subtle);
+            border-radius:var(--radius-md); color:var(--text-primary); font-size:14px; font-family:var(--font-body);
+            transition:all 0.3s ease; outline:none; box-sizing:border-box;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); box-shadow:0 0 12px rgba(183,28,28,0.2); }
+        .form-group textarea { min-height:140px; resize:vertical; }
+        .form-group select option { background:var(--dark-surface); }
+        .form-submit-btn {
+            width:100%; padding:16px; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-md);
+            font-family:var(--font-display); font-size:14px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+            cursor:pointer; transition:all 0.3s ease;
+        }
+        .form-submit-btn:hover { background:var(--primary-light); box-shadow:var(--shadow-red); transform:translateY(-2px); }
+        .form-success { display:none; text-align:center; padding:var(--space-2xl); }
+        .form-success i { font-size:48px; color:#4caf50; margin-bottom:var(--space-lg); }
+        .form-success h3 { font-family:var(--font-display); font-size:20px; letter-spacing:2px; margin-bottom:var(--space-sm); }
+        .form-success p { color:var(--text-muted); font-size:14px; }
+
+        /* Info cards */
+        .contact-info { display:flex; flex-direction:column; gap:var(--space-xl); }
+        .info-card {
+            background:var(--dark-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);
+            padding:var(--space-xl); display:flex; gap:var(--space-lg); align-items:flex-start; transition:all 0.35s ease;
+        }
+        .info-card:hover { border-color:var(--border-red); transform:translateY(-3px); box-shadow:0 4px 20px rgba(183,28,28,0.12); }
+        .info-icon {
+            width:52px; height:52px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center;
+            font-size:22px; flex-shrink:0; background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+            box-shadow:0 4px 15px rgba(183,28,28,0.3); color:#fff;
+        }
+        .info-title { font-family:var(--font-display); font-size:16px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-primary); margin-bottom:var(--space-xs); }
+        .info-details { font-size:14px; color:var(--text-muted); line-height:1.7; }
+        .info-details a { color:var(--primary-light); transition:color 0.2s; }
+        .info-details a:hover { color:#fff; }
+
+        /* Hours */
+        .hours-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-sm); margin-top:var(--space-sm); }
+        .hours-row { display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border-subtle); }
+        .hours-day { color:var(--text-secondary); }
+        .hours-time { color:var(--primary-light); font-weight:500; }
+
+        @media (max-width:768px) {
+            .contact-hero h1 { font-size:36px; letter-spacing:2px; }
+            .contact-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li><a href="../food-drinks.html" class="nav-link">FOOD & DRINKS</a></li>
+            </ul>
+            <div class="logo"><a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a></div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn" id="auth-nav-link"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="contact-hero">
+        <div class="contact-hero-content">
+            <div class="contact-hero-icon">📬</div>
+            <h1>Contact Us</h1>
+            <p>Have a question or feedback? We'd love to hear from you. Reach out and our team will get back to you shortly.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="contact-grid">
+
+            <!-- FORM -->
+            <div class="contact-form-wrap">
+                <h2 class="contact-form-title">Send a Message</h2>
+                <form id="contact-form">
+                    <div class="form-group">
+                        <label for="contact-name">Your Name</label>
+                        <input type="text" id="contact-name" placeholder="Full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Email Address</label>
+                        <input type="email" id="contact-email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-subject">Subject</label>
+                        <select id="contact-subject" required>
+                            <option value="">Choose a topic...</option>
+                            <option value="general">General Inquiry</option>
+                            <option value="booking">Booking Issue</option>
+                            <option value="refund">Refund Request</option>
+                            <option value="feedback">Feedback</option>
+                            <option value="partnership">Partnership / Events</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Message</label>
+                        <textarea id="contact-message" placeholder="Tell us more..." required></textarea>
+                    </div>
+                    <button type="submit" class="form-submit-btn" id="contact-submit-btn">
+                        <i class="fas fa-paper-plane"></i> SEND MESSAGE
+                    </button>
+                </form>
+                <div class="form-success" id="contact-success">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>MESSAGE SENT!</h3>
+                    <p>Thank you for reaching out. We'll reply within 24 hours.</p>
+                </div>
+            </div>
+
+            <!-- INFO CARDS -->
+            <div class="contact-info">
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div>
+                        <div class="info-title">Visit Us</div>
+                        <div class="info-details">
+                            123 Cinema Boulevard<br>
+                            Downtown District, Cairo 11511<br>
+                            Egypt
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-phone-alt"></i></div>
+                    <div>
+                        <div class="info-title">Call Us</div>
+                        <div class="info-details">
+                            Main: <a href="tel:+201234567890">+20 123 456 7890</a><br>
+                            Support: <a href="tel:+201234567891">+20 123 456 7891</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-envelope"></i></div>
+                    <div>
+                        <div class="info-title">Email Us</div>
+                        <div class="info-details">
+                            General: <a href="mailto:info@scenecinemas.com">info@scenecinemas.com</a><br>
+                            Support: <a href="mailto:support@scenecinemas.com">support@scenecinemas.com</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="info-title">Opening Hours</div>
+                        <div class="info-details">
+                            <div class="hours-grid">
+                                <div class="hours-row"><span class="hours-day">Mon – Thu</span><span class="hours-time">10:00 AM – 12:00 AM</span></div>
+                                <div class="hours-row"><span class="hours-day">Fri – Sat</span><span class="hours-time">10:00 AM – 2:00 AM</span></div>
+                                <div class="hours-row"><span class="hours-day">Sunday</span><span class="hours-time">11:00 AM – 11:00 PM</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-share-alt"></i></div>
+                    <div>
+                        <div class="info-title">Follow Us</div>
+                        <div class="info-details" style="display:flex;gap:16px;font-size:20px;">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-tiktok"></i></a>
+                            <a href="#"><i class="fab fa-youtube"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col"><h4 class="footer-title">GET IN TOUCH</h4><div class="footer-links"><a href="contact.html">Contact Us</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">ABOUT TEST CINEMAS</h4><div class="footer-links"><a href="about.html">About Us</a><a href="experience-imax.html">IMAX Cinema</a><a href="experience-dolby.html">Dolby Cinema</a><a href="experience-standard.html">Standard & Deluxe</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">LEGAL</h4><div class="footer-links"><a href="faq.html">FAQs</a><a href="terms.html">Terms & Conditions</a><a href="privacy.html">Privacy Policy</a><a href="support.html">Support</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">FOLLOW US</h4><div class="social-links"><a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="#" class="social-link"><i class="fab fa-instagram"></i></a><a href="#" class="social-link"><i class="fab fa-tiktok"></i></a><a href="#" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; 2026 Scene Cinemas. All rights reserved.</p></div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+    <script>
+        // Contact form simulation
+        document.getElementById('contact-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('contact-submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SENDING...';
+            setTimeout(() => {
+                document.getElementById('contact-form').style.display = 'none';
+                document.getElementById('contact-success').style.display = 'block';
+            }, 1500);
+        });
+    </script>
+</body>
+</html>

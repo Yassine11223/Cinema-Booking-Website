@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn about Scene Cinemas — our story, mission, and commitment to delivering the ultimate movie experience.">
+    <title>About Us | Scene Cinemas</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* About Page Styles */
+        .about-hero {
+            position: relative;
+            padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-surface) 0%, rgba(139, 0, 0, 0.18) 50%, var(--dark-surface) 100%);
+            overflow: hidden;
+        }
+        .about-hero::before {
+            content: '';
+            position: absolute;
+            top: -200px; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 800px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(183,28,28,0.12) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .about-hero-content { position: relative; z-index: 1; }
+        .about-hero-icon { font-size: 48px; margin-bottom: var(--space-lg); display: inline-block; animation: floatIcon 3s ease-in-out infinite; }
+        @keyframes floatIcon { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        .about-hero h1 {
+            font-family: var(--font-display); font-size: 52px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 4px; margin-bottom: var(--space-md);
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .about-hero p { font-size: 16px; color: var(--text-secondary); letter-spacing: 1px; max-width: 600px; margin: 0 auto; }
+
+        /* Section styling */
+        .about-section { padding: var(--space-3xl) 0; }
+        .about-section:nth-child(even) { background: rgba(255,255,255,0.01); }
+        .about-section-title {
+            font-family: var(--font-display); font-size: 32px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 3px; color: var(--primary-light);
+            margin-bottom: var(--space-xl); text-align: center;
+        }
+        .about-section-content { max-width: 800px; margin: 0 auto; color: var(--text-secondary); font-size: 16px; line-height: 1.9; text-align: center; }
+
+        /* Mission cards */
+        .mission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-xl); margin-top: var(--space-2xl); }
+        .mission-card {
+            background: var(--dark-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+            padding: var(--space-2xl); text-align: center; transition: all 0.35s ease; position: relative; overflow: hidden;
+        }
+        .mission-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,var(--primary),transparent); opacity:0; transition:opacity 0.3s; }
+        .mission-card:hover { transform: translateY(-6px); border-color: var(--border-red); box-shadow: 0 8px 30px rgba(183,28,28,0.15); }
+        .mission-card:hover::before { opacity: 1; }
+        .mission-icon { font-size: 36px; margin-bottom: var(--space-lg); color: var(--primary-light); }
+        .mission-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: var(--space-md); color: var(--text-primary); }
+        .mission-desc { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+        /* Timeline */
+        .timeline { max-width: 700px; margin: var(--space-2xl) auto 0; position: relative; }
+        .timeline::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; background:var(--border-red); transform:translateX(-50%); }
+        .timeline-item { display:flex; align-items:center; margin-bottom:var(--space-2xl); position:relative; }
+        .timeline-item:nth-child(odd) { flex-direction:row-reverse; }
+        .timeline-dot { width:16px; height:16px; border-radius:50%; background:var(--primary); border:3px solid var(--dark-surface); position:absolute; left:50%; transform:translateX(-50%); z-index:2; box-shadow:0 0 12px rgba(183,28,28,0.4); }
+        .timeline-content { width:44%; background:var(--dark-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:var(--space-lg) var(--space-xl); }
+        .timeline-year { font-family:var(--font-display); font-size:14px; color:var(--primary-light); letter-spacing:2px; margin-bottom:var(--space-xs); font-weight:600; }
+        .timeline-text { font-size:14px; color:var(--text-muted); line-height:1.6; }
+
+        /* Stats */
+        .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--space-xl); margin-top:var(--space-2xl); }
+        .stat-card { text-align:center; }
+        .stat-number { font-family:var(--font-display); font-size:48px; font-weight:700; color:var(--primary-light); letter-spacing:2px; }
+        .stat-label { font-size:13px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px; margin-top:var(--space-sm); font-family:var(--font-display); }
+
+        @media (max-width:768px) {
+            .about-hero h1 { font-size:36px; letter-spacing:2px; }
+            .stats-grid { grid-template-columns:repeat(2,1fr); }
+            .timeline::before { left:20px; }
+            .timeline-item, .timeline-item:nth-child(odd) { flex-direction:row; padding-left:50px; }
+            .timeline-dot { left:20px; }
+            .timeline-content { width:100%; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li><a href="../food-drinks.html" class="nav-link">FOOD & DRINKS</a></li>
+            </ul>
+            <div class="logo"><a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a></div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn" id="auth-nav-link"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="about-hero">
+        <div class="about-hero-content">
+            <div class="about-hero-icon">🎬</div>
+            <h1>About Us</h1>
+            <p>Where stories come alive on the big screen. Discover the passion behind Scene Cinemas.</p>
+        </div>
+    </section>
+
+    <div class="container">
+
+        <!-- MISSION -->
+        <section class="about-section">
+            <h2 class="about-section-title">Our Mission</h2>
+            <div class="about-section-content">
+                At Scene Cinemas, we believe that watching a movie should be more than just entertainment — it should be an experience.
+                From the moment you walk through our doors, every detail is designed to transport you into the world of cinema.
+            </div>
+            <div class="mission-grid">
+                <div class="mission-card">
+                    <div class="mission-icon"><i class="fas fa-film"></i></div>
+                    <div class="mission-title">Premium Experience</div>
+                    <div class="mission-desc">State-of-the-art IMAX & Dolby projection, immersive surround sound, and crystal-clear 4K laser displays.</div>
+                </div>
+                <div class="mission-card">
+                    <div class="mission-icon"><i class="fas fa-couch"></i></div>
+                    <div class="mission-title">Ultimate Comfort</div>
+                    <div class="mission-desc">Plush reclining seats, generous legroom, and luxurious Deluxe suites designed for ultimate relaxation.</div>
+                </div>
+                <div class="mission-card">
+                    <div class="mission-icon"><i class="fas fa-utensils"></i></div>
+                    <div class="mission-title">Gourmet Snacks</div>
+                    <div class="mission-desc">Freshly prepared popcorn, artisan beverages, and a curated menu of cinema-inspired bites and combos.</div>
+                </div>
+                <div class="mission-card">
+                    <div class="mission-icon"><i class="fas fa-heart"></i></div>
+                    <div class="mission-title">Community First</div>
+                    <div class="mission-desc">We host special screenings, film festivals, and community events to bring movie lovers together.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- OUR STORY -->
+        <section class="about-section">
+            <h2 class="about-section-title">Our Story</h2>
+            <div class="about-section-content" style="margin-bottom:var(--space-xl);">
+                What started as a single screen in 2010 has grown into one of the region's most beloved cinema chains. Here are some milestones along the way.
+            </div>
+            <div class="timeline">
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-year">2010</div><div class="timeline-text">Scene Cinemas opens its first flagship location with 4 standard screens.</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-year">2014</div><div class="timeline-text">Expansion to 3 locations. Introduction of Deluxe premium seating.</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-year">2018</div><div class="timeline-text">IMAX and Dolby Atmos theatres launched, setting a new standard in audiovisual quality.</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-year">2022</div><div class="timeline-text">Surpassed 5 million guests. Launched online booking and the Scene Rewards program.</div></div></div>
+                <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-year">2026</div><div class="timeline-text">Continuing to innovate with AI-powered recommendations and immersive 4DX experiences.</div></div></div>
+            </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="about-section">
+            <h2 class="about-section-title">By The Numbers</h2>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-number">12</div><div class="stat-label">Screens</div></div>
+                <div class="stat-card"><div class="stat-number">5M+</div><div class="stat-label">Guests Served</div></div>
+                <div class="stat-card"><div class="stat-number">3</div><div class="stat-label">Locations</div></div>
+                <div class="stat-card"><div class="stat-number">16</div><div class="stat-label">Years of Magic</div></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col"><h4 class="footer-title">GET IN TOUCH</h4><div class="footer-links"><a href="contact.html">Contact Us</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">ABOUT TEST CINEMAS</h4><div class="footer-links"><a href="about.html">About Us</a><a href="experience-imax.html">IMAX Cinema</a><a href="experience-dolby.html">Dolby Cinema</a><a href="experience-standard.html">Standard & Deluxe</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">LEGAL</h4><div class="footer-links"><a href="faq.html">FAQs</a><a href="terms.html">Terms & Conditions</a><a href="privacy.html">Privacy Policy</a><a href="support.html">Support</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">FOLLOW US</h4><div class="social-links"><a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="#" class="social-link"><i class="fab fa-instagram"></i></a><a href="#" class="social-link"><i class="fab fa-tiktok"></i></a><a href="#" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; 2026 Scene Cinemas. All rights reserved.</p></div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!-- ============================================
+     ADMIN SIDEBAR COMPONENT
+     Include in every admin page
+     ============================================ -->
+<aside class="sidebar" id="sidebar">
+
+    <!-- Logo / Brand -->
+    <div class="sidebar-header">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="fas fa-film"></i>
+            </div>
+            <div>
+                <span class="sidebar-brand">SCENE</span>
+                <span class="sidebar-brand-sub">ADMIN</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Info -->
+    <div class="sidebar-admin-info">
+        <div class="sidebar-avatar">
+            <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="sidebar-admin-text">
+            <span class="sidebar-admin-name">Administrator</span>
+            <span class="sidebar-admin-role">Super Admin</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" aria-label="Admin navigation">
+
+        <div class="sidebar-section-label">OVERVIEW</div>
+
+        <a href="index.html" class="sidebar-nav-link" id="nav-dashboard">
+            <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+            <span class="nav-text">Dashboard</span>
+            <span class="nav-badge nav-badge-new">LIVE</span>
+        </a>
+
+        <div class="sidebar-section-label">MANAGEMENT</div>
+
+        <a href="movies-manage.html" class="sidebar-nav-link" id="nav-movies">
+            <span class="nav-icon"><i class="fas fa-film"></i></span>
+            <span class="nav-text">Movies</span>
+        </a>
+
+        <a href="shows-manage.html" class="sidebar-nav-link" id="nav-shows">
+            <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+            <span class="nav-text">Shows</span>
+        </a>
+
+        <a href="theaters-manage.html" class="sidebar-nav-link" id="nav-theaters">
+            <span class="nav-icon"><i class="fas fa-building"></i></span>
+            <span class="nav-text">Theaters</span>
+        </a>
+
+        <a href="bookings-list.html" class="sidebar-nav-link" id="nav-bookings">
+            <span class="nav-icon"><i class="fas fa-ticket-alt"></i></span>
+            <span class="nav-text">Bookings</span>
+            <span class="nav-badge">12</span>
+        </a>
+
+        <a href="users-list.html" class="sidebar-nav-link" id="nav-users">
+            <span class="nav-icon"><i class="fas fa-users"></i></span>
+            <span class="nav-text">Users</span>
+        </a>
+
+
+
+
+        <div class="sidebar-divider"></div>
+
+        <a href="../frontend/index.html" class="sidebar-nav-link sidebar-nav-link-muted" target="_blank">
+            <span class="nav-icon"><i class="fas fa-external-link-alt"></i></span>
+            <span class="nav-text">View Site</span>
+        </a>
+
+        <a href="#" class="sidebar-nav-link sidebar-nav-link-danger" id="nav-logout">
+            <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+            <span class="nav-text">Logout</span>
+        </a>
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+        <span>Scene Cinemas Admin</span>
+        <span class="sidebar-version">v1.0.0</span>
+    </div>
+
+</aside>
+
+<!-- Mobile Sidebar Toggle -->
+<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+    <i class="fas fa-bars"></i>
+</button>
+<!-- Backdrop for mobile -->
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>

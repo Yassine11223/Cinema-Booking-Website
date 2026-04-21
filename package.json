@@ -1,0 +1,20 @@
+{
+  "name": "cinema-booking-system",
+  "version": "1.0.0",
+  "description": "A complete cinema management and booking website",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "test": "jest",
+    "seed": "cd backend && npm run seed",
+    "install:backend": "cd backend && npm install"
+  },
+  "keywords": [
+    "cinema",
+    "booking",
+    "movies"
+  ],
+  "author": "",
+  "license": "MIT"
+}

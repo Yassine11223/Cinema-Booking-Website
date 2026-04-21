@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scene Cinemas - Your Profile">
+    <title>My Profile | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================
+           PROFILE PAGE STYLES
+           ============================================ */
+
+        .profile-wrapper {
+            min-height: 100vh;
+            padding-top: calc(var(--nav-height) + var(--space-3xl));
+            padding-bottom: var(--space-3xl);
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.08) 0%, rgba(10, 10, 10, 0.95) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -300px;
+            right: -200px;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(183, 28, 28, 0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .profile-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: -300px;
+            left: -200px;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(183, 28, 28, 0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .profile-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Loading State --- */
+        .profile-loading {
+            text-align: center;
+            padding: var(--space-4xl) 0;
+        }
+
+        .profile-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--primary-light);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto var(--space-lg);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .profile-loading p {
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* --- Profile Card --- */
+        .profile-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-subtle);
+            border-top: 2px solid var(--primary-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(183, 28, 28, 0.08);
+        }
+
+        /* --- Profile Header with Avatar --- */
+        .profile-header {
+            text-align: center;
+            padding: var(--space-2xl) var(--space-2xl) var(--space-xl);
+            border-bottom: 1px solid var(--border-subtle);
+            background: linear-gradient(180deg, rgba(183, 28, 28, 0.06) 0%, transparent 100%);
+        }
+
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-lg);
+            box-shadow: 0 4px 20px rgba(183, 28, 28, 0.35);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-avatar span {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .profile-header h1 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: var(--space-xs);
+        }
+
+        .profile-role-badge {
+            display: inline-block;
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 14px;
+            border-radius: var(--radius-full);
+            background: rgba(183, 28, 28, 0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(183, 28, 28, 0.25);
+        }
+
+        /* --- Profile Info Rows --- */
+        .profile-info {
+            padding: var(--space-xl) var(--space-2xl);
+        }
+
+        .profile-info-row {
+            display: flex;
+            align-items: center;
+            padding: var(--space-md) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .profile-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .profile-info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-right: var(--space-lg);
+            color: var(--primary-light);
+            font-size: 16px;
+        }
+
+        .profile-info-label {
+            font-family: var(--font-display);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .profile-info-value {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        /* --- Action Buttons --- */
+        .profile-actions {
+            display: flex;
+            gap: var(--space-md);
+            padding: var(--space-xl) var(--space-2xl);
+            border-top: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+        }
+
+        .profile-btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 13px 20px;
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+        }
+
+        .profile-btn-edit {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+        }
+
+        .profile-btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(183, 28, 28, 0.5);
+        }
+
+        .profile-btn-logout {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .profile-btn-logout:hover {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: rgba(255, 68, 68, 0.3);
+            color: #ff6b6b;
+        }
+
+        /* --- Edit Section (hidden by default) --- */
+        .edit-section {
+            display: none;
+            padding: var(--space-xl) var(--space-2xl) var(--space-2xl);
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .edit-section-title {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xl);
+        }
+
+        .edit-form-group {
+            margin-bottom: var(--space-lg);
+        }
+
+        .edit-form-label {
+            display: block;
+            font-family: var(--font-display);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .edit-form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .edit-form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .edit-form-actions {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-xl);
+        }
+
+        .edit-save-btn {
+            flex: 1;
+            padding: 13px 20px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            color: #fff;
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+        }
+
+        .edit-save-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(183, 28, 28, 0.5);
+        }
+
+        .edit-save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .edit-cancel-btn {
+            padding: 13px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .edit-cancel-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        /* --- Messages --- */
+        .profile-msg {
+            font-size: 13px;
+            padding: var(--space-sm) 0;
+            text-align: center;
+            transition: var(--transition);
+            min-height: 24px;
+        }
+
+        .profile-msg.success {
+            color: #2ecc71;
+        }
+
+        .profile-msg.error {
+            color: #ff6b6b;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .profile-wrapper {
+                padding-top: calc(var(--nav-height) + var(--space-xl));
+            }
+
+            .profile-container {
+                padding: 0 var(--space-md);
+            }
+
+            .profile-header {
+                padding: var(--space-xl) var(--space-lg);
+            }
+
+            .profile-header h1 {
+                font-size: 22px;
+            }
+
+            .profile-avatar {
+                width: 70px;
+                height: 70px;
+            }
+
+            .profile-avatar span {
+                font-size: 28px;
+            }
+
+            .profile-info,
+            .profile-actions,
+            .edit-section {
+                padding-left: var(--space-lg);
+                padding-right: var(--space-lg);
+            }
+
+            .profile-actions {
+                flex-direction: column;
+            }
+
+            .edit-form-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+            <ul class="nav-links right">
+                <li>
+                    <a href="profile.html" class="login-btn" id="auth-nav-link">
+                        <i class="fa-solid fa-user"></i> PROFILE
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <!-- ========================================
+         PROFILE SECTION
+         ======================================== -->
+    <section class="profile-wrapper">
+        <div class="profile-container">
+
+            <!-- Loading State -->
+            <div id="profile-loading" class="profile-loading">
+                <div class="profile-loading-spinner"></div>
+                <p>Loading your profile...</p>
+            </div>
+
+            <!-- Profile Content (hidden until loaded) -->
+            <div id="profile-content" class="profile-card" style="display: none;">
+
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <span id="profile-avatar-letter">?</span>
+                    </div>
+                    <h1 id="profile-name">Loading...</h1>
+                    <span class="profile-role-badge" id="profile-role">CUSTOMER</span>
+                </div>
+
+                <!-- Profile Info -->
+                <div class="profile-info">
+                    <div class="profile-info-row">
+                        <div class="profile-info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                            <div class="profile-info-label">Email Address</div>
+                            <div class="profile-info-value" id="profile-email">—</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-info-row">
+                        <div class="profile-info-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div>
+                            <div class="profile-info-label">Phone Number</div>
+                            <div class="profile-info-value" id="profile-phone">—</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-info-row">
+                        <div class="profile-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <div class="profile-info-label">Member Since</div>
+                            <div class="profile-info-value" id="profile-since">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="profile-actions">
+                    <button class="profile-btn profile-btn-edit" id="edit-toggle-btn">
+                        <i class="fas fa-pen"></i> EDIT PROFILE
+                    </button>
+                    <button class="profile-btn profile-btn-logout" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
+                    </button>
+                </div>
+
+                <!-- Edit Section (hidden) -->
+                <div class="edit-section" id="edit-section">
+                    <div class="edit-section-title">Edit Your Info</div>
+                    <form id="edit-profile-form">
+                        <div class="edit-form-group">
+                            <label for="edit-name" class="edit-form-label">Full Name</label>
+                            <input type="text" id="edit-name" class="edit-form-input" placeholder="Your full name" required>
+                        </div>
+                        <div class="edit-form-group">
+                            <label for="edit-phone" class="edit-form-label">Phone Number</label>
+                            <input type="tel" id="edit-phone" class="edit-form-input" placeholder="+1 (555) 123-4567">
+                        </div>
+                        <div class="profile-msg" id="edit-message"></div>
+                        <div class="edit-form-actions">
+                            <button type="submit" class="edit-save-btn" id="edit-save-btn">SAVE CHANGES</button>
+                            <button type="button" class="edit-cancel-btn" id="edit-cancel-btn">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         SCRIPTS
+         ======================================== -->
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+
+</body>
+
+</html>

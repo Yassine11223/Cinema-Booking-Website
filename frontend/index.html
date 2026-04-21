@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Scene Cinemas - Book your tickets for the latest movies. Experience IMAX, Dolby Cinema, and premium screenings.">
+    <title>Scene Cinemas | Home</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+
+            <!-- Left Nav Links -->
+            <ul class="nav-links left">
+                <li>
+                    <a href="index.html" class="nav-link">HOME</a>
+                </li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a>
+                </li>
+            </ul>
+
+            <!-- Center Logo -->
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+
+            <!-- Right Nav -->
+            <ul class="nav-links right">
+                <li>
+                    <a href="login.html" class="login-btn" id="auth-nav-link">
+                        <i class="fa-regular fa-user"></i> LOGIN
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+
+    <!-- ========================================
+         HERO SLIDESHOW (populated by TMDB API)
+         ======================================== -->
+    <section class="hero-slider" id="hero-slider">
+
+        <!-- Slides are injected dynamically by js/tmdb-api.js -->
+
+        <!-- Hero Loading State -->
+        <div class="hero-loading" id="hero-loading">
+            <div class="hero-loading-spinner"></div>
+            <p class="hero-loading-text">Loading movies...</p>
+        </div>
+
+        <!-- Slider Arrows -->
+        <button class="slider-arrow prev" id="slider-prev" aria-label="Previous slide">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="slider-arrow next" id="slider-next" aria-label="Next slide">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+    </section>
+
+
+    <!-- ========================================
+         NOW SHOWING (populated by TMDB API)
+         ======================================== -->
+    <section class="section" id="now-showing">
+        <div class="container">
+
+            <div class="section-header">
+                <h2>NOW SHOWING</h2>
+            </div>
+
+            <!-- Movie cards are injected dynamically by js/tmdb-api.js -->
+            <div class="movies-grid" id="movies-grid">
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         EXPERIENCES
+         ======================================== -->
+    <section class="section" id="experiences">
+        <div class="container">
+
+            <div class="section-header">
+                <h2>EXPERIENCES</h2>
+                <p>At Scene Cinemas, we believe in creating unforgettable movie experiences rather than just screenings.
+                </p>
+            </div>
+
+            <div class="experiences-grid">
+
+                <!-- IMAX Cinema -->
+                <a href="pages/experience-imax.html" class="experience-card">
+                    <img src="images/banners/IMAX-with-laser-scaled.jpg" alt="IMAX Cinema" class="experience-card-bg">
+                    <div class="experience-card-overlay">
+                        <h3 class="experience-card-title">IMAX CINEMA</h3>
+                        <p class="experience-card-desc">The ultimate immersive experience with crystal-clear images and
+                            powerful sound.</p>
+                        <span class="btn btn-outline">LEARN MORE</span>
+                    </div>
+                </a>
+
+                <!-- Dolby Cinema -->
+                <a href="pages/experience-dolby.html" class="experience-card">
+                    <img src="images/banners/experience-dolby.png" alt="Dolby Cinema" class="experience-card-bg">
+                    <div class="experience-card-overlay">
+                        <h3 class="experience-card-title">DOLBY CINEMA</h3>
+                        <p class="experience-card-desc">Spectacular Dolby Vision and Dolby Atmos deliver the most vivid
+                            cinematic experience.</p>
+                        <span class="btn btn-outline">LEARN MORE</span>
+                    </div>
+                </a>
+
+                <!-- Standard & Deluxe -->
+                <a href="pages/experience-standard.html" class="experience-card">
+                    <img src="images/banners/experience-standard.png" alt="Standard & Deluxe"
+                        class="experience-card-bg">
+                    <div class="experience-card-overlay">
+                        <h3 class="experience-card-title">STANDARD & DELUXE</h3>
+                        <p class="experience-card-desc">Comfortable seating and premium sound for the perfect everyday
+                            movie experience.</p>
+                        <span class="btn btn-outline">LEARN MORE</span>
+                    </div>
+                </a>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         OUR PARTNERS
+         ======================================== -->
+    <section class="section partners-section" id="partners">
+        <div class="container">
+
+            <div class="section-header section-header-center">
+                <h2>OUR PARTNERS</h2>
+            </div>
+
+            <div class="partners-grid">
+                <!-- Dolby Atmos -->
+                <div class="partner-item">
+                    <img src="images/logos/dolby-atmos.png" alt="Dolby Atmos"
+                        class="partner-logo partner-logo-invert partner-logo-dolby-atmos">
+                </div>
+
+                <!-- IMAX -->
+                <div class="partner-item">
+                    <img src="images/logos/imax.png" alt="IMAX" class="partner-logo">
+                </div>
+
+                <!-- Dolby Cinema -->
+                <div class="partner-item">
+                    <img src="images/logos/dolby-cinema-official.png" alt="Dolby Cinema"
+                        class="partner-logo partner-logo-invert">
+                </div>
+
+                <!-- MIU - Misr International University -->
+                <div class="partner-item">
+                    <img src="images/logos/miu.png" alt="Misr International University"
+                        class="partner-logo partner-logo-miu">
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer" id="footer">
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <!-- Get in Touch -->
+                <div class="footer-col">
+                    <h4 class="footer-title">GET IN TOUCH</h4>
+                    <div class="footer-links">
+                        <a href="pages/contact.html">Contact Us</a>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="footer-col">
+                    <h4 class="footer-title">ABOUT TEST CINEMAS</h4>
+                    <div class="footer-links">
+                        <a href="pages/about.html">About Us</a>
+                        <a href="pages/experience-imax.html">IMAX Cinema</a>
+                        <a href="pages/experience-dolby.html">Dolby Cinema</a>
+                        <a href="pages/experience-standard.html">Standard & Deluxe</a>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="footer-col">
+                    <h4 class="footer-title">LEGAL</h4>
+                    <div class="footer-links">
+                        <a href="pages/faq.html">FAQs</a>
+                        <a href="pages/terms.html">Terms & Conditions</a>
+                        <a href="pages/privacy.html">Privacy Policy</a>
+                        <a href="pages/support.html">Support</a>
+                    </div>
+                </div>
+
+                <!-- Follow Us -->
+                <div class="footer-col">
+                    <h4 class="footer-title">FOLLOW US</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Scene Cinemas. All rights reserved.</p>
+            </div>
+
+        </div>
+    </footer>
+
+
+    <!-- ========================================
+         SCRIPTS
+         ======================================== -->
+    <script src="js/main.js"></script>
+    <script src="js/tmdb-api.js"></script>
+
+</body>
+
+</html>

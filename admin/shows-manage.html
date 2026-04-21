@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Shows | Scene Cinemas Admin</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0a; --surface: #141414; --elevated: #1e1e1e; --card: #181818;
+            --text: #ffffff; --text2: rgba(255,255,255,0.7); --text3: rgba(255,255,255,0.4);
+            --border: rgba(255,255,255,0.06); --red: #b71c1c; --red-l: #d32f2f;
+            --gold: #d4af37; --green: #22c55e; --blue: #2563eb; --orange: #f59e0b; --danger: #e53935;
+            --font-d: 'Oswald', sans-serif; --font-b: 'Inter', sans-serif;
+            --rad: 8px; --rad-full: 9999px;
+        }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--text); font-family: var(--font-b); line-height: 1.6; }
+        a { color: inherit; text-decoration: none; }
+        button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; }
+        select, input { font-family: inherit; color: inherit; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--elevated); border-radius: var(--rad-full); }
+
+        /* Layout */
+        .layout { min-height: 100vh; }
+
+        /* Sidebar */
+        .side { background: var(--surface); border-right: 1px solid var(--border); position: fixed; width: 240px; height: 100vh; overflow-y: auto; padding: 24px 0; }
+        .side-brand { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; font-family: var(--font-d); font-size: 18px; letter-spacing: 2px; }
+        .side-brand span { color: var(--red-l); }
+        .side a { display: flex; align-items: center; gap: 14px; padding: 12px 20px; color: var(--text2); font-size: 14px; transition: all 0.2s; border-left: 3px solid transparent; }
+        .side a:hover, .side a.on { color: var(--gold); background: rgba(212,175,55,0.05); border-left-color: var(--gold); }
+        .side a i { width: 18px; text-align: center; }
+
+        /* Main */
+        .main { margin-left: 240px; padding: 32px; min-width: 0; }
+
+        /* Header */
+        .hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .hdr h1 { font-family: var(--font-d); font-size: 28px; letter-spacing: 2px; }
+        .hdr-time { font-size: 13px; color: var(--text3); }
+
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+        .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rad); padding: 20px; }
+        .stat-lbl { font-family: var(--font-d); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 6px; }
+        .stat-val { font-family: var(--font-d); font-size: 32px; font-weight: 600; color: var(--gold); }
+
+        /* Filters */
+        .filters { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .flt { background: var(--elevated); border: 1px solid var(--border); border-radius: var(--rad); padding: 10px 14px; color: var(--text); font-size: 13px; min-width: 140px; }
+        .flt:focus { border-color: var(--gold); outline: none; }
+        .flt::placeholder { color: var(--text3); }
+        .flt option { background: var(--surface); color: var(--text); }
+        .btn-add { margin-left: auto; background: var(--red); color: #fff; padding: 10px 22px; border-radius: var(--rad); font-family: var(--font-d); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: all 0.3s; }
+        .btn-add:hover { background: var(--red-l); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(183,28,28,0.25); }
+
+        /* Table */
+        .tbl-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rad); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { font-family: var(--font-d); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); text-align: left; padding: 14px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; }
+        tbody tr:hover { background: rgba(255,255,255,0.025); }
+        tbody td { padding: 12px 16px; font-size: 14px; color: var(--text2); vertical-align: middle; }
+        .tbl-foot { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text3); }
+
+        /* Movie cell */
+        .mov { display: flex; align-items: center; gap: 12px; }
+        .mov-poster { width: 36px; height: 50px; border-radius: 4px; background: var(--elevated); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 14px; flex-shrink: 0; }
+        .mov-title { font-weight: 500; color: var(--text); font-size: 14px; }
+        .mov-genre { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+        /* Badges */
+        .bdg { display: inline-flex; padding: 4px 12px; border-radius: var(--rad-full); font-family: var(--font-d); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; }
+        .bdg-active { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+        .bdg-upcoming { background: rgba(37,99,235,0.12); color: var(--blue); border: 1px solid rgba(37,99,235,0.25); }
+        .bdg-ended { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid rgba(255,255,255,0.08); }
+        .bdg-sold-out { background: rgba(229,57,53,0.12); color: var(--danger); border: 1px solid rgba(229,57,53,0.25); }
+
+        /* Screen tags */
+        .scr { display: inline-block; padding: 3px 10px; border-radius: var(--rad-full); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-family: var(--font-d); background: rgba(255,255,255,0.06); color: var(--text2); border: 1px solid rgba(255,255,255,0.08); }
+        .scr-imax { background: rgba(37,99,235,0.1); color: #60a5fa; border-color: rgba(37,99,235,0.25); }
+        .scr-3d { background: rgba(139,92,246,0.1); color: #a78bfa; border-color: rgba(139,92,246,0.25); }
+        .scr-vip { background: rgba(212,175,55,0.12); color: var(--gold); border-color: rgba(212,175,55,0.3); }
+        .scr-4dx { background: rgba(245,158,11,0.1); color: var(--orange); border-color: rgba(245,158,11,0.25); }
+
+        /* Price */
+        .price { font-family: var(--font-d); font-weight: 600; color: var(--gold); font-size: 15px; }
+
+        /* Occupancy */
+        .occ { display: flex; align-items: center; gap: 10px; }
+        .occ-bar { width: 70px; height: 5px; border-radius: var(--rad-full); background: var(--elevated); overflow: hidden; }
+        .occ-fill { height: 100%; border-radius: var(--rad-full); }
+        .occ-low { background: var(--green); } .occ-mid { background: var(--orange); } .occ-high { background: var(--danger); }
+        .occ-pct { font-size: 12px; color: var(--text3); min-width: 30px; }
+
+        /* Actions */
+        .acts { display: flex; gap: 6px; }
+        .act { width: 30px; height: 30px; border-radius: var(--rad); display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--border); color: var(--text3); transition: all 0.2s; }
+        .act:hover { background: var(--elevated); color: var(--text); }
+        .act-d:hover { background: rgba(229,57,53,0.1); color: var(--danger); border-color: rgba(229,57,53,0.3); }
+
+        /* Empty */
+        .empty { text-align: center; padding: 50px 20px; color: var(--text3); }
+        .empty i { font-size: 40px; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+        /* Modal */
+        .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); z-index: 5000; display: none; align-items: center; justify-content: center; }
+        .modal-bg.open { display: flex; }
+        .mdl { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 540px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.6); animation: mdlIn 0.3s ease; }
+        @keyframes mdlIn { from { opacity: 0; transform: translateY(-20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .mdl-hd { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+        .mdl-hd h3 { font-family: var(--font-d); font-size: 20px; letter-spacing: 2px; text-transform: uppercase; }
+        .mdl-x { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--text3); transition: all 0.2s; }
+        .mdl-x:hover { background: var(--elevated); color: var(--text); }
+        .mdl-bd { padding: 24px; }
+        .mdl-ft { display: flex; justify-content: flex-end; gap: 12px; padding: 18px 24px; border-top: 1px solid var(--border); }
+
+        /* Form */
+        .fg { margin-bottom: 18px; }
+        .fg label { display: block; font-family: var(--font-d); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+        .fc { width: 100%; background: var(--elevated); border: 1px solid var(--border); border-radius: var(--rad); padding: 11px 14px; color: var(--text); font-size: 14px; }
+        .fc:focus { border-color: var(--gold); outline: none; }
+        .fc option { background: var(--surface); color: var(--text); }
+        .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* Modal buttons */
+        .mb { padding: 10px 22px; border-radius: var(--rad); font-family: var(--font-d); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; transition: all 0.3s; }
+        .mb-cancel { border: 1px solid var(--border); color: var(--text2); }
+        .mb-cancel:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+        .mb-save { background: var(--red); color: #fff; }
+        .mb-save:hover { background: var(--red-l); }
+        .mb-del { background: var(--danger); color: #fff; }
+        .mb-del:hover { background: #c62828; }
+
+        /* Delete confirm */
+        .dc { text-align: center; padding: 16px 0; }
+        .dc i { font-size: 44px; color: var(--danger); margin-bottom: 14px; }
+        .dc p { font-size: 15px; color: var(--text2); margin-bottom: 6px; }
+        .dc strong { color: var(--text); }
+
+        /* Toast */
+        .toast-n { position: fixed; bottom: 30px; right: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--rad); padding: 14px 24px; display: flex; align-items: center; gap: 10px; font-size: 14px; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .toast-n.show { transform: translateY(0); opacity: 1; }
+        .toast-n.ok { border-left: 3px solid var(--green); } .toast-n.ok i { color: var(--green); }
+        .toast-n.err { border-left: 3px solid var(--danger); } .toast-n.err i { color: var(--danger); }
+
+        @media (max-width: 768px) {
+            .layout { grid-template-columns: 1fr; }
+            .side { display: none; }
+            .main { margin-left: 0; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .frow { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="side">
+            <div class="side-brand"><span>SCENE</span>ADMIN</div>
+            <nav>
+                <a href="index.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="movies-manage.html"><i class="fas fa-film"></i> Movies</a>
+                <a href="shows-manage.html" class="on"><i class="fas fa-calendar-alt"></i> Shows</a>
+                <a href="theaters-manage.html"><i class="fas fa-theater-masks"></i> Theaters</a>
+                <a href="bookings-list.html"><i class="fas fa-ticket-alt"></i> Bookings</a>
+                <a href="users-list.html"><i class="fas fa-users"></i> Users</a>
+                <a href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+                <a href="../frontend/index.html" style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 18px;"><i class="fas fa-external-link-alt"></i> View Website</a>
+            </nav>
+        </aside>
+        <main class="main">
+            <div class="hdr">
+                <h1>Manage Shows</h1>
+                <div class="hdr-time"><i class="far fa-clock"></i> <span id="clock"></span></div>
+            </div>
+            <div class="stats">
+                <div class="stat"><div class="stat-lbl">Total Shows</div><div class="stat-val" id="s-total">0</div></div>
+                <div class="stat"><div class="stat-lbl">Today's Shows</div><div class="stat-val" id="s-today">0</div></div>
+                <div class="stat"><div class="stat-lbl">Active Now</div><div class="stat-val" id="s-active">0</div></div>
+                <div class="stat"><div class="stat-lbl">Avg. Occupancy</div><div class="stat-val" id="s-occ">0%</div></div>
+            </div>
+            <div class="filters">
+                <input type="text" class="flt" id="f-search" placeholder="Search movie...">
+                <input type="date" class="flt" id="f-date" style="min-width:130px">
+                <select class="flt" id="f-screen"><option value="">All Screens</option><option value="standard">Standard</option><option value="imax">IMAX</option><option value="3d">3D</option><option value="4dx">4DX</option><option value="vip">VIP</option></select>
+                <select class="flt" id="f-status"><option value="">All Statuses</option><option value="active">Active</option><option value="upcoming">Upcoming</option><option value="ended">Ended</option><option value="sold-out">Sold Out</option></select>
+                <button class="btn-add" id="btn-add"><i class="fas fa-plus"></i> Add Show</button>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>Movie</th><th>Date & Time</th><th>Hall / Screen</th><th>Price</th><th>Occupancy</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+                <div class="tbl-foot" id="tbl-foot">Showing 0 shows</div>
+            </div>
+        </main>
+    </div>
+    <div class="modal-bg" id="modal-bg">
+        <div class="mdl">
+            <div class="mdl-hd"><h3 id="m-title">Add New Show</h3><button class="mdl-x" id="m-close"><i class="fas fa-times"></i></button></div>
+            <div class="mdl-bd" id="m-body"></div>
+            <div class="mdl-ft" id="m-foot"></div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        var MOVIES=[
+            {id:1,title:'Interstellar',genre:'Sci-Fi'},{id:2,title:'The Dark Knight',genre:'Action'},
+            {id:3,title:'Inception',genre:'Sci-Fi'},{id:4,title:'Oppenheimer',genre:'Drama'},
+            {id:5,title:'Dune: Part Two',genre:'Sci-Fi'},{id:6,title:'Spider-Man: No Way Home',genre:'Action'},
+            {id:7,title:'The Batman',genre:'Action'},{id:8,title:'Avatar: The Way of Water',genre:'Sci-Fi'}
+        ];
+        var THEATERS=[
+            {id:1,name:'Hall 1',type:'standard',cap:150},{id:2,name:'Hall 2',type:'standard',cap:120},
+            {id:3,name:'IMAX Theater',type:'imax',cap:300},{id:4,name:'VIP Lounge',type:'vip',cap:40},
+            {id:5,name:'3D Theater',type:'3d',cap:180},{id:6,name:'4DX Experience',type:'4dx',cap:80}
+        ];
+        var KEY='cinema_shows_v2',allShows=[],filtered=[],editId=null;
+        var $=function(id){return document.getElementById(id)};
+        var prices={vip:250,imax:180,'4dx':200,'3d':150,standard:120};
+
+        function gen(){
+            var s=[],td=new Date(),id=1;
+            for(var d=-2;d<7;d++){
+                var dt=new Date(td);dt.setDate(dt.getDate()+d);
+                var ds=dt.toISOString().split('T')[0],n=3+Math.floor(Math.random()*3);
+                for(var i=0;i<n;i++){
+                    var m=MOVIES[Math.floor(Math.random()*MOVIES.length)];
+                    var t=THEATERS[Math.floor(Math.random()*THEATERS.length)];
+                    var h=[10,13,16,19,21,23][Math.floor(Math.random()*6)];
+                    var mn=[0,15,30,45][Math.floor(Math.random()*4)];
+                    var bk=Math.floor(Math.random()*t.cap);
+                    s.push({id:id++,mid:m.id,movie:m.title,genre:m.genre,tid:t.id,hall:t.name,scr:t.type,cap:t.cap,bk:bk,date:ds,time:(h<10?'0':'')+h+':'+(mn<10?'0':'')+mn,price:prices[t.type]||120,status:d<0?'ended':bk>=t.cap?'sold-out':'active'});
+                }
+            }
+            return s;
+        }
+        function load(){try{var r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}var s=gen();save(s);return s}
+        function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+
+        function stats(){
+            var td=new Date().toISOString().split('T')[0];
+            var tds=allShows.filter(function(s){return s.date===td});
+            var act=allShows.filter(function(s){return s.status==='active'});
+            var to=0;allShows.forEach(function(s){if(s.cap>0)to+=s.bk/s.cap*100});
+            $('s-total').textContent=allShows.length;
+            $('s-today').textContent=tds.length;
+            $('s-active').textContent=act.length;
+            $('s-occ').textContent=(allShows.length?Math.round(to/allShows.length):0)+'%';
+        }
+
+        function render(){
+            var tb=$('tbody');
+            if(!filtered.length){
+                tb.innerHTML='<tr><td colspan="7"><div class="empty"><i class="fas fa-calendar-times"></i>No shows found</div></td></tr>';
+                $('tbl-foot').textContent='No shows';return;
+            }
+            var h='';
+            for(var i=0;i<filtered.length;i++){
+                var s=filtered[i],pct=s.cap?Math.round(s.bk/s.cap*100):0;
+                var fc=pct>=85?'high':pct>=50?'mid':'low';
+                var dd=s.date;
+                try{var dt=new Date(s.date+'T00:00:00');dd=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}catch(e){}
+                h+='<tr><td><div class="mov"><div class="mov-poster"><i class="fas fa-film"></i></div><div><div class="mov-title">'+s.movie+'</div><div class="mov-genre">'+s.genre+'</div></div></div></td>';
+                h+='<td><div style="font-weight:500;color:#fff">'+dd+'</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">'+s.time+'</div></td>';
+                h+='<td><div style="margin-bottom:4px">'+s.hall+'</div><span class="scr scr-'+s.scr+'">'+s.scr+'</span></td>';
+                h+='<td><span class="price">'+s.price+' EGP</span></td>';
+                h+='<td><div class="occ"><div class="occ-bar"><div class="occ-fill occ-'+fc+'" style="width:'+pct+'%"></div></div><span class="occ-pct">'+pct+'%</span></div><div style="font-size:11px;color:rgba(255,255,255,0.4)">'+s.bk+'/'+s.cap+'</div></td>';
+                h+='<td><span class="bdg bdg-'+s.status+'">'+s.status.replace('-',' ')+'</span></td>';
+                h+='<td><div class="acts"><button class="act" onclick="SM.edit('+s.id+')" title="Edit"><i class="fas fa-pen"></i></button><button class="act" onclick="SM.dup('+s.id+')" title="Duplicate"><i class="fas fa-copy"></i></button><button class="act act-d" onclick="SM.del('+s.id+')" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>';
+            }
+            tb.innerHTML=h;
+            $('tbl-foot').textContent='Showing '+filtered.length+' of '+allShows.length+' shows';
+        }
+
+        function filter(){
+            var q=$('f-search').value.toLowerCase(),d=$('f-date').value,sc=$('f-screen').value,st=$('f-status').value;
+            filtered=allShows.filter(function(s){
+                if(q&&s.movie.toLowerCase().indexOf(q)===-1)return false;
+                if(d&&s.date!==d)return false;
+                if(sc&&s.scr!==sc)return false;
+                if(st&&s.status!==st)return false;
+                return true;
+            });
+            filtered.sort(function(a,b){return(a.date+a.time).localeCompare(b.date+b.time)});
+            render();
+        }
+
+        function openM(){$('modal-bg').classList.add('open')}
+        function closeM(){$('modal-bg').classList.remove('open');editId=null}
+
+        function form(s){
+            s=s||{};
+            var mo=MOVIES.map(function(m){return'<option value="'+m.id+'"'+(s.mid===m.id?' selected':'')+'>'+m.title+'</option>'}).join('');
+            var to=THEATERS.map(function(t){return'<option value="'+t.id+'"'+(s.tid===t.id?' selected':'')+'>'+t.name+' ('+t.type.toUpperCase()+' — '+t.cap+' seats)</option>'}).join('');
+            var so=['active','upcoming','ended','sold-out'].map(function(x){return'<option value="'+x+'"'+(s.status===x?' selected':'')+'>'+x.replace('-',' ').toUpperCase()+'</option>'}).join('');
+            $('m-body').innerHTML='<div class="fg"><label>Movie</label><select class="fc" id="fm-movie"><option value="">Select...</option>'+mo+'</select></div><div class="fg"><label>Theater</label><select class="fc" id="fm-hall"><option value="">Select...</option>'+to+'</select></div><div class="frow"><div class="fg"><label>Date</label><input type="date" class="fc" id="fm-date" value="'+(s.date||'')+'"></div><div class="fg"><label>Time</label><input type="time" class="fc" id="fm-time" value="'+(s.time||'')+'"></div></div><div class="frow"><div class="fg"><label>Price (EGP)</label><input type="number" class="fc" id="fm-price" min="0" step="5" value="'+(s.price||'')+'"></div><div class="fg"><label>Status</label><select class="fc" id="fm-status">'+so+'</select></div></div>';
+            $('m-foot').innerHTML='<button class="mb mb-cancel" onclick="SM.close()">Cancel</button><button class="mb mb-save" onclick="SM.save()"><i class="fas fa-check"></i> '+(editId?'Update':'Create')+'</button>';
+            $('fm-hall').onchange=function(e){if(!editId){var t=THEATERS.find(function(x){return x.id===parseInt(e.target.value)});if(t)$('fm-price').value=prices[t.type]||120}};
+        }
+
+        // Public API
+        window.SM={
+            add:function(){editId=null;$('m-title').textContent='Add New Show';form();openM()},
+            edit:function(id){var s=allShows.find(function(x){return x.id===id});if(!s)return;editId=id;$('m-title').textContent='Edit Show';form(s);openM()},
+            del:function(id){
+                var s=allShows.find(function(x){return x.id===id});if(!s)return;editId=id;
+                $('m-title').textContent='Delete Show';
+                $('m-body').innerHTML='<div class="dc"><i class="fas fa-exclamation-triangle"></i><p>Are you sure you want to delete?</p><p><strong>'+s.movie+' — '+s.date+' at '+s.time+'</strong></p><p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px">This cannot be undone.</p></div>';
+                $('m-foot').innerHTML='<button class="mb mb-cancel" onclick="SM.close()">Cancel</button><button class="mb mb-del" onclick="SM.confirmDel()"><i class="fas fa-trash"></i> Delete</button>';
+                openM();
+            },
+            confirmDel:function(){allShows=allShows.filter(function(x){return x.id!==editId});save(allShows);closeM();filter();stats();toast('Show deleted','ok')},
+            dup:function(id){
+                var s=allShows.find(function(x){return x.id===id});if(!s)return;
+                var nd=new Date(s.date+'T00:00:00');nd.setDate(nd.getDate()+1);
+                var nid=Math.max.apply(null,allShows.map(function(x){return x.id}))+1;
+                allShows.push({id:nid,mid:s.mid,movie:s.movie,genre:s.genre,tid:s.tid,hall:s.hall,scr:s.scr,cap:s.cap,bk:0,date:nd.toISOString().split('T')[0],time:s.time,price:s.price,status:'active'});
+                save(allShows);filter();stats();toast('Duplicated to next day','ok');
+            },
+            save:function(){
+                var mid=parseInt($('fm-movie').value),tid=parseInt($('fm-hall').value),d=$('fm-date').value,t=$('fm-time').value,p=parseInt($('fm-price').value),st=$('fm-status').value;
+                if(!mid){toast('Select a movie','err');return}if(!tid){toast('Select a theater','err');return}
+                if(!d){toast('Select a date','err');return}if(!t){toast('Select a time','err');return}
+                if(!p||p<=0){toast('Enter a valid price','err');return}
+                var m=MOVIES.find(function(x){return x.id===mid}),th=THEATERS.find(function(x){return x.id===tid});
+                if(editId){
+                    var idx=-1;for(var i=0;i<allShows.length;i++){if(allShows[i].id===editId){idx=i;break}}
+                    if(idx>=0){var o=allShows[idx];o.mid=mid;o.movie=m.title;o.genre=m.genre;o.tid=tid;o.hall=th.name;o.scr=th.type;o.cap=th.cap;o.date=d;o.time=t;o.price=p;o.status=st}
+                    toast('Show updated','ok');
+                }else{
+                    var nid=allShows.length?Math.max.apply(null,allShows.map(function(x){return x.id}))+1:1;
+                    allShows.push({id:nid,mid:mid,movie:m.title,genre:m.genre,tid:tid,hall:th.name,scr:th.type,cap:th.cap,bk:0,date:d,time:t,price:p,status:st});
+                    toast('Show created','ok');
+                }
+                save(allShows);closeM();filter();stats();
+            },
+            close:closeM
+        };
+
+        function toast(msg,type){
+            var old=document.querySelector('.toast-n');if(old)old.remove();
+            var el=document.createElement('div');el.className='toast-n '+(type||'ok');
+            el.innerHTML='<i class="fas '+(type==='err'?'fa-exclamation-circle':'fa-check-circle')+'"></i> '+msg;
+            document.body.appendChild(el);
+            requestAnimationFrame(function(){el.classList.add('show')});
+            setTimeout(function(){el.classList.remove('show');setTimeout(function(){el.remove()},400)},3000);
+        }
+
+        function clock(){var el=$('clock');if(el)el.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+
+        // Remove stale data from v1
+        try{localStorage.removeItem('cinema_shows_admin_v1')}catch(e){}
+
+        allShows=load();
+        $('btn-add').onclick=SM.add;
+        $('m-close').onclick=closeM;
+        $('modal-bg').onclick=function(e){if(e.target===$('modal-bg'))closeM()};
+        document.onkeydown=function(e){if(e.key==='Escape')closeM()};
+        $('f-search').oninput=filter;$('f-date').onchange=filter;$('f-screen').onchange=filter;$('f-status').onchange=filter;
+        filter();stats();clock();setInterval(clock,60000);
+    })();
+    </script>
+</body>
+</html>
