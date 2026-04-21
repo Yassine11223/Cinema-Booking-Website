@@ -50,9 +50,9 @@
 
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
-    color: var(--gold);
-    background: rgba(197, 160, 89, 0.05);
-    border-left-color: var(--gold);
+    color: var(--text-primary);
+    background: rgba(183, 28, 28, 0.12);
+    border-left-color: var(--primary);
 }
 
 /* --- Main Content --- */
@@ -105,7 +105,7 @@
     font-size: 32px;
     font-weight: 600;
     font-family: var(--font-display);
-    color: var(--gold);
+    color: var(--primary-light);
 }
 
 /* --- Admin Table Overrides --- */

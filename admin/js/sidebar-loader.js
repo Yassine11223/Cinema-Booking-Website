@@ -2,6 +2,7 @@
  * sidebar-loader.js
  * Loads the sidebar component and highlights the active nav link
  * based on the current page filename.
+ * Also handles the logout button.
  */
 
 (function () {
@@ -33,6 +34,7 @@
 
             activateCurrentLink();
             initMobileToggle();
+            initLogout();
 
         } catch (err) {
             console.warn('[Sidebar] Could not load sidebar component:', err);
@@ -64,24 +66,45 @@
 
         function openSidebar() {
             sidebar.classList.add('open');
-            backdrop.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
-            backdrop.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
             document.body.style.overflow = '';
         }
 
         toggleBtn.addEventListener('click', openSidebar);
-        backdrop.addEventListener('click', closeSidebar);
+        if (backdrop) backdrop.addEventListener('click', closeSidebar);
 
         // Close on nav link click (mobile UX)
         sidebar.querySelectorAll('.sidebar-nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 768) closeSidebar();
             });
+        });
+    }
+
+    /**
+     * Logout button handler.
+     * Clears admin auth tokens and redirects to the frontend login page.
+     */
+    function initLogout() {
+        const logoutBtn = document.getElementById('nav-logout');
+        if (!logoutBtn) return;
+
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Clear admin-related data from localStorage
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('admin_user');
+
+            // Redirect to frontend login page
+            window.location.href = '../frontend/login.html';
         });
     }
 

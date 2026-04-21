@@ -1,1 +1,255 @@
-<!-- Manage Shows -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Shows | Vision X Cinemas Admin</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shows.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- SIDEBAR (injected via JS) -->
+        <div id="sidebar-container"></div>
+        <main class="admin-main">
+            <div class="hdr">
+                <h1>Manage Shows</h1>
+                <div class="hdr-time"><i class="far fa-clock"></i> <span id="clock"></span></div>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-lbl">Total Shows</div>
+                    <div class="stat-val" id="s-total">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-lbl">Today's Shows</div>
+                    <div class="stat-val" id="s-today">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-lbl">Active Now</div>
+                    <div class="stat-val" id="s-active">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-lbl">Avg. Occupancy</div>
+                    <div class="stat-val" id="s-occ">0%</div>
+                </div>
+            </div>
+            <div class="filters">
+                <input type="text" class="flt" id="f-search" placeholder="Search movie...">
+                <input type="date" class="flt" id="f-date" style="min-width:130px">
+                <select class="flt" id="f-screen">
+                    <option value="">All Screens</option>
+                    <option value="imax">IMAX</option>
+                    <option value="dolby">Dolby</option>
+                    <option value="standard">Standard</option>
+                    <option value="deluxe">Deluxe</option>
+                </select>
+                <select class="flt" id="f-status">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="ended">Ended</option>
+                    <option value="sold-out">Sold Out</option>
+                </select>
+                <button class="btn-add" id="btn-add"><i class="fas fa-plus"></i> Add Show</button>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Movie</th>
+                            <th>Date & Time</th>
+                            <th>Hall / Screen</th>
+                            <th>Price</th>
+                            <th>Occupancy</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+                <div class="tbl-foot" id="tbl-foot">Showing 0 shows</div>
+            </div>
+        </main>
+    </div>
+    <div class="modal-bg" id="modal-bg">
+        <div class="mdl">
+            <div class="mdl-hd">
+                <h3 id="m-title">Add New Show</h3><button class="mdl-x" id="m-close"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="mdl-bd" id="m-body"></div>
+            <div class="mdl-ft" id="m-foot"></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var MOVIES = [
+                { id: 1, title: 'Thunderbolts*', genre: 'Action' }, { id: 2, title: 'Sinners', genre: 'Horror' },
+                { id: 3, title: 'A Minecraft Movie', genre: 'Adventure' }, { id: 4, title: 'Mission: Impossible - The Final Reckoning', genre: 'Action' },
+                { id: 5, title: 'The Amateur', genre: 'Thriller' }, { id: 6, title: 'Lilo & Stitch', genre: 'Animation' },
+                { id: 7, title: 'Karate Kid: Legends', genre: 'Action' }, { id: 8, title: 'How to Train Your Dragon', genre: 'Animation' }
+            ];
+            var THEATERS = [
+                { id: 1, name: 'IMAX Theatre', type: 'imax', cap: 310 }, { id: 2, name: 'Dolby Atmos', type: 'dolby', cap: 256 },
+                { id: 3, name: 'Hall 1', type: 'standard', cap: 200 }, { id: 4, name: 'Hall 3', type: 'standard', cap: 200 },
+                { id: 5, name: 'Deluxe Suite', type: 'deluxe', cap: 116 }
+            ];
+            var KEY = 'cinema_shows_v4', allShows = [], filtered = [], editId = null;
+            var $ = function (id) { return document.getElementById(id) };
+            var prices = { imax: 320, dolby: 280, standard: 180, deluxe: 250 };
+
+            function gen() {
+                var s = [], td = new Date(), id = 1;
+                for (var d = -2; d < 7; d++) {
+                    var dt = new Date(td); dt.setDate(dt.getDate() + d);
+                    var ds = dt.toISOString().split('T')[0], n = 3 + Math.floor(Math.random() * 3);
+                    for (var i = 0; i < n; i++) {
+                        var m = MOVIES[Math.floor(Math.random() * MOVIES.length)];
+                        var t = THEATERS[Math.floor(Math.random() * THEATERS.length)];
+                        var h = [10, 13, 16, 19, 21, 23][Math.floor(Math.random() * 6)];
+                        var mn = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+                        var bk = Math.floor(Math.random() * t.cap);
+                        s.push({ id: id++, mid: m.id, movie: m.title, genre: m.genre, tid: t.id, hall: t.name, scr: t.type, cap: t.cap, bk: bk, date: ds, time: (h < 10 ? '0' : '') + h + ':' + (mn < 10 ? '0' : '') + mn, price: prices[t.type] || 120, status: d < 0 ? 'ended' : bk >= t.cap ? 'sold-out' : 'active' });
+                    }
+                }
+                return s;
+            }
+            function load() { try { var r = localStorage.getItem(KEY); if (r) return JSON.parse(r) } catch (e) { } var s = gen(); save(s); return s }
+            function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)) } catch (e) { } }
+
+            function stats() {
+                var td = new Date().toISOString().split('T')[0];
+                var tds = allShows.filter(function (s) { return s.date === td });
+                var act = allShows.filter(function (s) { return s.status === 'active' });
+                var to = 0; allShows.forEach(function (s) { if (s.cap > 0) to += s.bk / s.cap * 100 });
+                $('s-total').textContent = allShows.length;
+                $('s-today').textContent = tds.length;
+                $('s-active').textContent = act.length;
+                $('s-occ').textContent = (allShows.length ? Math.round(to / allShows.length) : 0) + '%';
+            }
+
+            function render() {
+                var tb = $('tbody');
+                if (!filtered.length) {
+                    tb.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="fas fa-calendar-times"></i>No shows found</div></td></tr>';
+                    $('tbl-foot').textContent = 'No shows'; return;
+                }
+                var h = '';
+                for (var i = 0; i < filtered.length; i++) {
+                    var s = filtered[i], pct = s.cap ? Math.round(s.bk / s.cap * 100) : 0;
+                    var fc = pct >= 85 ? 'high' : pct >= 50 ? 'mid' : 'low';
+                    var dd = s.date;
+                    try { var dt = new Date(s.date + 'T00:00:00'); dd = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) } catch (e) { }
+                    h += '<tr><td><div class="mov"><div class="mov-poster"><i class="fas fa-film"></i></div><div><div class="mov-title">' + s.movie + '</div><div class="mov-genre">' + s.genre + '</div></div></div></td>';
+                    h += '<td><div style="font-weight:500;color:#fff">' + dd + '</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + s.time + '</div></td>';
+                    h += '<td><div style="margin-bottom:4px">' + s.hall + '</div><span class="scr scr-' + s.scr + '">' + s.scr + '</span></td>';
+                    h += '<td><span class="price">' + s.price + ' EGP</span></td>';
+                    h += '<td><div class="occ"><div class="occ-bar"><div class="occ-fill occ-' + fc + '" style="width:' + pct + '%"></div></div><span class="occ-pct">' + pct + '%</span></div><div style="font-size:11px;color:rgba(255,255,255,0.4)">' + s.bk + '/' + s.cap + '</div></td>';
+                    h += '<td><span class="bdg bdg-' + s.status + '">' + s.status.replace('-', ' ') + '</span></td>';
+                    h += '<td><div class="acts"><button class="act" onclick="SM.edit(' + s.id + ')" title="Edit"><i class="fas fa-pen"></i></button><button class="act" onclick="SM.dup(' + s.id + ')" title="Duplicate"><i class="fas fa-copy"></i></button><button class="act act-d" onclick="SM.del(' + s.id + ')" title="Delete"><i class="fas fa-trash"></i></button></div></td></tr>';
+                }
+                tb.innerHTML = h;
+                $('tbl-foot').textContent = 'Showing ' + filtered.length + ' of ' + allShows.length + ' shows';
+            }
+
+            function filter() {
+                var q = $('f-search').value.toLowerCase(), d = $('f-date').value, sc = $('f-screen').value, st = $('f-status').value;
+                filtered = allShows.filter(function (s) {
+                    if (q && s.movie.toLowerCase().indexOf(q) === -1) return false;
+                    if (d && s.date !== d) return false;
+                    if (sc && s.scr !== sc) return false;
+                    if (st && s.status !== st) return false;
+                    return true;
+                });
+                filtered.sort(function (a, b) { return (a.date + a.time).localeCompare(b.date + b.time) });
+                render();
+            }
+
+            function openM() { $('modal-bg').classList.add('open') }
+            function closeM() { $('modal-bg').classList.remove('open'); editId = null }
+
+            function form(s) {
+                s = s || {};
+                var mo = MOVIES.map(function (m) { return '<option value="' + m.id + '"' + (s.mid === m.id ? ' selected' : '') + '>' + m.title + '</option>' }).join('');
+                var to = THEATERS.map(function (t) { return '<option value="' + t.id + '"' + (s.tid === t.id ? ' selected' : '') + '>' + t.name + ' (' + t.type.toUpperCase() + ' — ' + t.cap + ' seats)</option>' }).join('');
+                var so = ['active', 'upcoming', 'ended', 'sold-out'].map(function (x) { return '<option value="' + x + '"' + (s.status === x ? ' selected' : '') + '>' + x.replace('-', ' ').toUpperCase() + '</option>' }).join('');
+                $('m-body').innerHTML = '<div class="fg"><label>Movie</label><select class="fc" id="fm-movie"><option value="">Select...</option>' + mo + '</select></div><div class="fg"><label>Theater</label><select class="fc" id="fm-hall"><option value="">Select...</option>' + to + '</select></div><div class="frow"><div class="fg"><label>Date</label><input type="date" class="fc" id="fm-date" value="' + (s.date || '') + '"></div><div class="fg"><label>Time</label><input type="time" class="fc" id="fm-time" value="' + (s.time || '') + '"></div></div><div class="frow"><div class="fg"><label>Price (EGP)</label><input type="number" class="fc" id="fm-price" min="0" step="5" value="' + (s.price || '') + '"></div><div class="fg"><label>Status</label><select class="fc" id="fm-status">' + so + '</select></div></div>';
+                $('m-foot').innerHTML = '<button class="mb mb-cancel" onclick="SM.close()">Cancel</button><button class="mb mb-save" onclick="SM.save()"><i class="fas fa-check"></i> ' + (editId ? 'Update' : 'Create') + '</button>';
+                $('fm-hall').onchange = function (e) { if (!editId) { var t = THEATERS.find(function (x) { return x.id === parseInt(e.target.value) }); if (t) $('fm-price').value = prices[t.type] || 120 } };
+            }
+
+            // Public API
+            window.SM = {
+                add: function () { editId = null; $('m-title').textContent = 'Add New Show'; form(); openM() },
+                edit: function (id) { var s = allShows.find(function (x) { return x.id === id }); if (!s) return; editId = id; $('m-title').textContent = 'Edit Show'; form(s); openM() },
+                del: function (id) {
+                    var s = allShows.find(function (x) { return x.id === id }); if (!s) return; editId = id;
+                    $('m-title').textContent = 'Delete Show';
+                    $('m-body').innerHTML = '<div class="dc"><i class="fas fa-exclamation-triangle"></i><p>Are you sure you want to delete?</p><p><strong>' + s.movie + ' — ' + s.date + ' at ' + s.time + '</strong></p><p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px">This cannot be undone.</p></div>';
+                    $('m-foot').innerHTML = '<button class="mb mb-cancel" onclick="SM.close()">Cancel</button><button class="mb mb-del" onclick="SM.confirmDel()"><i class="fas fa-trash"></i> Delete</button>';
+                    openM();
+                },
+                confirmDel: function () { allShows = allShows.filter(function (x) { return x.id !== editId }); save(allShows); closeM(); filter(); stats(); toast('Show deleted', 'ok') },
+                dup: function (id) {
+                    var s = allShows.find(function (x) { return x.id === id }); if (!s) return;
+                    var nd = new Date(s.date + 'T00:00:00'); nd.setDate(nd.getDate() + 1);
+                    var nid = Math.max.apply(null, allShows.map(function (x) { return x.id })) + 1;
+                    allShows.push({ id: nid, mid: s.mid, movie: s.movie, genre: s.genre, tid: s.tid, hall: s.hall, scr: s.scr, cap: s.cap, bk: 0, date: nd.toISOString().split('T')[0], time: s.time, price: s.price, status: 'active' });
+                    save(allShows); filter(); stats(); toast('Duplicated to next day', 'ok');
+                },
+                save: function () {
+                    var mid = parseInt($('fm-movie').value), tid = parseInt($('fm-hall').value), d = $('fm-date').value, t = $('fm-time').value, p = parseInt($('fm-price').value), st = $('fm-status').value;
+                    if (!mid) { toast('Select a movie', 'err'); return } if (!tid) { toast('Select a theater', 'err'); return }
+                    if (!d) { toast('Select a date', 'err'); return } if (!t) { toast('Select a time', 'err'); return }
+                    if (!p || p <= 0) { toast('Enter a valid price', 'err'); return }
+                    var m = MOVIES.find(function (x) { return x.id === mid }), th = THEATERS.find(function (x) { return x.id === tid });
+                    if (editId) {
+                        var idx = -1; for (var i = 0; i < allShows.length; i++) { if (allShows[i].id === editId) { idx = i; break } }
+                        if (idx >= 0) { var o = allShows[idx]; o.mid = mid; o.movie = m.title; o.genre = m.genre; o.tid = tid; o.hall = th.name; o.scr = th.type; o.cap = th.cap; o.date = d; o.time = t; o.price = p; o.status = st }
+                        toast('Show updated', 'ok');
+                    } else {
+                        var nid = allShows.length ? Math.max.apply(null, allShows.map(function (x) { return x.id })) + 1 : 1;
+                        allShows.push({ id: nid, mid: mid, movie: m.title, genre: m.genre, tid: tid, hall: th.name, scr: th.type, cap: th.cap, bk: 0, date: d, time: t, price: p, status: st });
+                        toast('Show created', 'ok');
+                    }
+                    save(allShows); closeM(); filter(); stats();
+                },
+                close: closeM
+            };
+
+            function toast(msg, type) {
+                var old = document.querySelector('.toast-n'); if (old) old.remove();
+                var el = document.createElement('div'); el.className = 'toast-n ' + (type || 'ok');
+                el.innerHTML = '<i class="fas ' + (type === 'err' ? 'fa-exclamation-circle' : 'fa-check-circle') + '"></i> ' + msg;
+                document.body.appendChild(el);
+                requestAnimationFrame(function () { el.classList.add('show') });
+                setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove() }, 400) }, 3000);
+            }
+
+            function clock() { var el = $('clock'); if (el) el.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
+
+            // Remove stale data from v1
+            try { localStorage.removeItem('cinema_shows_admin_v1'); localStorage.removeItem('cinema_shows_v2'); localStorage.removeItem('cinema_shows_v3') } catch (e) { }
+
+            allShows = load();
+            $('btn-add').onclick = SM.add;
+            $('m-close').onclick = closeM;
+            $('modal-bg').onclick = function (e) { if (e.target === $('modal-bg')) closeM() };
+            document.onkeydown = function (e) { if (e.key === 'Escape') closeM() };
+            $('f-search').oninput = filter; $('f-date').onchange = filter; $('f-screen').onchange = filter; $('f-status').onchange = filter;
+            filter(); stats(); clock(); setInterval(clock, 60000);
+        })();
+    </script>
+    <script src="js/sidebar-loader.js"></script>
+</body>
+
+</html>

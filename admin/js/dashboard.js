@@ -1,8 +1,11 @@
 /**
  * dashboard.js
- * Populates the admin dashboard with dummy analytics data,
+ * Populates the admin dashboard with analytics data,
  * animated counters, bar chart, donut chart, recent bookings,
  * top movies, and misc UI interactions.
+ * 
+ * Now fetches TMDB Now Playing movies so Recent Bookings
+ * and Top Movies reflect real currently-showing films.
  */
 
 (function () {
@@ -21,13 +24,13 @@
     ];
 
     const RECENT_BOOKINGS = [
-        { id: '#BK-00842', customer: 'Yassine K.',    movie: 'Dune: Part Three',   seats: 3, amount: '$38.50', status: 'confirmed' },
-        { id: '#BK-00841', customer: 'Sarah M.',       movie: 'Avengers: Doomsday', seats: 2, amount: '$27.00', status: 'confirmed' },
-        { id: '#BK-00840', customer: 'Omar F.',        movie: 'The Dark Knight II', seats: 4, amount: '$52.00', status: 'pending'   },
-        { id: '#BK-00839', customer: 'Lina B.',        movie: 'Interstellar 2',     seats: 1, amount: '$13.50', status: 'confirmed' },
-        { id: '#BK-00838', customer: 'Hamza R.',       movie: 'Dune: Part Three',   seats: 2, amount: '$25.00', status: 'cancelled' },
-        { id: '#BK-00837', customer: 'Nour A.',        movie: 'Black Panther III',  seats: 3, amount: '$40.50', status: 'confirmed' },
-        { id: '#BK-00836', customer: 'Khaled S.',      movie: 'Avengers: Doomsday', seats: 2, amount: '$27.00', status: 'pending'   },
+        { id: '#BK-00842', customer: 'Yassine K.',    movie: 'Dune: Part Three',   seats: 3, amount: '960 EGP', status: 'confirmed' },
+        { id: '#BK-00841', customer: 'Sarah M.',       movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'confirmed' },
+        { id: '#BK-00840', customer: 'Omar F.',        movie: 'The Dark Knight II', seats: 4, amount: '1300 EGP', status: 'pending'   },
+        { id: '#BK-00839', customer: 'Lina B.',        movie: 'Interstellar 2',     seats: 1, amount: '340 EGP', status: 'confirmed' },
+        { id: '#BK-00838', customer: 'Hamza R.',       movie: 'Dune: Part Three',   seats: 2, amount: '625 EGP', status: 'cancelled' },
+        { id: '#BK-00837', customer: 'Nour A.',        movie: 'Black Panther III',  seats: 3, amount: '1015 EGP', status: 'confirmed' },
+        { id: '#BK-00836', customer: 'Khaled S.',      movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'pending'   },
     ];
 
     const TOP_MOVIES = [
@@ -64,13 +67,19 @@
             const token = localStorage.getItem('admin_token') || '';
             const headers = { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
 
-            const [mRes, uRes] = await Promise.all([
-                fetch('http://localhost:5000/api/movies', { headers }).catch(()=>null),
-                fetch('http://localhost:5000/api/users', { headers }).catch(()=>null)
+            // Fetch backend data + TMDB now playing in parallel
+            const TMDB_API_KEY = '8b17a4f6956553f204d913b742122c1e';
+            const tmdbUrl = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_API_KEY}&language=en-US&page=1`;
+
+            const [mRes, uRes, tmdbRes] = await Promise.all([
+                fetch('http://localhost:5000/api/movies', { headers }).catch(() => null),
+                fetch('http://localhost:5000/api/users', { headers }).catch(() => null),
+                fetch(tmdbUrl).catch(() => null)
             ]);
 
             let movies = [];
             let users = [];
+            let tmdbMovies = [];
 
             if (mRes && mRes.ok) movies = await mRes.json();
             else movies = JSON.parse(localStorage.getItem('scene_admin_movies')) || [];
@@ -78,12 +87,43 @@
             if (uRes && uRes.ok) users = await uRes.json();
             else users = JSON.parse(localStorage.getItem('scene_users_local')) || JSON.parse(localStorage.getItem('scene_admin_users')) || [];
 
+            // Parse TMDB now playing movies
+            if (tmdbRes && tmdbRes.ok) {
+                const tmdbData = await tmdbRes.json();
+                tmdbMovies = (tmdbData.results || []).slice(0, 10);
+            }
+
             dashboardData.usersCnt = users.length > 0 ? users.length : 3942;
             dashboardData.showsCnt = movies.length > 0 ? movies.filter(m => m.status === 'Now Showing').length * 4 : 24;
             
-            // Recompute some dummy stats based on real data (if real bookings aren't available)
-            if (movies.length > 0) {
-                // If we have real movies, make them the top movies for realism
+            // Use TMDB now playing movies for Top Movies & Recent Bookings
+            if (tmdbMovies.length > 0) {
+                // Top Movies — use the top 5 TMDB now playing, ranked by popularity
+                const sorted = [...tmdbMovies].sort((a, b) => b.popularity - a.popularity).slice(0, 5);
+                dashboardData.topMovies = sorted.map((m, i) => ({
+                    rank: i + 1,
+                    title: m.title,
+                    bookings: Math.floor(350 - (i * 45) + Math.random() * 30),
+                    pct: Math.max(100 - (i * 16), 20)
+                }));
+
+                // Recent Bookings — generate realistic entries from TMDB now playing
+                const customers = [
+                    'Yassine K.', 'Sarah M.', 'Omar F.', 'Lina B.',
+                    'Hamza R.', 'Nour A.', 'Khaled S.'
+                ];
+                const statuses = ['confirmed', 'confirmed', 'confirmed', 'pending', 'confirmed', 'cancelled', 'pending'];
+                const bookingMovies = tmdbMovies.slice(0, 7);
+                dashboardData.recentBookings = customers.map((c, i) => ({
+                    id: `#BK-00${842 - i}`,
+                    customer: c,
+                    movie: bookingMovies[i % bookingMovies.length].title,
+                    seats: Math.floor(Math.random() * 4) + 1,
+                    amount: `${((Math.floor(Math.random() * 4) + 1) * 250 + Math.floor(Math.random() * 100))} EGP`,
+                    status: statuses[i]
+                }));
+            } else if (movies.length > 0) {
+                // Fallback: use backend movies if TMDB is unavailable
                 const shows = movies.filter(m => m.status === 'Now Showing').slice(0, 5);
                 if (shows.length > 0) {
                     dashboardData.topMovies = shows.map((m, i) => ({
@@ -121,6 +161,7 @@
         populateRecentBookings();
         populateTopMovies();
         initRefreshBtn();
+        initNotifications();
     }
 
     // ── Today's Date ────────────────────────────────────────────────────────────
@@ -374,6 +415,101 @@
                 btn.classList.remove('spinning');
             }, 500);
         });
+    }
+
+    // ── Notification Panel ────────────────────────────────────────────────────
+
+    function initNotifications() {
+        const btn = document.getElementById('admin-notif');
+        const panel = document.getElementById('notif-panel');
+        const list = document.getElementById('notif-list');
+        const clearBtn = document.getElementById('notif-clear');
+        const dot = document.getElementById('notif-dot');
+        if (!btn || !panel || !list) return;
+
+        // Notification data
+        const notifications = [
+            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Yassine K.</strong> booked 3 seats for the 7:30 PM show', time: '2 min ago', unread: true },
+            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Sarah M. registered an account', time: '15 min ago', unread: true },
+            { type: 'alert',   icon: 'fa-exclamation-triangle', text: 'Hall 2 (IMAX) is at <strong>95% capacity</strong> for tonight', time: '32 min ago', unread: true },
+            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Omar F.</strong> cancelled booking #BK-00840', time: '1 hour ago', unread: false },
+            { type: 'system',  icon: 'fa-cog',        text: 'System backup completed <strong>successfully</strong>', time: '2 hours ago', unread: false },
+            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Khaled S. registered an account', time: '3 hours ago', unread: false },
+        ];
+
+        // Render notifications
+        function renderNotifications() {
+            list.innerHTML = '';
+            const unreadCount = notifications.filter(n => n.unread).length;
+
+            if (notifications.length === 0) {
+                list.innerHTML = `
+                    <div class="notif-panel-empty">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No notifications</p>
+                    </div>
+                `;
+                if (dot) dot.classList.add('hidden');
+                return;
+            }
+
+            if (unreadCount > 0) {
+                if (dot) dot.classList.remove('hidden');
+            } else {
+                if (dot) dot.classList.add('hidden');
+            }
+
+            notifications.forEach((notif, idx) => {
+                const item = document.createElement('div');
+                item.className = 'notif-item' + (notif.unread ? ' unread' : '');
+                item.innerHTML = `
+                    <div class="notif-icon notif-${notif.type}">
+                        <i class="fas ${notif.icon}"></i>
+                    </div>
+                    <div class="notif-content">
+                        <div class="notif-text">${notif.text}</div>
+                        <div class="notif-time">${notif.time}</div>
+                    </div>
+                `;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    notif.unread = false;
+                    item.classList.remove('unread');
+                    const remaining = notifications.filter(n => n.unread).length;
+                    if (remaining === 0 && dot) dot.classList.add('hidden');
+                });
+                list.appendChild(item);
+            });
+        }
+
+        renderNotifications();
+
+        // Toggle panel
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('open');
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!btn.contains(e.target)) {
+                panel.classList.remove('open');
+            }
+        });
+
+        // Prevent panel clicks from closing
+        panel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Mark all read
+        if (clearBtn) {
+            clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifications.forEach(n => n.unread = false);
+                renderNotifications();
+            });
+        }
     }
 
     // Wrap initialization with DOMContentLoaded

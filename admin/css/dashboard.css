@@ -397,6 +397,163 @@
     border: 1.5px solid var(--dark-bg);
 }
 
+.notif-dot.hidden {
+    display: none;
+}
+
+/* Notification Dropdown Panel */
+.notif-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 360px;
+    background: var(--dark-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    z-index: 500;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.97);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notif-panel.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.notif-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.notif-panel-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.notif-panel-clear {
+    font-size: 11px;
+    color: var(--primary-light);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+}
+
+.notif-panel-clear:hover {
+    color: var(--text-primary);
+}
+
+.notif-panel-body {
+    max-height: 340px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dark-elevated) transparent;
+}
+
+.notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.notif-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+.notif-item.unread {
+    background: rgba(183, 28, 28, 0.06);
+}
+
+.notif-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.notif-icon.notif-booking {
+    background: rgba(183, 28, 28, 0.15);
+    color: #ef5350;
+}
+
+.notif-icon.notif-user {
+    background: rgba(20, 100, 180, 0.15);
+    color: #42a5f5;
+}
+
+.notif-icon.notif-system {
+    background: rgba(100, 60, 180, 0.15);
+    color: #9575cd;
+}
+
+.notif-icon.notif-alert {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.notif-text strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.notif-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.notif-panel-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.notif-panel-empty i {
+    font-size: 32px;
+    margin-bottom: 10px;
+    display: block;
+    opacity: 0.3;
+}
+
+.notif-panel-empty p {
+    font-size: 13px;
+}
+
 /* ============================================
    KPI STAT CARDS
    ============================================ */
