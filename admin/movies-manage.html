@@ -1,1 +1,302 @@
-<!-- Manage Movies -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scene Cinemas Admin — Manage Movies">
+    <title>Scene Cinemas | Movies Management</title>
+
+    <!-- Shared Design System -->
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/movies.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="admin-body">
+
+    <div class="admin-layout" id="admin-layout">
+
+        <!-- SIDEBAR -->
+        <div id="sidebar-container"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main" id="admin-main">
+
+            <!-- TOP HEADER -->
+            <header class="admin-header" id="admin-header">
+                <div class="admin-header-left">
+                    <h1 class="admin-page-title">
+                        <i class="fas fa-film admin-title-icon"></i>
+                        Movies Management
+                    </h1>
+                    <p class="admin-page-subtitle">Add, edit and organise your cinema's film catalogue</p>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-date-badge">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="today-date-text"></span>
+                    </div>
+                    <button class="btn-add-movie" id="btn-open-manual" title="Add movie manually">
+                        <i class="fas fa-plus"></i>
+                        Add Manually
+                    </button>
+                    <button class="btn-add-api" id="btn-open-api" title="Import from TMDB">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        Import from TMDB
+                    </button>
+                </div>
+            </header>
+
+            <!-- STATS BAR -->
+            <section class="movies-stats-bar" id="movies-stats-bar">
+                <div class="mstat-item">
+                    <span class="mstat-value" id="mstat-total">0</span>
+                    <span class="mstat-label">Total Movies</span>
+                </div>
+                <div class="mstat-divider"></div>
+                <div class="mstat-item">
+                    <span class="mstat-value mstat-green" id="mstat-showing">0</span>
+                    <span class="mstat-label">Now Showing</span>
+                </div>
+                <div class="mstat-divider"></div>
+                <div class="mstat-item">
+                    <span class="mstat-value mstat-blue" id="mstat-coming">0</span>
+                    <span class="mstat-label">Coming Soon</span>
+                </div>
+                <div class="mstat-divider"></div>
+                <div class="mstat-item">
+                    <span class="mstat-value mstat-muted" id="mstat-ended">0</span>
+                    <span class="mstat-label">Ended</span>
+                </div>
+            </section>
+
+            <!-- FILTERS -->
+            <section class="movies-filters" id="movies-filters">
+                <div class="mfilter-left">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="movie-search" class="search-input" placeholder="Search movies…" autocomplete="off">
+                    </div>
+                    <div class="filter-tabs" role="tablist">
+                        <button class="ftab ftab-active" data-status="all"   id="ftab-all"     role="tab">All</button>
+                        <button class="ftab" data-status="now_showing"       id="ftab-showing" role="tab">Now Showing</button>
+                        <button class="ftab" data-status="coming_soon"       id="ftab-coming"  role="tab">Coming Soon</button>
+                        <button class="ftab" data-status="ended"             id="ftab-ended"   role="tab">Ended</button>
+                    </div>
+                </div>
+                <div class="mfilter-right">
+                    <select id="genre-filter" class="filter-select">
+                        <option value="">All Genres</option>
+                        <option value="Action">Action</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Crime">Crime</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Thriller">Thriller</option>
+                    </select>
+                    <div class="view-toggle">
+                        <button class="vtoggle vtoggle-active" id="view-grid" title="Grid view"><i class="fas fa-th-large"></i></button>
+                        <button class="vtoggle" id="view-list" title="List view"><i class="fas fa-list"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MOVIE GRID / LIST -->
+            <section class="movies-container" id="movies-container">
+                <!-- JS renders cards here -->
+                <div class="movies-loading" id="movies-loading">
+                    <div class="spinner"></div>
+                    <p>Loading movies…</p>
+                </div>
+                <div class="movies-grid" id="movies-grid" style="display:none;"></div>
+                <div class="movies-empty" id="movies-empty" style="display:none;">
+                    <i class="fas fa-film"></i>
+                    <p>No movies found</p>
+                    <span>Try a different search or add a new movie</span>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =============================================
+         MODAL: ADD MANUALLY
+         ============================================= -->
+    <div class="modal-overlay" id="modal-manual" role="dialog" aria-modal="true" aria-labelledby="modal-manual-title">
+        <div class="modal-panel modal-panel-wide" id="modal-manual-panel">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-manual-title">
+                    <i class="fas fa-plus-circle"></i>
+                    <span id="modal-manual-heading">Add Movie Manually</span>
+                </h2>
+                <button class="modal-close" id="modal-manual-close" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form class="modal-form" id="manual-movie-form" novalidate>
+                <input type="hidden" id="edit-movie-id">
+
+                <div class="form-row">
+                    <div class="form-group form-group-wide">
+                        <label for="m-title">Movie Title <span class="req">*</span></label>
+                        <input type="text" id="m-title" class="form-input" placeholder="e.g. The Dark Knight" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="m-status">Status <span class="req">*</span></label>
+                        <select id="m-status" class="form-select" required>
+                            <option value="now_showing">Now Showing</option>
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="ended">Ended</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="m-description">Description</label>
+                    <textarea id="m-description" class="form-textarea" placeholder="Movie synopsis…" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="m-genre">Genre</label>
+                        <select id="m-genre" class="form-select">
+                            <option value="">Select genre</option>
+                            <option>Action</option><option>Adventure</option><option>Animation</option>
+                            <option>Comedy</option><option>Crime</option><option>Drama</option>
+                            <option>Fantasy</option><option>Horror</option><option>Romance</option>
+                            <option>Sci-Fi</option><option>Thriller</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="m-duration">Duration (min) <span class="req">*</span></label>
+                        <input type="number" id="m-duration" class="form-input" placeholder="120" min="1" max="600" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="m-rating">Rating</label>
+                        <select id="m-rating" class="form-select">
+                            <option value="">-- Select --</option>
+                            <option>G</option><option>PG</option><option>PG-13</option>
+                            <option>R</option><option>NC-17</option><option>NR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="m-release-date">Release Date</label>
+                        <input type="date" id="m-release-date" class="form-input">
+                    </div>
+                    <div class="form-group form-group-wide">
+                        <label for="m-poster-url">Poster URL</label>
+                        <input type="url" id="m-poster-url" class="form-input" placeholder="https://…" id="m-poster-url">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="m-trailer-url">Trailer URL (YouTube)</label>
+                    <input type="url" id="m-trailer-url" class="form-input" placeholder="https://www.youtube.com/watch?v=…">
+                </div>
+
+                <!-- Poster Preview -->
+                <div class="poster-preview-row" id="poster-preview-row" style="display:none;">
+                    <img id="poster-preview-img" src="" alt="Poster preview" class="poster-preview-img">
+                    <button type="button" class="poster-clear-btn" id="poster-clear-btn"><i class="fas fa-times"></i> Clear</button>
+                </div>
+
+                <div class="form-error" id="manual-form-error" style="display:none;"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-modal-cancel" id="modal-manual-cancel">Cancel</button>
+                    <button type="submit" class="btn-modal-save" id="btn-save-movie">
+                        <i class="fas fa-save"></i>
+                        <span id="btn-save-label">Save Movie</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =============================================
+         MODAL: IMPORT FROM TMDB
+         ============================================= -->
+    <div class="modal-overlay" id="modal-api" role="dialog" aria-modal="true" aria-labelledby="modal-api-title">
+        <div class="modal-panel" id="modal-api-panel">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-api-title">
+                    <i class="fas fa-cloud-download-alt"></i>
+                    Import from TMDB
+                </h2>
+                <button class="modal-close" id="modal-api-close" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="tmdb-search-row">
+                <div class="search-box tmdb-search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="tmdb-search-input" class="search-input" placeholder="Search TMDB for a movie…" autocomplete="off">
+                </div>
+                <button class="btn-tmdb-search" id="btn-tmdb-search">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+
+            <div class="tmdb-results" id="tmdb-results">
+                <div class="tmdb-hint" id="tmdb-hint">
+                    <i class="fas fa-film"></i>
+                    <p>Type a movie title above and hit Search</p>
+                </div>
+                <!-- JS fills result cards here -->
+            </div>
+
+            <div class="tmdb-api-notice">
+                <i class="fas fa-info-circle"></i>
+                Data provided by <a href="https://www.themoviedb.org" target="_blank">TMDB</a>. Requires <code>TMDB_API_KEY</code> in your <code>.env</code> file.
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================
+         MODAL: DELETE CONFIRM
+         ============================================= -->
+    <div class="modal-overlay" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="modal-delete-title">
+        <div class="modal-panel modal-panel-sm" id="modal-delete-panel">
+            <div class="modal-header">
+                <h2 class="modal-title modal-title-danger" id="modal-delete-title">
+                    <i class="fas fa-trash-alt"></i>
+                    Delete Movie
+                </h2>
+                <button class="modal-close" id="modal-delete-close" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-text">
+                <p>Are you sure you want to delete <strong id="delete-movie-name">this movie</strong>?</p>
+                <p class="danger-note">This action cannot be undone. Shows and bookings linked to this movie will also be removed.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" id="modal-delete-cancel">Cancel</button>
+                <button class="btn-modal-danger" id="btn-confirm-delete">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCRIPTS -->
+    <script src="js/sidebar-loader.js"></script>
+    <script src="js/movies-admin.js"></script>
+
+</body>
+</html>
