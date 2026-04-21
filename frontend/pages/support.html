@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scene Cinemas Support Center — get help with bookings, payments, accounts, and more.">
+    <title>Support | Scene Cinemas</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .support-hero{position:relative;padding:calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);text-align:center;background:linear-gradient(135deg,var(--dark-surface) 0%,rgba(139,0,0,0.18) 50%,var(--dark-surface) 100%);overflow:hidden;}
+        .support-hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(183,28,28,0.12) 0%,transparent 60%);pointer-events:none;}
+        .support-hero-content{position:relative;z-index:1;}
+        .support-hero-icon{font-size:48px;margin-bottom:var(--space-lg);display:inline-block;animation:floatI 3s ease-in-out infinite;}
+        @keyframes floatI{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+        .support-hero h1{font-family:var(--font-display);font-size:48px;font-weight:700;text-transform:uppercase;letter-spacing:4px;margin-bottom:var(--space-md);background:linear-gradient(135deg,#fff 0%,var(--primary-light) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .support-hero p{font-size:16px;color:var(--text-secondary);letter-spacing:1px;max-width:600px;margin:0 auto;}
+
+        .support-channels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--space-xl);padding:var(--space-3xl) 0;}
+        .support-card{background:var(--dark-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:var(--space-2xl);text-align:center;transition:all 0.35s ease;position:relative;overflow:hidden;}
+        .support-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--primary),transparent);opacity:0;transition:opacity 0.3s;}
+        .support-card:hover{transform:translateY(-6px);border-color:var(--border-red);box-shadow:0 8px 30px rgba(183,28,28,0.15);}
+        .support-card:hover::before{opacity:1;}
+        .support-card-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;margin:0 auto var(--space-lg);font-size:26px;color:#fff;box-shadow:0 4px 15px rgba(183,28,28,0.3);}
+        .support-card h3{font-family:var(--font-display);font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:var(--space-md);color:var(--text-primary);}
+        .support-card p{font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:var(--space-lg);}
+        .support-card-link{display:inline-block;padding:10px 24px;border:1px solid var(--border-subtle);border-radius:var(--radius-md);font-family:var(--font-display);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-secondary);transition:all 0.3s;text-decoration:none;}
+        .support-card-link:hover{border-color:var(--primary);color:var(--primary-light);background:rgba(183,28,28,0.08);}
+
+        .support-section{padding:var(--space-3xl) 0;border-top:1px solid var(--border-subtle);}
+        .support-section-title{font-family:var(--font-display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:3px;text-align:center;margin-bottom:var(--space-2xl);color:var(--text-primary);}
+
+        .help-topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:var(--space-lg);}
+        .help-topic{background:var(--dark-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:var(--space-xl);transition:all 0.3s;cursor:pointer;text-decoration:none;display:block;}
+        .help-topic:hover{border-color:var(--border-red);transform:translateY(-3px);}
+        .help-topic h4{font-family:var(--font-display);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-primary);margin-bottom:var(--space-sm);display:flex;align-items:center;gap:var(--space-sm);}
+        .help-topic h4 i{color:var(--primary-light);}
+        .help-topic p{font-size:13px;color:var(--text-muted);line-height:1.6;}
+
+        .support-cta{text-align:center;padding:var(--space-3xl) 0;border-top:1px solid var(--border-subtle);margin-top:var(--space-2xl);}
+        .support-cta h3{font-family:var(--font-display);font-size:24px;text-transform:uppercase;letter-spacing:2px;margin-bottom:var(--space-md);}
+        .support-cta p{color:var(--text-muted);font-size:14px;margin-bottom:var(--space-lg);}
+        .support-hours{display:inline-block;padding:12px 24px;background:var(--dark-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:var(--text-secondary);font-size:14px;}
+        .support-hours i{color:var(--primary-light);margin-right:var(--space-sm);}
+
+        @media(max-width:768px){.support-hero h1{font-size:32px;letter-spacing:2px;}}
+    </style>
+</head>
+<body>
+    <nav class="navbar" id="navbar"><div class="nav-container">
+        <ul class="nav-links left"><li><a href="../index.html" class="nav-link">HOME</a></li><li class="dropdown"><a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a><ul class="dropdown-menu"><li><a href="../movies.html#now-showing">NOW SHOWING</a></li><li><a href="../movies.html#coming-soon">COMING SOON</a></li></ul></li><li class="dropdown"><span class="nav-link dropdown-trigger">EXPERIENCES <span class="dropdown-arrow"></span></span><ul class="dropdown-menu"><li><a href="experience-imax.html">IMAX CINEMA</a></li><li><a href="experience-dolby.html">DOLBY CINEMA</a></li><li><a href="experience-standard.html">STANDARD & DELUXE</a></li></ul></li><li><a href="../food-drinks.html" class="nav-link">FOOD & DRINKS</a></li></ul>
+        <div class="logo"><a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a></div>
+        <ul class="nav-links right"><li><a href="../login.html" class="login-btn" id="auth-nav-link"><i class="fa-regular fa-user"></i> LOGIN</a></li></ul>
+    </div></nav>
+
+    <section class="support-hero"><div class="support-hero-content"><div class="support-hero-icon">🛟</div><h1>Support</h1><p>Need help? Our support team is here to assist you with any questions or issues.</p></div></section>
+
+    <div class="container">
+        <!-- Support Channels -->
+        <div class="support-channels">
+            <div class="support-card">
+                <div class="support-card-icon"><i class="fas fa-comments"></i></div>
+                <h3>Live Chat</h3>
+                <p>Chat with our support team in real-time for immediate assistance with your bookings or account.</p>
+                <span class="support-card-link"><i class="fas fa-comment-dots"></i> Start Chat</span>
+            </div>
+            <div class="support-card">
+                <div class="support-card-icon"><i class="fas fa-envelope"></i></div>
+                <h3>Email Support</h3>
+                <p>Send us a detailed email and we'll get back to you within 24 hours with a solution.</p>
+                <a href="mailto:support@scenecinemas.com" class="support-card-link"><i class="fas fa-paper-plane"></i> Email Us</a>
+            </div>
+            <div class="support-card">
+                <div class="support-card-icon"><i class="fas fa-phone-alt"></i></div>
+                <h3>Phone Support</h3>
+                <p>Call our hotline for urgent issues or if you prefer speaking with a support agent directly.</p>
+                <a href="tel:+201234567891" class="support-card-link"><i class="fas fa-phone"></i> Call Now</a>
+            </div>
+            <div class="support-card">
+                <div class="support-card-icon"><i class="fas fa-question-circle"></i></div>
+                <h3>FAQ</h3>
+                <p>Find quick answers to the most commonly asked questions about our services.</p>
+                <a href="faq.html" class="support-card-link"><i class="fas fa-search"></i> Browse FAQs</a>
+            </div>
+        </div>
+
+        <!-- Help Topics -->
+        <div class="support-section">
+            <h2 class="support-section-title">Common Help Topics</h2>
+            <div class="help-topics">
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-ticket-alt"></i> Booking Issues</h4><p>Trouble completing your booking? Learn how to resolve common booking problems.</p></a>
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-credit-card"></i> Payment Problems</h4><p>Payment declined or charged twice? Here's how to resolve payment issues.</p></a>
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-undo-alt"></i> Refunds & Cancellations</h4><p>Need to cancel a booking? Learn about our refund policy and process.</p></a>
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-user-cog"></i> Account & Login</h4><p>Can't log in or need to update your profile? We can help.</p></a>
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-mobile-alt"></i> Digital Tickets</h4><p>Trouble accessing your digital ticket? Find out how to retrieve it.</p></a>
+                <a href="faq.html" class="help-topic"><h4><i class="fas fa-utensils"></i> Food Orders</h4><p>Questions about your food or drink pre-order? Check here.</p></a>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="support-cta">
+            <h3>Support Hours</h3>
+            <p>Our team is available to help during the following hours:</p>
+            <div class="support-hours"><i class="fas fa-clock"></i> Saturday – Thursday: 9:00 AM – 11:00 PM &nbsp;|&nbsp; Friday: 12:00 PM – 11:00 PM</div>
+        </div>
+    </div>
+
+    <footer class="footer" id="footer"><div class="container"><div class="footer-grid">
+        <div class="footer-col"><h4 class="footer-title">GET IN TOUCH</h4><div class="footer-links"><a href="contact.html">Contact Us</a></div></div>
+        <div class="footer-col"><h4 class="footer-title">ABOUT TEST CINEMAS</h4><div class="footer-links"><a href="about.html">About Us</a><a href="experience-imax.html">IMAX Cinema</a><a href="experience-dolby.html">Dolby Cinema</a><a href="experience-standard.html">Standard & Deluxe</a></div></div>
+        <div class="footer-col"><h4 class="footer-title">LEGAL</h4><div class="footer-links"><a href="faq.html">FAQs</a><a href="terms.html">Terms & Conditions</a><a href="privacy.html">Privacy Policy</a><a href="support.html">Support</a></div></div>
+        <div class="footer-col"><h4 class="footer-title">FOLLOW US</h4><div class="social-links"><a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="#" class="social-link"><i class="fab fa-instagram"></i></a><a href="#" class="social-link"><i class="fab fa-tiktok"></i></a><a href="#" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
+    </div><div class="footer-bottom"><p>&copy; 2026 Scene Cinemas. All rights reserved.</p></div></div></footer>
+    <script src="../js/main.js"></script>
+</body>
+</html>

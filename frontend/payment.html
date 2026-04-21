@@ -1,1 +1,209 @@
-<!-- Payment Processing -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Complete your cinema booking — add food & drinks, choose payment method, and get your ticket.">
+    <title>Checkout | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/payment.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Auth guard -->
+    <script>
+        (function () {
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+            if (!token || !userData) {
+                window.location.replace('login.html?redirect=payment.html');
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li><a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a></li>
+            </ul>
+            <div class="logo"><a href="index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a></div>
+            <ul class="nav-links right">
+                <li><a href="login.html" class="login-btn" id="auth-nav-link"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="payment-page">
+
+        <!-- PROGRESS STEPS -->
+        <div class="payment-steps">
+            <div class="step-item active">
+                <div class="step-circle">1</div>
+                <span class="step-label">Food & Drinks</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle">2</div>
+                <span class="step-label">Payment</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-item">
+                <div class="step-circle">3</div>
+                <span class="step-label">Confirmation</span>
+            </div>
+        </div>
+
+        <!-- ==============================
+             STEP 1 — FOOD & DRINKS ADD-ON
+             ============================== -->
+        <div class="step-view active" id="step-1">
+            <h2 class="step-title">🍿 Add Food & Drinks</h2>
+            <p class="step-subtitle">Enhance your movie experience! Add snacks to your order or skip to payment.</p>
+
+            <div id="food-menu-container"></div>
+
+            <div style="display:flex;justify-content:center;gap:var(--space-lg);margin-top:var(--space-2xl);flex-wrap:wrap;">
+                <button class="pay-btn pay-btn-outline" id="btn-skip-food">
+                    <i class="fas fa-forward"></i> SKIP
+                </button>
+                <button class="pay-btn pay-btn-primary" id="btn-continue-payment">
+                    <i class="fas fa-arrow-right"></i> CONTINUE TO PAYMENT
+                </button>
+            </div>
+        </div>
+
+        <!-- ==============================
+             STEP 2 — PAYMENT
+             ============================== -->
+        <div class="step-view" id="step-2">
+            <h2 class="step-title">💳 Payment</h2>
+            <p class="step-subtitle">Choose your payment method and complete your purchase securely.</p>
+
+            <!-- Payment Tabs -->
+            <div class="payment-tabs">
+                <button class="pay-tab active" data-method="card">
+                    <i class="fas fa-credit-card"></i> Visa / Credit Card
+                </button>
+                <button class="pay-tab" data-method="fawry">
+                    <i class="fas fa-wallet"></i> Fawry
+                </button>
+            </div>
+
+            <!-- Card Panel -->
+            <div class="pay-panel active" id="panel-card">
+                <div class="pay-field">
+                    <label for="card-number">Card Number</label>
+                    <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" autocomplete="cc-number">
+                </div>
+                <div class="pay-row">
+                    <div class="pay-field">
+                        <label for="card-expiry">Expiry Date</label>
+                        <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp">
+                    </div>
+                    <div class="pay-field">
+                        <label for="card-cvv">CVV</label>
+                        <input type="text" id="card-cvv" placeholder="123" maxlength="4" autocomplete="cc-csc">
+                    </div>
+                </div>
+                <div class="pay-field">
+                    <label for="card-holder">Cardholder Name</label>
+                    <input type="text" id="card-holder" placeholder="Name on card" autocomplete="cc-name">
+                </div>
+            </div>
+
+            <!-- Fawry Panel -->
+            <div class="pay-panel" id="panel-fawry">
+                <div class="fawry-ref-box">
+                    <div class="fawry-ref-label">Your Fawry Reference Number</div>
+                    <div class="fawry-ref-number" id="fawry-ref">—</div>
+                </div>
+                <div class="fawry-instructions">
+                    <strong>How to pay with Fawry:</strong>
+                    <ol>
+                        <li>Copy or screenshot this reference number</li>
+                        <li>Visit any Fawry outlet, ATM, or use the Fawry app</li>
+                        <li>Select "Pay Bill" and enter the reference number</li>
+                        <li>Complete the payment within your reservation window</li>
+                        <li>You'll receive a confirmation SMS once payment is verified</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary-card">
+                <div class="order-summary-title"><i class="fas fa-receipt"></i> Order Summary</div>
+                <div id="order-summary-body"></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;justify-content:center;gap:var(--space-lg);margin-top:var(--space-2xl);flex-wrap:wrap;">
+                <button class="pay-btn pay-btn-outline" id="btn-back-to-food">
+                    <i class="fas fa-arrow-left"></i> BACK
+                </button>
+                <button class="pay-btn pay-btn-primary" id="btn-pay-now">
+                    <i class="fas fa-lock"></i> PAY NOW
+                </button>
+            </div>
+        </div>
+
+        <!-- ==============================
+             STEP 3 — CONFIRMATION
+             ============================== -->
+        <div class="step-view" id="step-3">
+            <div class="confirm-card">
+                <div class="confirm-icon"><i class="fas fa-check"></i></div>
+                <h2 class="confirm-title">Booking Confirmed!</h2>
+                <p class="confirm-subtitle">Your tickets are ready. Enjoy the show! 🎬</p>
+
+                <div id="confirm-body"></div>
+
+                <div class="confirm-actions">
+                    <button class="pay-btn pay-btn-success" id="btn-print-ticket">
+                        <i class="fas fa-print"></i> PRINT TICKET
+                    </button>
+                    <a href="index.html" class="pay-btn pay-btn-outline">
+                        <i class="fas fa-home"></i> BACK TO HOME
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Cart floating bar (Step 1) -->
+    <div class="cart-bar" id="cart-bar">
+        <div class="cart-info">
+            <span class="cart-count" id="cart-count-text">0 items</span>
+            <span class="cart-total" id="cart-total-text">$0.00</span>
+        </div>
+        <div class="cart-actions">
+            <button class="pay-btn pay-btn-primary" onclick="document.getElementById('btn-continue-payment').click()">
+                <i class="fas fa-arrow-right"></i> CHECKOUT
+            </button>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/payment.js"></script>
+
+</body>
+</html>

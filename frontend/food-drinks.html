@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Scene Cinemas - Explore our delicious food and drinks menu. Popcorn, nachos, hot dogs, drinks and combo deals.">
+    <title>Food & Drinks | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================
+           FOOD & DRINKS PAGE STYLES
+           ============================================ */
+
+        /* --- Hero Banner --- */
+        .fd-hero {
+            position: relative;
+            padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+            text-align: center;
+            background: linear-gradient(135deg, var(--dark-surface) 0%, rgba(139, 0, 0, 0.2) 50%, var(--dark-surface) 100%);
+            overflow: hidden;
+        }
+
+        .fd-hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(183, 28, 28, 0.12) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .fd-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .fd-hero-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-lg);
+            display: inline-block;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .fd-hero h1 {
+            font-family: var(--font-display);
+            font-size: 52px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: var(--space-md);
+            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .fd-hero p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* --- Category Section --- */
+        .fd-category {
+            padding: var(--space-3xl) 0;
+        }
+
+        .fd-category:nth-child(even) {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .fd-category-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .fd-category-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
+        }
+
+        .fd-category-title {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--text-primary);
+        }
+
+        .fd-category-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .fd-category-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-red), transparent);
+        }
+
+        /* --- Menu Grid --- */
+        .fd-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-xl);
+        }
+
+        /* --- Menu Item Card --- */
+        .fd-item {
+            background: var(--dark-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            gap: var(--space-lg);
+            align-items: flex-start;
+        }
+
+        .fd-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .fd-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-red);
+            box-shadow: 0 8px 30px rgba(183, 28, 28, 0.15), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .fd-item:hover::before {
+            opacity: 1;
+        }
+
+        .fd-item-emoji {
+            font-size: 36px;
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-md);
+            transition: transform 0.3s ease;
+        }
+
+        .fd-item:hover .fd-item-emoji {
+            transform: scale(1.15);
+        }
+
+        .fd-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .fd-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+
+        .fd-item-name {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+        }
+
+        .fd-item-price {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-light);
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+            padding: 3px 12px;
+            background: rgba(183, 28, 28, 0.1);
+            border-radius: var(--radius-full);
+            border: 1px solid rgba(183, 28, 28, 0.2);
+        }
+
+        .fd-item-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .fd-item-sizes {
+            display: flex;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+            flex-wrap: wrap;
+        }
+
+        .fd-size-tag {
+            font-size: 11px;
+            font-family: var(--font-display);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .fd-size-tag.active,
+        .fd-size-tag:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+            background: rgba(183, 28, 28, 0.08);
+        }
+
+        /* --- Popular Badge --- */
+        .fd-badge-popular {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+            color: #fff;
+            font-family: var(--font-display);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            box-shadow: 0 2px 8px rgba(255, 23, 68, 0.4);
+        }
+
+        /* --- Combo Banner --- */
+        .fd-combo-banner {
+            background: linear-gradient(135deg, rgba(183, 28, 28, 0.15) 0%, rgba(10, 10, 10, 0.9) 100%);
+            border: 1px solid var(--border-red);
+            border-radius: var(--radius-lg);
+            padding: var(--space-2xl);
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .fd-combo-banner h3 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--primary-light);
+            margin-bottom: var(--space-sm);
+        }
+
+        .fd-combo-banner p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* --- Info Note --- */
+        .fd-info-note {
+            text-align: center;
+            padding: var(--space-2xl) 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: var(--space-2xl);
+        }
+
+        .fd-info-note i {
+            color: var(--primary-light);
+            margin-right: var(--space-sm);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .fd-hero h1 {
+                font-size: 36px;
+                letter-spacing: 2px;
+            }
+
+            .fd-category-title {
+                font-size: 24px;
+            }
+
+            .fd-menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .fd-item {
+                padding: var(--space-lg);
+            }
+
+            .fd-item-emoji {
+                font-size: 28px;
+                width: 44px;
+                height: 44px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+
+            <!-- Left Nav Links -->
+            <ul class="nav-links left">
+                <li>
+                    <a href="index.html" class="nav-link">HOME</a>
+                </li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link active">FOOD & DRINKS</a>
+                </li>
+            </ul>
+
+            <!-- Center Logo -->
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+
+            <!-- Right Nav -->
+            <ul class="nav-links right">
+                <li>
+                    <a href="login.html" class="login-btn" id="auth-nav-link">
+                        <i class="fa-regular fa-user"></i> LOGIN
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+
+    <!-- ========================================
+         HERO BANNER
+         ======================================== -->
+    <section class="fd-hero" id="fd-hero">
+        <div class="fd-hero-content">
+            <div class="fd-hero-icon">🍿</div>
+            <h1>Food & Drinks</h1>
+            <p>Elevate your movie experience with our premium cinema snacks, freshly prepared drinks, and unbeatable combo deals.</p>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         MENU SECTIONS
+         ======================================== -->
+    <div class="container">
+
+        <!-- ===== POPCORN ===== -->
+        <section class="fd-category" id="popcorn">
+            <div class="fd-category-header">
+                <div class="fd-category-icon">🍿</div>
+                <div>
+                    <div class="fd-category-title">Popcorn</div>
+                    <div class="fd-category-subtitle">Freshly popped, perfectly seasoned</div>
+                </div>
+                <div class="fd-category-line"></div>
+            </div>
+
+            <div class="fd-menu-grid">
+                <!-- Classic Butter Popcorn -->
+                <div class="fd-item" id="item-classic-popcorn">
+                    <span class="fd-badge-popular">POPULAR</span>
+                    <div class="fd-item-emoji">🧈</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Classic Butter</span>
+                        </div>
+                        <p class="fd-item-desc">Our signature buttery popcorn, made fresh with premium golden butter.</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $5.50</span>
+                            <span class="fd-size-tag active">Medium $7.50</span>
+                            <span class="fd-size-tag">Large $9.50</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caramel Popcorn -->
+                <div class="fd-item" id="item-caramel-popcorn">
+                    <div class="fd-item-emoji">🍯</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Caramel Drizzle</span>
+                        </div>
+                        <p class="fd-item-desc">Sweet caramelized popcorn with a rich, golden caramel coating.</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $6.00</span>
+                            <span class="fd-size-tag active">Medium $8.00</span>
+                            <span class="fd-size-tag">Large $10.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cheese Popcorn -->
+                <div class="fd-item" id="item-cheese-popcorn">
+                    <div class="fd-item-emoji">🧀</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Cheddar Cheese</span>
+                        </div>
+                        <p class="fd-item-desc">Savory cheddar cheese dusted over hot, fluffy popcorn.</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $6.00</span>
+                            <span class="fd-size-tag active">Medium $8.00</span>
+                            <span class="fd-size-tag">Large $10.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spicy Popcorn -->
+                <div class="fd-item" id="item-spicy-popcorn">
+                    <div class="fd-item-emoji">🌶️</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Spicy Jalapeño</span>
+                        </div>
+                        <p class="fd-item-desc">Bold and fiery jalapeño seasoning on crispy popcorn. Not for the faint hearted!</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $6.00</span>
+                            <span class="fd-size-tag active">Medium $8.00</span>
+                            <span class="fd-size-tag">Large $10.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===== SNACKS ===== -->
+        <section class="fd-category" id="snacks">
+            <div class="fd-category-header">
+                <div class="fd-category-icon">🍫</div>
+                <div>
+                    <div class="fd-category-title">Snacks</div>
+                    <div class="fd-category-subtitle">Sweet treats & savory bites</div>
+                </div>
+                <div class="fd-category-line"></div>
+            </div>
+
+            <div class="fd-menu-grid">
+                <!-- Nachos -->
+                <div class="fd-item" id="item-nachos">
+                    <span class="fd-badge-popular">POPULAR</span>
+                    <div class="fd-item-emoji">🫕</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Loaded Nachos</span>
+                            <span class="fd-item-price">$8.50</span>
+                        </div>
+                        <p class="fd-item-desc">Crispy tortilla chips with warm cheese sauce, jalapeños, and salsa on the side.</p>
+                    </div>
+                </div>
+
+                <!-- Hot Dog -->
+                <div class="fd-item" id="item-hotdog">
+                    <div class="fd-item-emoji">🌭</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Classic Hot Dog</span>
+                            <span class="fd-item-price">$6.50</span>
+                        </div>
+                        <p class="fd-item-desc">All-beef hot dog in a toasted bun with ketchup, mustard, and relish.</p>
+                    </div>
+                </div>
+
+                <!-- Pretzel -->
+                <div class="fd-item" id="item-pretzel">
+                    <div class="fd-item-emoji">🥨</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Soft Pretzel</span>
+                            <span class="fd-item-price">$5.50</span>
+                        </div>
+                        <p class="fd-item-desc">Warm, salted soft pretzel served with cheese dip or honey mustard.</p>
+                    </div>
+                </div>
+
+                <!-- Mozzarella Sticks -->
+                <div class="fd-item" id="item-mozz-sticks">
+                    <div class="fd-item-emoji">🧀</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Mozzarella Sticks</span>
+                            <span class="fd-item-price">$7.00</span>
+                        </div>
+                        <p class="fd-item-desc">Golden-fried mozzarella sticks served with marinara dipping sauce.</p>
+                    </div>
+                </div>
+
+                <!-- Candy Box -->
+                <div class="fd-item" id="item-candy">
+                    <div class="fd-item-emoji">🍬</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Candy Box</span>
+                            <span class="fd-item-price">$4.50</span>
+                        </div>
+                        <p class="fd-item-desc">Choose from M&M's, Skittles, Gummy Bears, or Sour Patch Kids.</p>
+                    </div>
+                </div>
+
+                <!-- Chocolate Bar -->
+                <div class="fd-item" id="item-chocolate">
+                    <div class="fd-item-emoji">🍫</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Chocolate Bar</span>
+                            <span class="fd-item-price">$3.50</span>
+                        </div>
+                        <p class="fd-item-desc">Premium chocolate bars — Snickers, KitKat, Twix, or Milky Way.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===== DRINKS ===== -->
+        <section class="fd-category" id="drinks">
+            <div class="fd-category-header">
+                <div class="fd-category-icon">🥤</div>
+                <div>
+                    <div class="fd-category-title">Drinks</div>
+                    <div class="fd-category-subtitle">Ice cold beverages & more</div>
+                </div>
+                <div class="fd-category-line"></div>
+            </div>
+
+            <div class="fd-menu-grid">
+                <!-- Soft Drinks -->
+                <div class="fd-item" id="item-soft-drink">
+                    <span class="fd-badge-popular">POPULAR</span>
+                    <div class="fd-item-emoji">🥤</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Soft Drink</span>
+                        </div>
+                        <p class="fd-item-desc">Coca-Cola, Pepsi, Sprite, Fanta, or Dr Pepper. Free refills on large!</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $4.00</span>
+                            <span class="fd-size-tag active">Medium $5.50</span>
+                            <span class="fd-size-tag">Large $7.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Iced Tea -->
+                <div class="fd-item" id="item-iced-tea">
+                    <div class="fd-item-emoji">🍵</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Iced Tea</span>
+                        </div>
+                        <p class="fd-item-desc">Refreshing iced tea — choose from Peach, Lemon, or Classic.</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $4.50</span>
+                            <span class="fd-size-tag active">Medium $6.00</span>
+                            <span class="fd-size-tag">Large $7.50</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Water -->
+                <div class="fd-item" id="item-water">
+                    <div class="fd-item-emoji">💧</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Bottled Water</span>
+                            <span class="fd-item-price">$3.00</span>
+                        </div>
+                        <p class="fd-item-desc">Pure spring water, 500ml bottle. Stay hydrated!</p>
+                    </div>
+                </div>
+
+                <!-- Slushie -->
+                <div class="fd-item" id="item-slushie">
+                    <div class="fd-item-emoji">🧊</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Frozen Slushie</span>
+                        </div>
+                        <p class="fd-item-desc">Icy frozen slushie in Blue Raspberry, Cherry, or Mango flavor.</p>
+                        <div class="fd-item-sizes">
+                            <span class="fd-size-tag">Small $5.00</span>
+                            <span class="fd-size-tag active">Medium $6.50</span>
+                            <span class="fd-size-tag">Large $8.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee -->
+                <div class="fd-item" id="item-coffee">
+                    <div class="fd-item-emoji">☕</div>
+                    <div class="fd-item-info">
+                        <div class="fd-item-header">
+                            <span class="fd-item-name">Hot Coffee</span>
+                            <span class="fd-item-price">$4.50</span>
+                        </div>
+                        <p class="fd-item-desc">Freshly brewed coffee — Americano, Latte, or Cappuccino.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+
+
+
+        <!-- Info Note -->
+        <div class="fd-info-note">
+            <i class="fas fa-info-circle"></i>
+            Food and drinks can be added to your order during checkout. Prices may vary by location.
+        </div>
+
+    </div>
+
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer" id="footer">
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <!-- Get in Touch -->
+                <div class="footer-col">
+                    <h4 class="footer-title">GET IN TOUCH</h4>
+                    <div class="footer-links">
+                        <a href="pages/contact.html">Contact Us</a>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="footer-col">
+                    <h4 class="footer-title">ABOUT TEST CINEMAS</h4>
+                    <div class="footer-links">
+                        <a href="pages/about.html">About Us</a>
+                        <a href="pages/experience-imax.html">IMAX Cinema</a>
+                        <a href="pages/experience-dolby.html">Dolby Cinema</a>
+                        <a href="pages/experience-standard.html">Standard & Deluxe</a>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="footer-col">
+                    <h4 class="footer-title">LEGAL</h4>
+                    <div class="footer-links">
+                        <a href="pages/faq.html">FAQs</a>
+                        <a href="pages/terms.html">Terms & Conditions</a>
+                        <a href="pages/privacy.html">Privacy Policy</a>
+                        <a href="pages/support.html">Support</a>
+                    </div>
+                </div>
+
+                <!-- Follow Us -->
+                <div class="footer-col">
+                    <h4 class="footer-title">FOLLOW US</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Scene Cinemas. All rights reserved.</p>
+            </div>
+
+        </div>
+    </footer>
+
+
+    <!-- ========================================
+         SCRIPTS
+         ======================================== -->
+    <script src="js/main.js"></script>
+
+</body>
+
+</html>

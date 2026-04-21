@@ -200,7 +200,7 @@
                     </div>
                     <div class="form-group form-group-wide">
                         <label for="m-poster-url">Poster URL</label>
-                        <input type="url" id="m-poster-url" class="form-input" placeholder="https://…" id="m-poster-url">
+                        <input type="url" id="m-poster-url" class="form-input" placeholder="https://…">
                     </div>
                 </div>
 
@@ -249,6 +249,9 @@
                 <button class="btn-tmdb-search" id="btn-tmdb-search">
                     <i class="fas fa-search"></i> Search
                 </button>
+                <button class="btn-tmdb-search" id="btn-tmdb-sync" style="background:var(--success);border-color:var(--success);margin-left:8px;" title="Auto-load current Now Playing movies">
+                    <i class="fas fa-sync-alt"></i> Sync Now Playing
+                </button>
             </div>
 
             <div class="tmdb-results" id="tmdb-results">
@@ -296,7 +299,7 @@
 
     <!-- SCRIPTS -->
     <script src="js/sidebar-loader.js"></script>
-    <script src="js/movies-admin.js"></script>
+    <script src="js/movies-admin.js?v=6"></script>
 
 </body>
 </html>

@@ -451,6 +451,8 @@
 
 .modal-overlay.open {
     display: flex;
+    opacity: 1;
+    visibility: visible;
     animation: fadeIn 0.2s ease;
 }
 

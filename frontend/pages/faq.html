@@ -1,1 +1,275 @@
-<!-- FAQ Page -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Frequently asked questions about Scene Cinemas — booking, payments, food, and more.">
+    <title>FAQ | Scene Cinemas</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .faq-hero {
+            position:relative; padding:calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
+            text-align:center;
+            background:linear-gradient(135deg,var(--dark-surface) 0%,rgba(139,0,0,0.18) 50%,var(--dark-surface) 100%);
+            overflow:hidden;
+        }
+        .faq-hero::before { content:''; position:absolute; top:-200px; left:50%; transform:translateX(-50%); width:800px; height:800px; border-radius:50%; background:radial-gradient(circle,rgba(183,28,28,0.12) 0%,transparent 60%); pointer-events:none; }
+        .faq-hero-content { position:relative; z-index:1; }
+        .faq-hero-icon { font-size:48px; margin-bottom:var(--space-lg); display:inline-block; animation:floatI 3s ease-in-out infinite; }
+        @keyframes floatI { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+        .faq-hero h1 { font-family:var(--font-display); font-size:52px; font-weight:700; text-transform:uppercase; letter-spacing:4px; margin-bottom:var(--space-md); background:linear-gradient(135deg,#fff 0%,var(--primary-light) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .faq-hero p { font-size:16px; color:var(--text-secondary); letter-spacing:1px; max-width:600px; margin:0 auto; }
+
+        /* Search */
+        .faq-search-wrap { max-width:600px; margin:0 auto var(--space-3xl); position:relative; }
+        .faq-search { width:100%; padding:16px 20px 16px 50px; background:var(--dark-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); color:var(--text-primary); font-size:15px; outline:none; transition:all 0.3s ease; box-sizing:border-box; }
+        .faq-search:focus { border-color:var(--primary); box-shadow:0 0 20px rgba(183,28,28,0.15); }
+        .faq-search-icon { position:absolute; left:18px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:16px; }
+
+        /* Category tabs */
+        .faq-tabs { display:flex; justify-content:center; gap:var(--space-md); margin-bottom:var(--space-2xl); flex-wrap:wrap; }
+        .faq-tab {
+            padding:10px 24px; border:1px solid var(--border-subtle); border-radius:var(--radius-full);
+            font-family:var(--font-display); font-size:12px; font-weight:600; letter-spacing:1.5px;
+            text-transform:uppercase; color:var(--text-secondary); cursor:pointer; transition:all 0.3s ease; background:transparent;
+        }
+        .faq-tab:hover { border-color:var(--primary); color:var(--primary-light); }
+        .faq-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); box-shadow:var(--shadow-red); }
+
+        /* Accordion */
+        .faq-category { margin-bottom:var(--space-3xl); }
+        .faq-category-title {
+            font-family:var(--font-display); font-size:24px; font-weight:700; text-transform:uppercase;
+            letter-spacing:2px; color:var(--primary-light); margin-bottom:var(--space-xl);
+            display:flex; align-items:center; gap:var(--space-md);
+        }
+        .faq-category-icon { width:44px; height:44px; border-radius:var(--radius-lg); display:flex; align-items:center; justify-content:center; font-size:20px; background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; flex-shrink:0; }
+        .faq-category-line { flex:1; height:1px; background:linear-gradient(90deg,var(--border-red),transparent); }
+
+        .faq-item { background:var(--dark-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); margin-bottom:var(--space-md); overflow:hidden; transition:all 0.3s ease; }
+        .faq-item:hover { border-color:var(--border-red); }
+        .faq-item.open { border-color:var(--primary); box-shadow:0 4px 20px rgba(183,28,28,0.1); }
+        .faq-question {
+            display:flex; align-items:center; justify-content:space-between; padding:var(--space-lg) var(--space-xl);
+            cursor:pointer; font-size:15px; font-weight:500; color:var(--text-primary); transition:all 0.2s;
+        }
+        .faq-question:hover { color:var(--primary-light); }
+        .faq-arrow { transition:transform 0.3s ease; color:var(--primary-light); font-size:14px; flex-shrink:0; margin-left:var(--space-md); }
+        .faq-item.open .faq-arrow { transform:rotate(180deg); }
+        .faq-answer {
+            max-height:0; overflow:hidden; transition:max-height 0.4s ease, padding 0.3s ease;
+            padding:0 var(--space-xl); color:var(--text-muted); font-size:14px; line-height:1.8;
+        }
+        .faq-item.open .faq-answer { max-height:500px; padding:0 var(--space-xl) var(--space-lg); }
+
+        /* CTA */
+        .faq-cta { text-align:center; padding:var(--space-3xl) 0; border-top:1px solid var(--border-subtle); margin-top:var(--space-2xl); }
+        .faq-cta h3 { font-family:var(--font-display); font-size:24px; text-transform:uppercase; letter-spacing:2px; margin-bottom:var(--space-md); }
+        .faq-cta p { color:var(--text-muted); font-size:14px; margin-bottom:var(--space-xl); }
+        .faq-cta-btn {
+            display:inline-block; padding:14px 40px; background:var(--primary); color:#fff; border-radius:var(--radius-md);
+            font-family:var(--font-display); font-size:14px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+            transition:all 0.3s ease; text-decoration:none;
+        }
+        .faq-cta-btn:hover { background:var(--primary-light); box-shadow:var(--shadow-red); transform:translateY(-2px); }
+        .faq-no-results { display:none; text-align:center; padding:var(--space-3xl); color:var(--text-muted); font-size:16px; }
+
+        @media (max-width:768px) { .faq-hero h1 { font-size:36px; letter-spacing:2px; } }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li><a href="../food-drinks.html" class="nav-link">FOOD & DRINKS</a></li>
+            </ul>
+            <div class="logo"><a href="../index.html"><span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span></a></div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn" id="auth-nav-link"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="faq-hero">
+        <div class="faq-hero-content">
+            <div class="faq-hero-icon">❓</div>
+            <h1>FAQ</h1>
+            <p>Find quick answers to the most commonly asked questions about Scene Cinemas.</p>
+        </div>
+    </section>
+
+    <div class="container">
+
+        <!-- SEARCH -->
+        <div class="faq-search-wrap">
+            <i class="fas fa-search faq-search-icon"></i>
+            <input type="text" class="faq-search" id="faq-search" placeholder="Search questions...">
+        </div>
+
+        <!-- TABS -->
+        <div class="faq-tabs" id="faq-tabs">
+            <button class="faq-tab active" data-cat="all">All</button>
+            <button class="faq-tab" data-cat="booking">Booking</button>
+            <button class="faq-tab" data-cat="payment">Payment</button>
+            <button class="faq-tab" data-cat="food">Food & Drinks</button>
+            <button class="faq-tab" data-cat="general">General</button>
+        </div>
+
+        <!-- NO RESULTS -->
+        <div class="faq-no-results" id="faq-no-results">
+            <i class="fas fa-search" style="font-size:36px;color:var(--primary-light);margin-bottom:16px;display:block;"></i>
+            No matching questions found. Try a different search term.
+        </div>
+
+        <!-- BOOKING -->
+        <div class="faq-category" data-category="booking">
+            <div class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-ticket-alt"></i></div>
+                Booking
+                <div class="faq-category-line"></div>
+            </div>
+            <div class="faq-item"><div class="faq-question">How do I book tickets online?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Simply browse our movies, select a showtime, choose your seats on our interactive seat map, and complete your payment. You'll receive a booking confirmation with a unique booking number.</div></div>
+            <div class="faq-item"><div class="faq-question">Can I choose my seats?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Yes! Our interactive seat map lets you pick your preferred seats. You can choose from Standard, Premium, IMAX, Dolby, and Deluxe options depending on the showtime.</div></div>
+            <div class="faq-item"><div class="faq-question">Is there a reservation time limit?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Once you select seats, you have a 10-minute reservation window to complete your booking. If time runs out, the seats are released back for others to book.</div></div>
+            <div class="faq-item"><div class="faq-question">Can I cancel or modify my booking?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Bookings can be modified or cancelled up to 2 hours before the show starts. Go to your profile page to manage your bookings or contact our support team.</div></div>
+            <div class="faq-item"><div class="faq-question">Do I need an account to book?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Yes, you need to create a free account or log in to book tickets. This helps us manage your reservations and provide a personalized experience.</div></div>
+        </div>
+
+        <!-- PAYMENT -->
+        <div class="faq-category" data-category="payment">
+            <div class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-credit-card"></i></div>
+                Payment
+                <div class="faq-category-line"></div>
+            </div>
+            <div class="faq-item"><div class="faq-question">What payment methods do you accept?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">We accept Visa, Mastercard, credit/debit cards, and Fawry. You can choose your preferred method during checkout.</div></div>
+            <div class="faq-item"><div class="faq-question">Is online payment secure?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Absolutely. All transactions are encrypted using industry-standard SSL. We never store your full card details on our servers.</div></div>
+            <div class="faq-item"><div class="faq-question">How do refunds work?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Refunds are processed within 5–7 business days back to your original payment method. For Fawry payments, refunds are credited to your Fawry wallet.</div></div>
+            <div class="faq-item"><div class="faq-question">Can I pay with Fawry?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Yes! Select Fawry at checkout and you'll receive a reference number. Pay at any Fawry outlet within your reservation window to confirm your booking.</div></div>
+        </div>
+
+        <!-- FOOD -->
+        <div class="faq-category" data-category="food">
+            <div class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-utensils"></i></div>
+                Food & Drinks
+                <div class="faq-category-line"></div>
+            </div>
+            <div class="faq-item"><div class="faq-question">Can I pre-order food with my ticket?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Yes! After selecting your seats, you'll have the option to add food and drinks to your order. This ensures your snacks are ready when you arrive.</div></div>
+            <div class="faq-item"><div class="faq-question">Can I bring outside food?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Outside food and beverages are not permitted inside the theatre. We offer a wide variety of snacks, drinks, and combo deals at our concession stands.</div></div>
+            <div class="faq-item"><div class="faq-question">Do you have vegetarian or allergy-friendly options?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">We offer several vegetarian options. For specific allergies, please speak to our staff at the concession stand and they'll be happy to assist you.</div></div>
+        </div>
+
+        <!-- GENERAL -->
+        <div class="faq-category" data-category="general">
+            <div class="faq-category-title">
+                <div class="faq-category-icon"><i class="fas fa-info-circle"></i></div>
+                General
+                <div class="faq-category-line"></div>
+            </div>
+            <div class="faq-item"><div class="faq-question">What are your opening hours?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">We're open Monday–Thursday from 10:00 AM to 12:00 AM, Friday–Saturday from 10:00 AM to 2:00 AM, and Sunday from 11:00 AM to 11:00 PM.</div></div>
+            <div class="faq-item"><div class="faq-question">What experiences do you offer?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">We offer Standard, Deluxe (premium recliner seating), IMAX (massive screen + laser projection), and Dolby Cinema (Dolby Atmos immersive sound) experiences.</div></div>
+            <div class="faq-item"><div class="faq-question">Is there parking available?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">Yes, free parking is available at all our locations with over 500 spaces. Valet parking is also available at select locations.</div></div>
+            <div class="faq-item"><div class="faq-question">Do you have wheelchair accessibility?<i class="fas fa-chevron-down faq-arrow"></i></div><div class="faq-answer">All our theatres are fully wheelchair accessible with designated seating, accessible restrooms, and elevator access to all floors.</div></div>
+        </div>
+
+        <!-- CTA -->
+        <div class="faq-cta">
+            <h3>Still have questions?</h3>
+            <p>Our support team is here to help. Don't hesitate to reach out!</p>
+            <a href="contact.html" class="faq-cta-btn"><i class="fas fa-envelope"></i> CONTACT US</a>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col"><h4 class="footer-title">GET IN TOUCH</h4><div class="footer-links"><a href="contact.html">Contact Us</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">ABOUT TEST CINEMAS</h4><div class="footer-links"><a href="about.html">About Us</a><a href="experience-imax.html">IMAX Cinema</a><a href="experience-dolby.html">Dolby Cinema</a><a href="experience-standard.html">Standard & Deluxe</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">LEGAL</h4><div class="footer-links"><a href="faq.html">FAQs</a><a href="terms.html">Terms & Conditions</a><a href="privacy.html">Privacy Policy</a><a href="support.html">Support</a></div></div>
+                <div class="footer-col"><h4 class="footer-title">FOLLOW US</h4><div class="social-links"><a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a><a href="#" class="social-link"><i class="fab fa-instagram"></i></a><a href="#" class="social-link"><i class="fab fa-tiktok"></i></a><a href="#" class="social-link"><i class="fab fa-youtube"></i></a></div></div>
+            </div>
+            <div class="footer-bottom"><p>&copy; 2026 Scene Cinemas. All rights reserved.</p></div>
+        </div>
+    </footer>
+
+    <script src="../js/main.js"></script>
+    <script>
+    (function() {
+        // Accordion toggle
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.addEventListener('click', () => {
+                const item = q.parentElement;
+                const wasOpen = item.classList.contains('open');
+                // Close all in same category
+                item.closest('.faq-category').querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+                if (!wasOpen) item.classList.add('open');
+            });
+        });
+
+        // Category tabs
+        document.querySelectorAll('.faq-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.faq-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const cat = tab.dataset.cat;
+                document.querySelectorAll('.faq-category').forEach(c => {
+                    c.style.display = (cat === 'all' || c.dataset.category === cat) ? 'block' : 'none';
+                });
+                document.getElementById('faq-no-results').style.display = 'none';
+            });
+        });
+
+        // Search filter
+        document.getElementById('faq-search')?.addEventListener('input', function() {
+            const q = this.value.toLowerCase().trim();
+            let found = 0;
+            document.querySelectorAll('.faq-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const match = !q || text.includes(q);
+                item.style.display = match ? 'block' : 'none';
+                if (match) found++;
+            });
+            // Show/hide categories that have no visible items
+            document.querySelectorAll('.faq-category').forEach(cat => {
+                const visible = cat.querySelectorAll('.faq-item[style*="block"], .faq-item:not([style])').length;
+                const hasVisible = Array.from(cat.querySelectorAll('.faq-item')).some(i => i.style.display !== 'none');
+                cat.style.display = hasVisible ? 'block' : 'none';
+            });
+            document.getElementById('faq-no-results').style.display = found === 0 ? 'block' : 'none';
+
+            // Reset tabs to "All"
+            if (q) {
+                document.querySelectorAll('.faq-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('.faq-tab[data-cat="all"]')?.classList.add('active');
+                document.querySelectorAll('.faq-category').forEach(c => { if(c.style.display !== 'none') c.style.display = 'block'; });
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
