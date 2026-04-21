@@ -5,336 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Scene Cinemas - Explore our delicious food and drinks menu. Popcorn, nachos, hot dogs, drinks and combo deals.">
-    <title>Food & Drinks | Scene Cinemas</title>
-    <link rel="stylesheet" href="css/style.css">
+        content="Explore our cinema food & drinks menu. Popcorn, nachos, hot dogs, drinks, and candy at great prices.">
+    <title>Food & Drinks | Vision X Cinemas</title>
+    <link rel="stylesheet" href="../shared/css/food-drinks.css">
+
+    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* ============================================
-           FOOD & DRINKS PAGE STYLES
-           ============================================ */
-
-        /* --- Hero Banner --- */
-        .fd-hero {
-            position: relative;
-            padding: calc(var(--nav-height) + var(--space-3xl)) 0 var(--space-3xl);
-            text-align: center;
-            background: linear-gradient(135deg, var(--dark-surface) 0%, rgba(139, 0, 0, 0.2) 50%, var(--dark-surface) 100%);
-            overflow: hidden;
-        }
-
-        .fd-hero::before {
-            content: '';
-            position: absolute;
-            top: -200px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 800px;
-            height: 800px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(183, 28, 28, 0.12) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .fd-hero-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .fd-hero-icon {
-            font-size: 48px;
-            margin-bottom: var(--space-lg);
-            display: inline-block;
-            animation: floatIcon 3s ease-in-out infinite;
-        }
-
-        @keyframes floatIcon {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .fd-hero h1 {
-            font-family: var(--font-display);
-            font-size: 52px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-bottom: var(--space-md);
-            background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .fd-hero p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            letter-spacing: 1px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* --- Category Section --- */
-        .fd-category {
-            padding: var(--space-3xl) 0;
-        }
-
-        .fd-category:nth-child(even) {
-            background: rgba(255, 255, 255, 0.01);
-        }
-
-        .fd-category-header {
-            display: flex;
-            align-items: center;
-            gap: var(--space-lg);
-            margin-bottom: var(--space-2xl);
-        }
-
-        .fd-category-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            box-shadow: 0 4px 15px rgba(183, 28, 28, 0.3);
-        }
-
-        .fd-category-title {
-            font-family: var(--font-display);
-            font-size: 32px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--text-primary);
-        }
-
-        .fd-category-subtitle {
-            font-size: 14px;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            margin-top: 4px;
-        }
-
-        .fd-category-line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border-red), transparent);
-        }
-
-        /* --- Menu Grid --- */
-        .fd-menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: var(--space-xl);
-        }
-
-        /* --- Menu Item Card --- */
-        .fd-item {
-            background: var(--dark-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-lg);
-            padding: var(--space-xl);
-            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            gap: var(--space-lg);
-            align-items: flex-start;
-        }
-
-        .fd-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .fd-item:hover {
-            transform: translateY(-4px);
-            border-color: var(--border-red);
-            box-shadow: 0 8px 30px rgba(183, 28, 28, 0.15), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .fd-item:hover::before {
-            opacity: 1;
-        }
-
-        .fd-item-emoji {
-            font-size: 36px;
-            flex-shrink: 0;
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: var(--radius-md);
-            transition: transform 0.3s ease;
-        }
-
-        .fd-item:hover .fd-item-emoji {
-            transform: scale(1.15);
-        }
-
-        .fd-item-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .fd-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: var(--space-md);
-            margin-bottom: var(--space-sm);
-        }
-
-        .fd-item-name {
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-primary);
-        }
-
-        .fd-item-price {
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-light);
-            letter-spacing: 0.5px;
-            flex-shrink: 0;
-            padding: 3px 12px;
-            background: rgba(183, 28, 28, 0.1);
-            border-radius: var(--radius-full);
-            border: 1px solid rgba(183, 28, 28, 0.2);
-        }
-
-        .fd-item-desc {
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        .fd-item-sizes {
-            display: flex;
-            gap: var(--space-sm);
-            margin-top: var(--space-md);
-            flex-wrap: wrap;
-        }
-
-        .fd-size-tag {
-            font-size: 11px;
-            font-family: var(--font-display);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: var(--radius-full);
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-secondary);
-            transition: var(--transition);
-        }
-
-        .fd-size-tag.active,
-        .fd-size-tag:hover {
-            border-color: var(--primary);
-            color: var(--primary-light);
-            background: rgba(183, 28, 28, 0.08);
-        }
-
-        /* --- Popular Badge --- */
-        .fd-badge-popular {
-            position: absolute;
-            top: var(--space-md);
-            right: var(--space-md);
-            background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
-            color: #fff;
-            font-family: var(--font-display);
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            padding: 4px 12px;
-            border-radius: var(--radius-full);
-            box-shadow: 0 2px 8px rgba(255, 23, 68, 0.4);
-        }
-
-        /* --- Combo Banner --- */
-        .fd-combo-banner {
-            background: linear-gradient(135deg, rgba(183, 28, 28, 0.15) 0%, rgba(10, 10, 10, 0.9) 100%);
-            border: 1px solid var(--border-red);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            text-align: center;
-            margin-bottom: var(--space-2xl);
-        }
-
-        .fd-combo-banner h3 {
-            font-family: var(--font-display);
-            font-size: 28px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--primary-light);
-            margin-bottom: var(--space-sm);
-        }
-
-        .fd-combo-banner p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* --- Info Note --- */
-        .fd-info-note {
-            text-align: center;
-            padding: var(--space-2xl) 0;
-            color: var(--text-muted);
-            font-size: 14px;
-            border-top: 1px solid var(--border-subtle);
-            margin-top: var(--space-2xl);
-        }
-
-        .fd-info-note i {
-            color: var(--primary-light);
-            margin-right: var(--space-sm);
-        }
-
-        /* --- Responsive --- */
-        @media (max-width: 768px) {
-            .fd-hero h1 {
-                font-size: 36px;
-                letter-spacing: 2px;
-            }
-
-            .fd-category-title {
-                font-size: 24px;
-            }
-
-            .fd-menu-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .fd-item {
-                padding: var(--space-lg);
-            }
-
-            .fd-item-emoji {
-                font-size: 28px;
-                width: 44px;
-                height: 44px;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -377,14 +53,14 @@
             <!-- Center Logo -->
             <div class="logo">
                 <a href="index.html">
-                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                    <span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span>
                 </a>
             </div>
 
             <!-- Right Nav -->
             <ul class="nav-links right">
                 <li>
-                    <a href="login.html" class="login-btn" id="auth-nav-link">
+                    <a href="login.html" class="login-btn">
                         <i class="fa-regular fa-user"></i> LOGIN
                     </a>
                 </li>
@@ -395,289 +71,521 @@
 
 
     <!-- ========================================
-         HERO BANNER
+         PAGE HEADER
          ======================================== -->
-    <section class="fd-hero" id="fd-hero">
-        <div class="fd-hero-content">
-            <div class="fd-hero-icon">🍿</div>
+    <header class="food-header">
+        <div class="food-header-content">
             <h1>Food & Drinks</h1>
-            <p>Elevate your movie experience with our premium cinema snacks, freshly prepared drinks, and unbeatable combo deals.</p>
+            <p>Elevate your movie experience with our delicious cinema snacks, refreshing drinks, and sweet treats</p>
+
+            <!-- Category Tabs -->
+            <div class="menu-categories-nav" id="menu-categories-nav">
+                <button class="category-tab active" data-category="all">ALL</button>
+                <button class="category-tab" data-category="popcorn">POPCORN</button>
+                <button class="category-tab" data-category="snacks">SNACKS</button>
+                <button class="category-tab" data-category="drinks">DRINKS</button>
+                <button class="category-tab" data-category="candy">CANDY</button>
+
+            </div>
         </div>
-    </section>
+    </header>
 
 
     <!-- ========================================
-         MENU SECTIONS
+         POPCORN SECTION
          ======================================== -->
-    <div class="container">
+    <section class="menu-section" id="popcorn" data-section="popcorn">
+        <div class="container">
 
-        <!-- ===== POPCORN ===== -->
-        <section class="fd-category" id="popcorn">
-            <div class="fd-category-header">
-                <div class="fd-category-icon">🍿</div>
-                <div>
-                    <div class="fd-category-title">Popcorn</div>
-                    <div class="fd-category-subtitle">Freshly popped, perfectly seasoned</div>
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-seedling"></i>
                 </div>
-                <div class="fd-category-line"></div>
+                <div>
+                    <h2 class="menu-section-title">Popcorn</h2>
+                    <p class="menu-section-subtitle">Freshly popped, perfectly seasoned</p>
+                </div>
             </div>
+            <div class="section-divider"></div>
 
-            <div class="fd-menu-grid">
+            <div class="menu-grid">
+
                 <!-- Classic Butter Popcorn -->
-                <div class="fd-item" id="item-classic-popcorn">
-                    <span class="fd-badge-popular">POPULAR</span>
-                    <div class="fd-item-emoji">🧈</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Classic Butter</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/classic-butter-popcorn.jpg" alt="Classic Butter Popcorn">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Classic Butter Popcorn</h3>
                         </div>
-                        <p class="fd-item-desc">Our signature buttery popcorn, made fresh with premium golden butter.</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $5.50</span>
-                            <span class="fd-size-tag active">Medium $7.50</span>
-                            <span class="fd-size-tag">Large $9.50</span>
+                        <p class="menu-card-desc">Our signature buttery popcorn, freshly popped and seasoned to
+                            perfection. A cinema classic.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">150 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">190 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">225 EGP</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-fire"></i> Best Seller</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Caramel Popcorn -->
-                <div class="fd-item" id="item-caramel-popcorn">
-                    <div class="fd-item-emoji">🍯</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Caramel Drizzle</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/caramel-popcorn.jpg" alt="Caramel Popcorn">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Caramel Popcorn</h3>
                         </div>
-                        <p class="fd-item-desc">Sweet caramelized popcorn with a rich, golden caramel coating.</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $6.00</span>
-                            <span class="fd-size-tag active">Medium $8.00</span>
-                            <span class="fd-size-tag">Large $10.00</span>
+                        <p class="menu-card-desc">Sweet, crunchy caramel-coated popcorn. The perfect sweet treat for
+                            your movie.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">165 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">200 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">240 EGP</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Cheese Popcorn -->
-                <div class="fd-item" id="item-cheese-popcorn">
-                    <div class="fd-item-emoji">🧀</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Cheddar Cheese</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/cheese-popcorn.jpg" alt="Cheese Popcorn">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Cheddar Cheese Popcorn</h3>
                         </div>
-                        <p class="fd-item-desc">Savory cheddar cheese dusted over hot, fluffy popcorn.</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $6.00</span>
-                            <span class="fd-size-tag active">Medium $8.00</span>
-                            <span class="fd-size-tag">Large $10.00</span>
+                        <p class="menu-card-desc">Rich, cheesy flavor on every kernel. Made with real cheddar seasoning
+                            for a savory crunch.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">165 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">200 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">240 EGP</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Spicy Popcorn -->
-                <div class="fd-item" id="item-spicy-popcorn">
-                    <div class="fd-item-emoji">🌶️</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Spicy Jalapeño</span>
-                        </div>
-                        <p class="fd-item-desc">Bold and fiery jalapeño seasoning on crispy popcorn. Not for the faint hearted!</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $6.00</span>
-                            <span class="fd-size-tag active">Medium $8.00</span>
-                            <span class="fd-size-tag">Large $10.00</span>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </section>
+        </div>
+    </section>
 
 
-        <!-- ===== SNACKS ===== -->
-        <section class="fd-category" id="snacks">
-            <div class="fd-category-header">
-                <div class="fd-category-icon">🍫</div>
+    <!-- ========================================
+         SNACKS SECTION
+         ======================================== -->
+    <section class="menu-section" id="snacks" data-section="snacks">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-hotdog"></i>
+                </div>
                 <div>
-                    <div class="fd-category-title">Snacks</div>
-                    <div class="fd-category-subtitle">Sweet treats & savory bites</div>
+                    <h2 class="menu-section-title">Snacks</h2>
+                    <p class="menu-section-subtitle">Hot & fresh from our kitchen</p>
                 </div>
-                <div class="fd-category-line"></div>
             </div>
+            <div class="section-divider"></div>
 
-            <div class="fd-menu-grid">
+            <div class="menu-grid">
+
                 <!-- Nachos -->
-                <div class="fd-item" id="item-nachos">
-                    <span class="fd-badge-popular">POPULAR</span>
-                    <div class="fd-item-emoji">🫕</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Loaded Nachos</span>
-                            <span class="fd-item-price">$8.50</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/loaded-nachos.jpg" alt="Loaded Nachos">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Loaded Nachos</h3>
+                            <span class="menu-card-price">250 EGP</span>
                         </div>
-                        <p class="fd-item-desc">Crispy tortilla chips with warm cheese sauce, jalapeños, and salsa on the side.</p>
+                        <p class="menu-card-desc">Crispy tortilla chips loaded with warm cheese sauce, jalapeños, and
+                            salsa on the side.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-pepper-hot"></i> Spicy</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Hot Dog -->
-                <div class="fd-item" id="item-hotdog">
-                    <div class="fd-item-emoji">🌭</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Classic Hot Dog</span>
-                            <span class="fd-item-price">$6.50</span>
-                        </div>
-                        <p class="fd-item-desc">All-beef hot dog in a toasted bun with ketchup, mustard, and relish.</p>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/classic-hotdog.jpg" alt="Classic Hot Dog">
                     </div>
-                </div>
-
-                <!-- Pretzel -->
-                <div class="fd-item" id="item-pretzel">
-                    <div class="fd-item-emoji">🥨</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Soft Pretzel</span>
-                            <span class="fd-item-price">$5.50</span>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Classic Hot Dog</h3>
+                            <span class="menu-card-price">190 EGP</span>
                         </div>
-                        <p class="fd-item-desc">Warm, salted soft pretzel served with cheese dip or honey mustard.</p>
+                        <p class="menu-card-desc">All-beef hot dog in a toasted bun with your choice of ketchup,
+                            mustard, or relish.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-drumstick-bite"></i> Meat</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Mozzarella Sticks -->
-                <div class="fd-item" id="item-mozz-sticks">
-                    <div class="fd-item-emoji">🧀</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Mozzarella Sticks</span>
-                            <span class="fd-item-price">$7.00</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/mozzarella-sticks.jpg" alt="Mozzarella Sticks">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Mozzarella Sticks</h3>
+                            <span class="menu-card-price">200 EGP</span>
                         </div>
-                        <p class="fd-item-desc">Golden-fried mozzarella sticks served with marinara dipping sauce.</p>
+                        <p class="menu-card-desc">Golden crispy mozzarella sticks served with marinara dipping sauce. 6
+                            pieces per order.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Candy Box -->
-                <div class="fd-item" id="item-candy">
-                    <div class="fd-item-emoji">🍬</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Candy Box</span>
-                            <span class="fd-item-price">$4.50</span>
+                <!-- Chicken Tenders -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxMTEhUTExMVFhUXFxgaFxcXGRgYGRcXGhgYFxcXGBcbHiggGB0lHhcVITEhJSkrLi4uFx8zODMsNygtLisBCgoKDg0OGhAQGy0gHyYrLS8yLS0tLS0tLy0tLS0tLS0tLi0tLSsrKy01LS0tLS8vLy0tLystLS8tLTUtLS0tLf/AABEIALcBEwMBIgACEQEDEQH/xAAbAAABBQEBAAAAAAAAAAAAAAAEAAIDBQYBB//EADwQAAEDAgQDBgUDAgYBBQAAAAEAAhEDIQQSMUEFUWEGInGBkaETMrHR8EJSwRThFiNicpLxQwcVM1Oy/8QAGgEAAgMBAQAAAAAAAAAAAAAAAgMAAQQFBv/EAC8RAAICAQQBAgUEAQUBAAAAAAABAhEDBBIhMUETUQUiMmGBFHGR8OEjQqGxwRX/2gAMAwEAAhEDEQA/APYYXF1cSwhJJJKEEkuSlKhDqSSShBJJLhKhDq5CUpSoQ4lC6uKEOQuJ8JlWoGglxAA1JsFCWJNhUOO7WU22pNNQ89G+u6oMb2txB0LGdAJKvYxbzRRvsq6GryOt2sxBmXu9Somdp6+7z6lXsA/UL2PYYSXmGD7UVf3H1I/laLh3aGo7U+sH+6v0y1qI+TWpIChjyRJZI5t+390ZSrNdcGfzcbIWmhykpdD0kl1UQ5C5C6kqouzkKKpWaBJP8olrd1V40wPNEoguRKMdTP6vYhStqtOhCzzjeVK1xU2g72X6SpmV3NNiUXh+IbOt1VUEpoNSXQElVBhSaVytUygmJ6DdD0saHD5XA8jE+xVgBKSjdWAXPjhSiEkLia6qFwV2ndSiWSLqYHjmnKFiSKjfVaNSFC7HsG8+ChAlJAu4m3YFMPE+TVCFiuhVo4ieQXRjncgrogXjsU2kxz3GwH4F51xXjprEufMT3Kew6nmr7tlXc6i3kX38hKxtLDl7o9SrcowjbM8905bUQVsS9x18gozhn/tKumYdjNB5lT0qRdsVzsmv5+VGzH8P8zZmqXCXuN9E89nnzZwWxo4LTuokUWjULL+qyt3Zr/R4kqoxtHgFUbtPsrjBcPqtiR6K+ZSapm0C2902OsyoVPQ4n0P4biXs6dCrR7mvGYd1/MboGjUixAP57IymBsujh1McnD4ZjyaeWP7olwtfNINnDUfQjofuiAq1tSMS0c2Onygqwa+6a48lRna5JE5gTU4v5K0iWPJVFx10EBXYss3xlxL1GUwNus7LpxEOjZSUxsoCqACmVQVBiKuVUHFuMAd2mbjfaeiHwfFXP7rvVQFstBxqq3uh5AGgskqipUMpIStzPSsZXLnZW6BcNPT6J7AAuCtLhA80wcMqEhOZdcqPUVKqSZAgDU7KFhDwQoqYIuTA/PVKvXE2Hmf4CEe4m5QuQSh7k1TEAXAk8zb2QtTFuO8DpZNfdMyILYaSRwuXWpAKRrVZDgapGsTmtUrWK0CMaxTNYnNapA1WUwfGYFtamabrTcHkdljqmBfRJY4Q6fXqFvMiCxr2kZajczdjuPApefD6sNt0THk9Oe6jI0aAmd0fSa7b3UlXB057j/I/dPpsjkfAyuTPSZY+L/Y6UNVil5r9xUW1C4Zmty8wSrJ9FsABD0n81Nn6hBHE14Y15E/IM6pPdjTcfRPp1SABqZ35JtV7QPmaL7lRO4rQbYOzHeL+6OGDI3wmLnmxx7aLGqJEhdGKFMS7yG5/ss7iu0bRIbH/AOj9h7qrqcQc65MA7nUrbi0+17pv8GLLqFJbYL8m24GzPUdWNzETtfYdBHurogckFwWllosEXLQT5iUYSt92Z4qkcc0JNsmlyaXKi6FWqkWjzVNjoz3Vt8RDYjCseZ+V3MaeYUKcStyxposx2gxj2iGiGnVw67dFbcfq1aDYyFwP6/0+FrglZ3+pfUBaW67bf3VCZPwUbqkoim6BZNxGGNOzh5hE4LDgi5lUykcbxG3y+yStW4BnJcVEo3rc0dV2ix3NNfiTs4eBEpxflGZwEn5QN+p6I26HpW6OVKcRmdPTc/YJrqk/wBoEJUrEmSUxmIuBa/NInkS5Zphi9gslRki8mLGOsLuEJcTpp3Y30v4CUPxfGgATytM6iy52f4goxuBqxaVyltZIGH8hNJETmETE9eSpsLxduYAuBA0y38fzoi8ZxZojuNc22UnTn63WV/FJ98L8M0//AD1dcssKcHQqn4lx8UzAaYBu7W3QKGniQ0FwcAdYBFh0Prqu0cZTqE/FoB8ixtMcyNxO6qXxCWZKN7Pd+P57G4tHDE3KUd6/v4ZPwzjrqjZawmDd2jWgczubzCtqTX03T3nlwgNuGiSTO/qSoOzNOkxpbq1okB17m5t6o7iFaxMZTEjpG3ikxnKlNy/YmXb6jhGNIHx2Pqse2GhwLogWMXuL30VlhMU19hqNQdR91jGUqgq5nAz0JgX9ghsVxYMqAEFrs1zbpFx1/LJmD4jlhL3Xs/8Awmb4dCaSTp+6PRgFW41vfLTo4S3x3/Oqz/CeO1GuhxlpdEOcSf8AcDBPloei0NSqzEMPw3d9sOAOoPXobhdrTa3HnXHD9jj6nSTwunyvcwuP4gPiOplpBBiVVY+s9l85A6qbt3mpV21QCA8X6OFiFW8WxoqYYHcFPk+zGogdTi1XZ59SmDidY6vd6lVNKorDBwXeSU5uhqhELZVcdXe6notJ3QOKARfDXw0koVJt8luKS4CW1MpAjXcq84NhfjV2U9tXdGj5vt5rKjFjPJvHv0Wr4HxVtCm/Kc1V7QS4FpyXMNg6xqY59AqnkjDmQWPHKf0noPEOLUqPzuAsSBvbS206ToqOj2wD3QKdt+9eZgQI81jMZXxFR7qpgmNdLD9LWi8Ac06i4kDLZ25ggX81y9R8SyuX+m6X97Ovg0GPb83LPQWcepF+Q5m2mXCAjzUWFpOMmLxrN46yVYYHHOYYFw4iehiDB9L9FNN8Xbltyrvyv7yVn+GrbeM0rqiidVUL6qhdUXds5W0Op19jcHUFVWO4G2fiUR4s38vt6ck41YRWGxCtMGUEzPV+HNqNPMeoPVVrMFkOniPsttisJm77LP3H7h91WV8MHCRYqzO40UQqdYXUe/ASbt/PRJVRC/w0OdfQCXHkPv8AdMxNbMZ9ByCexnw6QH6n94+H6R/PmhygyPwasUaVkFdUHGMb8MTmymRB6zI+i0b6dln+PcOFVsHxHismVWmjdiaTTLPgePmXXcwizzyvYRtb6KPi+IvmDHO3n9Pja4lZPgT6lEvpOOZphzQ6S0QZM38COoWm4fWpuw0C7nhpcT+qCCfAWNtpXBzYti2t9HUg1KW+uxYPD90gsa0vvadIMmdAACBGqfiqtNpAfIImwba4g6mB6IkUHue25yAERtuJO6C4kabRlAJM2Mm5teBtqkMZGmwahUzSYhgdykHf5TdHUsO2oC+4vGzbfxqoKfw7ZjlOuQCDO4J32R9Ws2GA5gzkBd3K6GKSCk34IOFUctR9WzWgENbPUXPmB7q2xvFmCmHuF9IaDM/3tZZ2mXPcQGjmc23IfnNcoYkte4Ogknu97Qtv8u19D0RwyySorJgUpWy/wJ+JNTK7vd0DprJkWH2Q/EMIzJcCSQZE3EaTsrrCtY2i0MgjQbzOt99/VVWJwTiw1IyAaBouRpYDVNyQcY8cujLjyJzfhWQswTH7AGN5Np6WCjqYR1Mh1OoW90fLMkbTeE7h7nZgHGQWmAJmdmkbc0RicoOhiN9J3IE3PkhjKo2uGHJfNtfKB8dgKfEMO6k5zRWGhFpcB3XRtyP/AEvMa3Da1IVKNRpDgPwjmF6VXBcTUBaaoiI7pAtMEIDtGyo+mKzW94TmAuWncjodV3dFq/W+SXaXfv8A5OTrNL6Xzx6b/j/B5LKLwdaDPRSY2u3MZbBVbia/KLrY4GPcg7FY0KJ3E3ZclMFzuiM7P9ka2KzF00mjdzTmdzDWki3XRbXA9nKdKm2iGglvzOByucfEXJmDCw59ZjwulyzZh0k8vL4RleFYN7MtQkiqDcEAtEjugczurfg1JrGEOBLhEwQQdwZFv+lpKmAygueC7LeDEtOmnQHXVOwmHGVro2tPjYcoXIz6yWRVJHUxaWOPmIPgqtKp3QPP6+Klbhjrq08xcGPCyIoMBLnkgc+Z2m232T8a0tggy02PjtZY/F+DVXNFcwGCQPlMX12kA8tPVF1zmZkAyA3zHSZG5U2GqgDM0C+o6rmbLObkZECBNwEUa4aLd9Frw/D5abRmLt55zey7UBCdwcODIe7MZsYi3I80RWaF63FXprxwecy/W/PJXVE7DFSPpp1KmmJpgNFjhnJvEMN/5Gj/AHff7p2HarCmJsmoVJWZo+JC6iMTSLXFsGx5bbLqgignGEF55Cw8BZQkJ7k2Fnbtm9LgjeEJWoSjSQlklC1YSlRluKcKzDRBcL4dWaS2mGiSJcZtqBv1W2bhM/dv1Im3mh6tA0nANcItmJuTF7z9FzdZKMVVWn5N2nk2+6ZW8Qw9UNABaCLd2Y6t/uU5uDL5a6nlIHzEnXmHHzt0R+LxE3zQCRpqLzfZDOqZiSHTBmCCdvpquTJRTdG2MpOJUt4PVqVO84Q0i4+Y8ot7lHY5ga3vF0AgxaTrfoNfVSGqQxzpEtIDYm0a28Dy3QTcQ6qTSYdR3nAW1kAja5QcNUNTd2+gepinCw/VEkT6+6io4OMzc4HdkE27w0jnAlV+Ow72EsLgXh3ea1hbA3tLtNZkWuisRxKmxoLSC6DIF9RBd039VPTa65NDa8Fvwvj7KdFjXO7wzSYnUmIAHIhX2PxRbSD3m8XEWvzvbn5LF9madFzhWLgYhzGDSf3X1AsfFaepXNWGiAXWDrkCL6DXSZTVNJuPn2MWXHHemlx22LCUcrDVLpzGxAOlwFHiqoIPyt2E/wA6x5q3xNIMbLiD3oA0bYTIHVZnE4p7j3IaMxtz5/8AamVen8vQOJ+o3IX9ScwHckE6RcCLW8VJ/WZXWGov4bG/n7qmxhDWlwGUsIMfuGhg7k3UTOIAiLwBfw1vugxzyKSlA05MUJRqQfxThOGr3ewBx3bY/wB1T8N4FSoVS5jXPOjS4WbzMxbbrZRDiLqji0fJpI1H3VkWFgkvjlPd+pXT1utcl6ceDnabRbJKcg/BU3uOYZgOWh9NQFd4ekREmDFo2j6lUXD8bGgLQZM8+UeqLfjWXEm4sJ9ff6rkKkb5xlIOqiDmOp8Sepgfyhn8QayS5rf9J1BIEgX3P8KL+pgxNiOWg/DuouIV/iNDHtBbr4jTTY+HNSM0nbIsb6ZFicQ54LgWtkCCBtZTYp4LQM2gBJEbdENi4bT7txER05T0+yCwlSq5jcrS4XbblJgwb23VKLfP3DdB9LGtbM5YsOkuHLZWFDBgwc0kGdPzZCcO4KBLnw55i8kAeAn3V0ykYGW0W6JiVdCZyRE906G7RpMAcyV1uHzjPNhy18yp8ThABmMc/YhD4jEyyGuFwbX80c7X1u/7wBF39AsS9jo7w8QRP3sqrGcUdSIAfIj5jtsNrTfXkmUabmuEs12PT+Vnu2HGYLaTIBM5xq6DBbaLC6vC8k5VF0/taGSUIqnyjecB4rmBD3SbagDxEDbqtBhcU12hXkfZrD1s4eS4N5EzK9G4CAD1Oq9Do5z2qM+fucbW44bnKBocgOwSTwElvOcZ97oJC5mUnEqeWo4IPOssuDZHklm6kZUAOk9PNQg3UdUBrw60OEO2NtL8r6dSs2rm1itOh2CCc6YQyvmcQLwTngm4ERcKrxAqgQ1rnQbcrnVScSxZp5n07NECIGhmXHfX+EDheNvewjNaNDEzymFw55F07/H9+x1ceKVbopfkMptzNc53zCbaCYIid/JDYbCuLA8vG3dEuHIF1xfRScPwDq2cVA4MaRFo70XHsCliS0ujO5rGxP8AqjXTfTzQcpJvyXS3OKf7hmHwgkgh8Ey4TckiJ2y+AhW2Iw4pDLRYMztY0/3Hn4oCrjC0iJmxdMW5HxUDuNl73hpEUxDhyPnqnRnCMXd2ZpQyTafgIOAYxwqPLPjZfmiJBtPtGqD4rg2vEOyk62EAcoOv7t1X06z69cNkgtP6tA2Ybrz91Y8czNp6gPuCNbk2g7Dx5oJO4tpUvA1QcZxTdv8A6K3DcApyX03uYdhILQN8oiY13Vhwig2hd785BOUABoAIIvMzr0VRw+jleGOqwS0kjptCMoEjNLyDcC2vLX6BL9Rrnixso3avgJxWHdUpubm7hu0k3b57qmwWAqjLSc6RmJFQXERMEAzMj3Vy9pqUhlygA3Ew6RrMCFFSZDXdyY3c7ztGqkn4ChNpNGO4pUqhxowA4C7jcT05ab7lRjAVn0ZYx998pvzjmtjVotflFRrbGW3BI0BBkm0+sIlr2ubcugSLQI6Qmwz7I1HgHJ87t8nmXAqbpqf6QXeQ1VriuMNeyHlp0hsjXaQd/Ra6tg6BblbTYBBADRcg6iREzusvV4RTpFxcHAF3dGVrgJ6keG6t5ITnbCgnVFUOJVPiCn+mdPC8+C0mG4rJADe87S9rjUnl0VZjeCkUxUYXPcTDTaL2BiNvHdUNWrWomHDvCLGx6a80fpwy/SU5uPEjdYjEtNIXb3CQTO5OoGsX9lXYjGNDGy68E5p65R7yfRZ2rxsimXGGkiCLW8I1MKsx/F21WNDXPEBrS3LrEmb6XKmPRyb5KeojHyafh9Y1HtGYhou4izRY3LjqTa2plbbDMhoLR0zOsTPJvJYv/wBOuFl4dWqiQ1wDGkmBAu7LMEmRtsvQGz0PInafql54KM6XgH1d0bG1jJvAg7WkAC6fhyDOWSYHIjaeiY6QCYsBDpiJ6KNzSAWiWt/dod9kr/dYNWqI+IYsBrmnkbzPoo6jwymTDviOFrX0t4KDh8Z5cCWnQkhwkaQQLHxRVau1zi0d7WTB87zfb8CrtW+xtJfKlx2yvx+Jy0tYedJI13PvyWa4fwXO/wCJUlz7CT00WkxOCztGpiDfa7gfZF4XChoXS+H404bjHq51KhuHw8AALS8EweUSdSqej8wWlwOi7WGKOZmkwwlJZXiPG3Cq4M+UGB5WPvK4tBj3IueJM+JTbUi4EO8fz6qlK0lGsxvccRDrHTXRUvEsIabi3/ieiVlj5H4J+CBqG4tRL2d352/LfXmOV+qJpXCc6nZZZwU4uLNkJuElJGSxWINN0PnI9rbExFpvAuQRHmmdncJ8Vz3QfhgjvX1vZtom4nyWjxXDs7SOY1hF8Kw3wqVOmQCRMECBzkibkc+q4+XR+kuejpLWblx2OdVcWtYJEbuNzvJICExBLATlaQRzMCT4XuZndWQ4iBNpsbi82E39FV4rEFzmhrdJzA3HITsfuEjJtq07f9/BWJO+qQ8F2V/xCM0CIvKpTjWk1XE5Yg5DEEgDUzp03RtasMxLnkMAnTceCoccHvr/AA2tzBzCW5jlDidC4jUWS4re6RqSUVbLrhnFjVOYt77Gh2aRfkyNzJOul0TQxHxKbgcrQ0946vqO1NztrZefntK9tYktOZjoflIFgcjssCCI38Fd0uPUKzbODDmmDaAeYnxTcmLJFXXAqLxt0WvEsRmfIBBbDmxrA6Haygx2Opv+V8nXQx5HpYyiaNJzaLod3jzA0vodYE6rNYFr31WtDSC2ztxp4RF0mKuxraVfwaehi206YdY3hwte9zJ5+ygxOJ+C4E3BJsTIjlHofNV/9HIJcSA0/KC619SDbTlzSxrZYYMgCWuB1AtEESCLeiDarIqLalVcHwHQ0NG15sef5fmhMQ6o1052uDjJJsR1t6oEYkuDSCTAAdGsixA9FYYXDPdDnvEfUjbwVNOPZaaH1sS9zb2cHEZQbGIuOlwuYTGNcO8IA2N5vuN4/hPxdRjXQIygD5dze8JMwzc7ajXAtOvSNft5qqTL3UiWm6mWlsWn9NoOkgGwPks7j+xTKhqPL35nxlJcTcbHmDbXRacC/cFpsAOepn83Xa1RwMmBIvc+sckUM08buLAljjPho87p9kCNRoYPirLC9mg3Za/GVwGhjwC1wBtp/Y6KHChjWlwJIAvJkyJMyeY26Lp49cpyqaoxz0rjHdHkL4SwNp06cAdBa+s+evmja9aBrFtBznboqbhuLpk/MHTdomBEHXlorB2JY5sjK6CIAtMgWjxssE203fBoUevIZhqLiy+jnejdJ8VHxLDNzAsl37pcYkbE39kqj3DK17hmIs0ctjHOVLhagh0RO5tY6fkqfK1tB+ZPcUeKwtNocwSxznZiWCcrgbwZgC2ltVzC1C0gEl0ic5MNzcyGyB4zsj3YXOcrnOdIuRaCDYE9U84FgMgBrZgga6WPU3QbeOR29LgicXEiYgHbe1hyOpKNbEKvazK7IDZqNANgNSu5ocezFyuWcvVT3T46CMDQzOV1xCt8KkY+Y2Hjz8tU3huFFNmZ3KT0Wd4ljzWeXNnKJDf5PmutjjSOVmycgnwT0/PNJPbi3bsBXUZlJuKY+BpPIT7xr+FWvA+JtxVP4VSBUHynmB/I9/VYTE4gm4QtTirh8hykGQd52IKvsintdm/rUXMcWuEH6pUihuz3aeljAKNchlfRrtBU8OTum+3QvFYR9MwR57FZpwcXaOhiyqaCGKGrhi4/NIJ0Pp6XSoVJU7h6hZdRjWSFM0YpuErRFRwVNgy5M25JIvEwI2E/RAveXOMtsLCO62bzJi+qnfWcCS+YMAReNdfOLohrJaKlRxETA/cOjVxp43e1Kq8fb7m6M6+ZuwHGYVrGd3vOJjqBOg5TBus1xmjWpg1SDly6Zs2QTYxvG3itLjAXWYx5c68GBFiB7FVdbDTUFJwJtDw02DRzdvo0pTrdwuDRjbrl8gg4C1zG5mNc4ASXSJ1N9LgRPgsx2n4RUptaWU+6CSDBO068oHst457To4tgDraw/lDcSc2rSyhznkTew06eCvHk2Pd/wXJN8GCwzMRTZ8ZtRwEwBOZsbCI0218E/AcecwPzU8znGQRYTEGfT3KvRwFj6UOrOawOlotr1EX8dlU8T4bTZJp1c2UXDhB9dCtMJ4sn1gTjNcxO8O4p3iXPaSRJY4lsc4cRlPS60T+IsqMBfmDhOWI01nNN1hTldYhAVeHuBzU3m1wJNk2eihP6XQlamUe1ZtBWawk94btaYI3Fnb7I+vxNtRgbMPMAbFed/wBdWDh8RznAawGgm2kwif8AET5MtDRsQTm83bpU9DJ/cbHWQ7fB6DinZnBzXBsCIIAJ2kc5+6bTxop90d61zM6nvR12WVdxd9V9NocGvsAbQ5puXR9uqu6XEKbZDSJaLC0Eg7z5rLLBKPZohJT6L4YsFhIlpgQdZPIxtCqamLJdlcgRxBomSYJmJ/LI/g2IY7Ed8tLS2W8pAJi3S6B4nfId7UPqfEDJgBsx3uccvJS8PeCC0wXb7cwNLKy4pWDmwAMrm3bbS4kctDCrK7wMpDhDmzAHeO38zKBpVSCTckV2IrfCcA2mSGM2GgvA9RqrujjZucrNo3m0XERfx0VdxGWtdqZEaTA081W4DizSMpyktPQmNARrtCZJyyrd5FKMY8GopYhpf8wnQOkl8iRvZE08QASSTexk/NysFT1KjHNhrh1Bg+ZEXCjxDqgaLtbAgCNZgAAXM9UpJ2E4qi8q1Q1ohpAzX7sToQcxMqTIIvM+KzoxD6kOeYyCzZjTQzzNrqWhi31DpA/aFox4t8qQmUlFWWWGbckmbm/NaPg2E/W4eCE4Xwq2ap3W6xoT48gguNdoBU/yqLoboXDfoOQ6r02DFSTZwdRmXSJ+O8X+KTRp/IPmcND0HQe6qaTC02ugM5puAIidD/H1RZeRcXG4/kLSc9u2Hsc4jRcQ7cb4JKEMRicaKYJLhHVUeK4u95/ymE/6jp/dWeC7PtdBdLnc3GVquGdnmiJE9FYraeeU+G4ioQSSTO2xFxEL2vsXxHEGiKWM/wAyLB5+YDYOP6vHXnKhwvC6bbZR5D7aq+wtIAWEKxkbRJX4Z+qkZ6IWSLO1Rge4Gykq4hjrVAOh09CkyxJ9GuGf3KqrTlCYxpyBsGRYXOmquamA/Y4Ecj90LXonRzSPzmsOq0nqxp8G3BqNrtFXRxLyHOJuDAAtaL7eCGxzXNEjumQDl1gi4JGuqJxeBcDmYfEHQhC8QxUl/iJ20G3MLh58GTF3z9zqYcsZPggxsUgCCTJ0J1G1j4awqziTTTDvhkiRETfW+2h/lRcRxrWhznuLoOuvgOp8FlavGazy6xIcb5oG9ojRViwTycxXAeTNGHD7NJw97hSyPsAZIOpBImD4JcSptcSWxBGugGioaeNqSSWgjKQ0Xsdj1/6T2VKhaGk2C0LSZHK26A/UwUaI3YfW0XUJpFXOFw5OoRDsAulCDRhlJMzvwp1CjqcOnZaZnD+imbw9M2i7RkKuEd3SJDm6EaqXhlcsd3xqRBgQOc/nNaw8M6KGpwcHZLliTVMOORp2mCsZTdBJDmEuDtIAnX0lRcCpMD6eQOEzLriRoIM9QpHcFLZy2kEHqCnYRlSmwU3XYCC0xcEGRfksc9NKMXTs0Rz21ZocZiSBciQMo3i87XVBjn5nhzGRlN+RBO9tFb16DKtVr8wIs3KPGTf0CN4g1rXBxMNaIH/W+65kWou+zpKVqkVVPEEwCD6zvoZ8FmeJ16nxC6jSDRp8oDp0JMa+C1FV1J8xa+YAmHOsIcB5o7C4UES4AE3K26HEpTfBk1knGKMJg+LV2k5qczuJ9xN9/VHYWvi6jRDO/oHEd1o5gTc+K3FDg+a7acjmbD1OvkrKlgqVEZqjm22FmjxJufZdRaKEndHOlrJJVZmuDdmKtSPiuJi/hNz7zqtc2lh8IzM4iRvqT4DcrOcS7dMvTwwBj9UQweA/UqWpizV7z3FzjueXIdOi2YtPCHSMGXVSlwHcc7TvxBLBLGft3d1cf4Vbw5xBvqPdMa0TcIzCOaD+SnmRuyzquFQX2t5rtBpAiU0U2n5XEImmy2oPsoQjgbtPskiPhO2j1SUKG4Xh4bsFaUGho6/miY50+ClsBOgRFhNBl7o5hVThMSHHu359PFGhxI5fVQiCWvlD8QFkRQAGqixdKRO6hZlziMXTdNOMv7XX9OXqrXB9pptUaWHeYcPUfyFPWbA1jrr6Dmo6eGBuBP8APiVCJtBwxNNwmARzaftZDVqNF9sw8HBCVuDWkOLDzaSI+/mqLiZrU/lqCqBzbeeWZsD2S5Y4vtDY5pRLDiPZhtQd2CBoARF+iqHdlyzVh9FS1O0z6Z77HN8DPtr7KfDdvhoK8HkbH0KV+mh4HrVSfZZngg5KfDcJAHyqCl2zcdSx3iAUSztUDrSYfCR9ELwINakmbgANl04IpM7SUz/4vRxUp7RUt6bv+Q+yJYqBeexlPhyJZgBuFB/iaj+x3qPsu/4po/8A1u/5D7K9iK9UMGDS/oggT2rp7Uj5u/smntUNqbfMkq9qJ6jLA4Aclz/24clVu7Uu2DB5fdD1e0796keED6IXCLL9VotjwG5LRlJEEgR7qLFcOrWGejtJcTJA6Nm6zGM7Y0x81WTyBLj7KpxfbjZjCfEx90iehxZHcojY67JDpm0ZwemDmq1s3RjQ0ebnEk+gRNXjGGoCwaOp7x8p/heW4jj+IqCS/KOTdfUoKi8ukkz1NyfNPxYIY1UVRny6qeR3J2egcR7fEkim0n/UfsqStjTiD/mVHHkCLDymFTU6RsjaVIhPozuTYfS4IRdpDh0R1OiW/MEJSrmld7wwdTHtui2dpcO6xzE8wx11LBoewAz9FDWZGiLof5hmlTe7qRkHmT9lcYPgdQ3e5rejBJ/5H7IXJBKDZVUK7WtEuAJ56nwGp8kXQbVqf/Gw+LrDxjVaHCcIpMuGCeZufVWLAAhcmGsfuZpvAsQbmu4dAAB5WSWozLqEvailrv7uYaJlDCuqfMYaUkloEB1RuRh+G0WUuAl7W5j1J/jqkkoWWGUnklind2AJPWySSgRBRwbTrfxXMdjqdFuZ2g6fRdSUKMfxLtm2LAnlP5CpMRxirXGXNlHJtvdJJUUV+MawWBMxcxHj5rKdpOESM7dQPUJJKFN0Zqi4t0JHgSPojaPEqw0qO8zP1SSVl2WuD4piTo8HxARGO4xiqYDnZCD0/uupKgU3YIztLXImG+/3Tv8AEVbk33+6SSlIK2RVu0dYaFvofuoxxzEH9ceAC6kpSJbOf19UmDUcfOPoicO0PMOuet11JQhLUwOvTRQCjAkpJKih7Wy1SUQQEklCwrAve2SbgaCdTy6KzpNr1NCGD/Tb31XEkuTGRRY4Ts20mXGT1MrRcP4LTb+kJJJbYxIvqAA0RLXriSgQ8VF34qSSuyHfiJJJKWUf/9k="
+                            alt="Chicken Tenders">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Chicken Tenders</h3>
+                            <span class="menu-card-price">225 EGP</span>
                         </div>
-                        <p class="fd-item-desc">Choose from M&M's, Skittles, Gummy Bears, or Sour Patch Kids.</p>
+                        <p class="menu-card-desc">Crispy breaded chicken tenders served with BBQ or ranch dipping sauce.
+                            5 pieces per order.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-drumstick-bite"></i> Meat</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pretzel Bites -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="data:image/jpeg;base64,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"
+                            alt="Pretzel Bites">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Pretzel Bites</h3>
+                            <span class="menu-card-price">165 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Warm, soft pretzel bites served with cheese dip. Perfectly salted and
+                            baked fresh.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         DRINKS SECTION
+         ======================================== -->
+    <section class="menu-section" id="drinks" data-section="drinks">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-glass-water"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Drinks</h2>
+                    <p class="menu-section-subtitle">Ice cold beverages to quench your thirst</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- Soft Drinks -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1556881286-fc6915169721?" alt="Soft Drinks">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Soft Drinks</h3>
+                        </div>
+                        <p class="menu-card-desc">Choose from Coca-Cola, Pepsi, Sprite, Fanta, or Diet Coke. Free
+                            refills on large sizes.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">115 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">140 EGP</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">165 EGP</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-sync-alt"></i> Free Refill (L)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fresh Juice -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1600271886742-f049cd451bba?" alt="Fresh Juice">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Fresh Juice</h3>
+                            <span class="menu-card-price">175 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Freshly squeezed orange, apple, or mixed berry juice. No added sugar,
+                            100% natural.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Natural</span>
+                            <span class="menu-tag"><i class="fas fa-heart"></i> Healthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Milkshakes -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1572490122747-3968b75cc699?" alt="Milkshakes">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Milkshakes</h3>
+                            <span class="menu-card-price">200 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Thick, creamy milkshakes in chocolate, vanilla, strawberry, or cookies
+                            & cream flavors.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-ice-cream"></i> Creamy</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottled Water -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.pexels.com/photos/416528/pexels-photo-416528.jpeg?auto=compress&cs=tinysrgb&w=600"
+                            alt="Bottled Water">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Bottled Water</h3>
+                            <span class="menu-card-price">75 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Premium spring water, still or sparkling. Stay refreshed throughout
+                            your movie.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-heart"></i> Healthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Iced Coffee -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://www.allrecipes.com/thmb/Hqro0FNdnDEwDjrEoxhMfKdWfOY=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/21667-easy-iced-coffee-ddmfs-4x3-0093-7becf3932bd64ed7b594d46c02d0889f.jpg"
+                            alt="Iced Coffee">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Iced Coffee</h3>
+                            <span class="menu-card-price">150 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Cold-brewed iced coffee with your choice of regular, vanilla, or
+                            caramel flavor. Served over ice.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-mug-hot"></i> Caffeinated</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         CANDY SECTION
+         ======================================== -->
+    <section class="menu-section" id="candy" data-section="candy">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-candy-cane"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Candy & Sweets</h2>
+                    <p class="menu-section-subtitle">Satisfy your sweet tooth</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- M&Ms -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://t3.ftcdn.net/jpg/00/64/32/42/360_F_64324209_xkMONcWW62ju8phxXUpT6uWk16r1JUb7.jpg"
+                            alt="M&Ms">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">M&M's</h3>
+                            <span class="menu-card-price">125 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Classic milk chocolate M&M's in a sharing size bag. Also available in
+                            peanut variety.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gummy Bears -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=600&auto=format&fit=crop"
+                            alt="Gummy Bears">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Gummy Bears</h3>
+                            <span class="menu-card-price">115 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Haribo Gold-Bears in assorted fruity flavors. A chewy, colorful
+                            classic loved by all ages.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-child"></i> Kid Fav</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Chocolate Bar -->
-                <div class="fd-item" id="item-chocolate">
-                    <div class="fd-item-emoji">🍫</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Chocolate Bar</span>
-                            <span class="fd-item-price">$3.50</span>
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1549007994-cb92caebd54b?q=80&w=600&auto=format&fit=crop"
+                            alt="Chocolate Bars">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Chocolate Bars</h3>
+                            <span class="menu-card-price">100 EGP</span>
                         </div>
-                        <p class="fd-item-desc">Premium chocolate bars — Snickers, KitKat, Twix, or Milky Way.</p>
+                        <p class="menu-card-desc">Choose from Snickers, Twix, KitKat, or Milky Way. King size available
+                            for 140 EGP.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Ice Cream -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?q=80&w=600&auto=format&fit=crop"
+                            alt="Ice Cream">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Ice Cream Cup</h3>
+                            <span class="menu-card-price">150 EGP</span>
+                        </div>
+                        <p class="menu-card-desc">Premium ice cream in vanilla, chocolate, or strawberry. Served in a
+                            cup with toppings.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-ice-cream"></i> Frozen</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </section>
-
-
-        <!-- ===== DRINKS ===== -->
-        <section class="fd-category" id="drinks">
-            <div class="fd-category-header">
-                <div class="fd-category-icon">🥤</div>
-                <div>
-                    <div class="fd-category-title">Drinks</div>
-                    <div class="fd-category-subtitle">Ice cold beverages & more</div>
-                </div>
-                <div class="fd-category-line"></div>
-            </div>
-
-            <div class="fd-menu-grid">
-                <!-- Soft Drinks -->
-                <div class="fd-item" id="item-soft-drink">
-                    <span class="fd-badge-popular">POPULAR</span>
-                    <div class="fd-item-emoji">🥤</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Soft Drink</span>
-                        </div>
-                        <p class="fd-item-desc">Coca-Cola, Pepsi, Sprite, Fanta, or Dr Pepper. Free refills on large!</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $4.00</span>
-                            <span class="fd-size-tag active">Medium $5.50</span>
-                            <span class="fd-size-tag">Large $7.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Iced Tea -->
-                <div class="fd-item" id="item-iced-tea">
-                    <div class="fd-item-emoji">🍵</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Iced Tea</span>
-                        </div>
-                        <p class="fd-item-desc">Refreshing iced tea — choose from Peach, Lemon, or Classic.</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $4.50</span>
-                            <span class="fd-size-tag active">Medium $6.00</span>
-                            <span class="fd-size-tag">Large $7.50</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Water -->
-                <div class="fd-item" id="item-water">
-                    <div class="fd-item-emoji">💧</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Bottled Water</span>
-                            <span class="fd-item-price">$3.00</span>
-                        </div>
-                        <p class="fd-item-desc">Pure spring water, 500ml bottle. Stay hydrated!</p>
-                    </div>
-                </div>
-
-                <!-- Slushie -->
-                <div class="fd-item" id="item-slushie">
-                    <div class="fd-item-emoji">🧊</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Frozen Slushie</span>
-                        </div>
-                        <p class="fd-item-desc">Icy frozen slushie in Blue Raspberry, Cherry, or Mango flavor.</p>
-                        <div class="fd-item-sizes">
-                            <span class="fd-size-tag">Small $5.00</span>
-                            <span class="fd-size-tag active">Medium $6.50</span>
-                            <span class="fd-size-tag">Large $8.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Coffee -->
-                <div class="fd-item" id="item-coffee">
-                    <div class="fd-item-emoji">☕</div>
-                    <div class="fd-item-info">
-                        <div class="fd-item-header">
-                            <span class="fd-item-name">Hot Coffee</span>
-                            <span class="fd-item-price">$4.50</span>
-                        </div>
-                        <p class="fd-item-desc">Freshly brewed coffee — Americano, Latte, or Cappuccino.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-
-
-
-
-        <!-- Info Note -->
-        <div class="fd-info-note">
-            <i class="fas fa-info-circle"></i>
-            Food and drinks can be added to your order during checkout. Prices may vary by location.
         </div>
+    </section>
 
-    </div>
+
+    <!-- ========================================
+         ALLERGEN INFO
+         ======================================== -->
+    <section class="menu-section">
+        <div class="container">
+            <div class="allergen-bar">
+                <div class="allergen-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="allergen-text">
+                    <h4>Allergen Information</h4>
+                    <p>Our food may contain or come into contact with common allergens including wheat, peanuts, tree
+                        nuts, soy, milk, and eggs. Please inform our staff of any allergies before ordering. Full
+                        allergen information is available upon request.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
 
     <!-- ========================================
@@ -698,7 +606,7 @@
 
                 <!-- About -->
                 <div class="footer-col">
-                    <h4 class="footer-title">ABOUT TEST CINEMAS</h4>
+                    <h4 class="footer-title">ABOUT VISION X CINEMAS</h4>
                     <div class="footer-links">
                         <a href="pages/about.html">About Us</a>
                         <a href="pages/experience-imax.html">IMAX Cinema</a>
@@ -712,9 +620,9 @@
                     <h4 class="footer-title">LEGAL</h4>
                     <div class="footer-links">
                         <a href="pages/faq.html">FAQs</a>
-                        <a href="pages/terms.html">Terms & Conditions</a>
-                        <a href="pages/privacy.html">Privacy Policy</a>
-                        <a href="pages/support.html">Support</a>
+                        <a href="#">Terms & Conditions</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Support</a>
                     </div>
                 </div>
 
@@ -740,7 +648,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2026 Scene Cinemas. All rights reserved.</p>
+                <p>&copy; 2026 Vision X Cinemas. All rights reserved.</p>
             </div>
 
         </div>
@@ -750,7 +658,62 @@
     <!-- ========================================
          SCRIPTS
          ======================================== -->
-    <script src="js/main.js"></script>
+    <script>
+        // ── Category Tab Filtering ──
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.category-tab');
+            const sections = document.querySelectorAll('.menu-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const category = tab.dataset.category;
+
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Show/hide sections
+                    if (category === 'all') {
+                        sections.forEach(s => {
+                            s.style.display = '';
+                            // Re-trigger animation
+                            s.querySelectorAll('.menu-card').forEach(card => {
+                                card.style.animation = 'none';
+                                card.offsetHeight; // trigger reflow
+                                card.style.animation = '';
+                            });
+                        });
+                    } else {
+                        sections.forEach(s => {
+                            if (s.dataset.section === category) {
+                                s.style.display = '';
+                                // Re-trigger animation
+                                s.querySelectorAll('.menu-card').forEach(card => {
+                                    card.style.animation = 'none';
+                                    card.offsetHeight;
+                                    card.style.animation = '';
+                                });
+                                // Smooth scroll to section
+                                s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } else {
+                                s.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            });
+
+            // ── Navbar scroll effect ──
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+        });
+    </script>
 
 </body>
 

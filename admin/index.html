@@ -53,7 +53,17 @@
                     </button>
                     <div class="admin-notification-btn" id="admin-notif">
                         <i class="fas fa-bell"></i>
-                        <span class="notif-dot"></span>
+                        <span class="notif-dot" id="notif-dot"></span>
+                        <!-- Notification Dropdown -->
+                        <div class="notif-panel" id="notif-panel">
+                            <div class="notif-panel-header">
+                                <span class="notif-panel-title">Notifications</span>
+                                <button class="notif-panel-clear" id="notif-clear">Mark all read</button>
+                            </div>
+                            <div class="notif-panel-body" id="notif-list">
+                                <!-- JS injects notification items -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
