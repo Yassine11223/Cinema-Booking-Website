@@ -1,1 +1,354 @@
-<!-- View All Bookings -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Booking Management — monitor reservations, payments, and booking status for cinema showtimes.">
+    <title>Booking Management | Cinema Admin</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/bookings.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="admin-layout">
+
+        <!-- ============================================
+             SIDEBAR NAVIGATION
+             ============================================ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-film" style="color:var(--primary);margin-right:8px;"></i> CINEMAX</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="index.html" id="nav-dashboard">
+                        <i class="fas fa-grid-2"></i> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="movies-manage.html" id="nav-movies">
+                        <i class="fas fa-clapperboard"></i> Movies
+                    </a>
+                    <a href="theaters-manage.html" id="nav-theaters">
+                        <i class="fas fa-building-columns"></i> Theaters
+                    </a>
+                    <a href="shows-manage.html" id="nav-showtimes">
+                        <i class="fas fa-clock"></i> Showtimes
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="bookings-list.html" class="active" id="nav-bookings">
+                        <i class="fas fa-ticket"></i> Bookings
+                    </a>
+                    <a href="users-list.html" id="nav-users">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                    <a href="reports.html" id="nav-reports">
+                        <i class="fas fa-chart-line"></i> Reports
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#" id="nav-settings">
+                        <i class="fas fa-gear"></i> Settings
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="admin-avatar">AD</div>
+                    <div class="admin-info">
+                        <span class="admin-name">Admin User</span>
+                        <span class="admin-role">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================
+             MAIN CONTENT AREA
+             ============================================ -->
+        <main class="admin-main">
+
+            <!-- ---- Top Header Bar ---- -->
+            <header class="admin-header" id="admin-header">
+                <div class="header-left">
+                    <h1 class="admin-title">Booking Management</h1>
+                    <p class="header-subtitle">Monitor reservations, payments, and booking status</p>
+                </div>
+                <div class="header-actions">
+                    <div class="header-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="header-search" placeholder="Quick search bookings...">
+                    </div>
+                    <button class="btn-export" id="btn-export">
+                        <i class="fas fa-file-export"></i> Export
+                    </button>
+                </div>
+            </header>
+
+            <!-- ---- Summary Stat Cards ---- -->
+            <section class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Total Bookings</div>
+                            <div class="value" id="stat-total">0</div>
+                        </div>
+                        <div class="icon icon-total-bookings">
+                            <i class="fas fa-ticket"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">All time reservations</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Confirmed</div>
+                            <div class="value" id="stat-confirmed">0</div>
+                        </div>
+                        <div class="icon icon-confirmed">
+                            <i class="fas fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Active & checked in</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Cancelled</div>
+                            <div class="value" id="stat-cancelled">0</div>
+                        </div>
+                        <div class="icon icon-cancelled">
+                            <i class="fas fa-circle-xmark"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Cancelled reservations</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Total Revenue</div>
+                            <div class="value" id="stat-revenue">0 EGP</div>
+                        </div>
+                        <div class="icon icon-revenue">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">From paid bookings</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Pending Payments</div>
+                            <div class="value" id="stat-pending">0</div>
+                        </div>
+                        <div class="icon icon-pending">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Awaiting payment</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Refunded</div>
+                            <div class="value" id="stat-refunded">0</div>
+                        </div>
+                        <div class="icon icon-refunded">
+                            <i class="fas fa-rotate-left"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Processed refunds</div>
+                </div>
+            </section>
+
+            <!-- ---- Filters & Controls Row ---- -->
+            <section class="filters-row" id="filters-row">
+                <div class="filter-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="filter-search" placeholder="Search by Booking ID or Name...">
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-movie">
+                        <option value="">All Movies</option>
+                        <option value="Interstellar">Interstellar</option>
+                        <option value="John Wick 4">John Wick 4</option>
+                        <option value="Dune Part Two">Dune Part Two</option>
+                        <option value="Oppenheimer">Oppenheimer</option>
+                        <option value="The Batman">The Batman</option>
+                        <option value="Spider-Man: Beyond">Spider-Man: Beyond</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-theater">
+                        <option value="">All Theaters</option>
+                        <option value="IMAX Hall 1">IMAX Hall 1</option>
+                        <option value="IMAX Hall 5">IMAX Hall 5</option>
+                        <option value="Dolby Hall 2">Dolby Hall 2</option>
+                        <option value="Dolby Hall 7">Dolby Hall 7</option>
+                        <option value="Standard Hall 6">Standard Hall 6</option>
+                        <option value="Deluxe Hall 4">Deluxe Hall 4</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-payment">
+                        <option value="">All Payments</option>
+                        <option value="paid">Paid</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                        <option value="refunded">Refunded</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-booking">
+                        <option value="">All Status</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="checkedin">Checked In</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+
+                <div class="filter-date">
+                    <input type="date" id="filter-date-from" title="From date">
+                </div>
+
+                <div class="filter-date-separator">to</div>
+
+                <div class="filter-date">
+                    <input type="date" id="filter-date-to" title="To date">
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-sort">
+                        <option value="">Sort By</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="highest">Highest Amount</option>
+                        <option value="lowest">Lowest Amount</option>
+                    </select>
+                </div>
+
+                <button class="btn-clear-filters" id="btn-clear-filters">
+                    <i class="fas fa-filter-circle-xmark"></i> Clear
+                </button>
+
+                <div class="filter-count" id="filter-count">
+                    Showing <span>0</span> of <span>0</span> bookings
+                </div>
+            </section>
+
+            <!-- ---- Bookings Data Table ---- -->
+            <section class="table-container" id="table-container">
+                <div class="table-header-bar">
+                    <span class="table-title"><i class="fas fa-list" style="margin-right:8px;opacity:0.5;"></i>Reservation List</span>
+                </div>
+                <div class="table-scroll">
+                    <table class="bookings-table" id="bookings-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable">Booking ID</th>
+                                <th class="sortable">Customer</th>
+                                <th class="sortable">Movie</th>
+                                <th>Theater</th>
+                                <th class="sortable">Showtime</th>
+                                <th>Seats</th>
+                                <th>Tickets</th>
+                                <th class="sortable">Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th class="sortable">Booked At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookings-tbody">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <div class="page-info">
+                        Showing <span>0</span> to <span>0</span> of <span>0</span> bookings
+                    </div>
+                    <div class="pagination">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ---- Empty State ---- -->
+            <div class="empty-state" id="empty-state" style="display:none;">
+                <div class="empty-state-icon">
+                    <i class="fas fa-ticket"></i>
+                </div>
+                <h3>No Bookings Found</h3>
+                <p>No bookings match your current filters. Try adjusting your search criteria or clear all filters.</p>
+                <button class="btn-refresh" id="empty-refresh-btn">
+                    <i class="fas fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ============================================
+         DETAIL DRAWER — Booking Details
+         ============================================ -->
+    <div class="detail-overlay" id="detail-overlay"></div>
+
+    <div class="detail-drawer" id="detail-drawer">
+        <div class="drawer-header">
+            <h2><i class="fas fa-ticket" style="margin-right:8px;opacity:0.6;"></i> Booking Details</h2>
+            <button class="modal-close-btn" id="detail-close-btn">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div class="drawer-body" id="detail-body">
+            <!-- Populated by JS -->
+        </div>
+        <div class="drawer-actions">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- ============================================
+         CONFIRM MODAL
+         ============================================ -->
+    <div class="confirm-modal-overlay" id="confirm-modal-overlay">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- ============================================
+         TOAST CONTAINER
+         ============================================ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/bookings.js"></script>
+
+</body>
+
+</html>
