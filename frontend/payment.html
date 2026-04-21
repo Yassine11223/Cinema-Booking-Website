@@ -1,1 +1,141 @@
-<!-- Payment Processing -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Scene Cinemas</title>
+    <meta name="description" content="Complete your cinema booking - select food & drinks, review your order, and pay securely.">
+    <link rel="stylesheet" href="css/payment.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- =============================================
+         PAYMENT PAGE WRAPPER
+         ============================================= -->
+    <div class="pay-page" id="pay-page">
+
+        <!-- Header / Movie Info Bar -->
+        <header class="pay-header" id="pay-header">
+            <div class="pay-header__inner">
+                <a href="booking.html" class="pay-header__back" title="Back to Booking">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="pay-header__movie">
+                    <h1 class="pay-header__title" id="header-movie-title">Loading...</h1>
+                    <div class="pay-header__meta" id="header-movie-meta"></div>
+                </div>
+                <div class="pay-header__booking-info" id="header-booking-info"></div>
+            </div>
+        </header>
+
+        <!-- Progress Bar -->
+        <div class="pay-progress" id="pay-progress">
+            <div class="progress-track">
+                <!-- Step 1: Food & Drinks -->
+                <div class="progress-step active" data-step="0">
+                    <div class="progress-step__circle"><i class="fas fa-utensils"></i></div>
+                    <span class="progress-step__label">Food & Drinks</span>
+                </div>
+                <div class="progress-line"></div>
+                <!-- Step 2: Summary -->
+                <div class="progress-step" data-step="1">
+                    <div class="progress-step__circle"><i class="fas fa-receipt"></i></div>
+                    <span class="progress-step__label">Summary</span>
+                </div>
+                <div class="progress-line"></div>
+                <!-- Step 3: Payment -->
+                <div class="progress-step" data-step="2">
+                    <div class="progress-step__circle"><i class="fas fa-credit-card"></i></div>
+                    <span class="progress-step__label">Payment</span>
+                </div>
+                <div class="progress-line"></div>
+                <!-- Step 4: Confirmation -->
+                <div class="progress-step" data-step="3">
+                    <div class="progress-step__circle"><i class="fas fa-check-circle"></i></div>
+                    <span class="progress-step__label">Done</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step Panels Container -->
+        <div class="pay-steps" id="pay-steps">
+
+            <!-- =============================================
+                 STEP 1: FOOD & DRINKS
+                 ============================================= -->
+            <div class="pay-step-panel active" data-step="food-drinks">
+                <div class="step-header">
+                    <h2>Food & Drinks</h2>
+                    <p class="step-subtitle">Add snacks to enhance your cinema experience</p>
+                </div>
+
+                <!-- Food Category Tabs -->
+                <div class="food-categories" id="food-categories"></div>
+
+                <!-- Food Items Grid -->
+                <div class="food-grid" id="food-grid"></div>
+
+                <!-- Running Total -->
+                <div class="food-running-total" id="food-running-total"></div>
+            </div>
+
+            <!-- =============================================
+                 STEP 2: ORDER SUMMARY
+                 ============================================= -->
+            <div class="pay-step-panel" data-step="order-summary">
+                <div class="step-header">
+                    <h2>Order Summary</h2>
+                    <p class="step-subtitle">Review your order before payment</p>
+                </div>
+                <div class="order-summary-content" id="order-summary-content"></div>
+            </div>
+
+            <!-- =============================================
+                 STEP 3: PAYMENT
+                 ============================================= -->
+            <div class="pay-step-panel" data-step="payment">
+                <div class="step-header">
+                    <h2>Payment</h2>
+                    <p class="step-subtitle">Choose your preferred payment method</p>
+                </div>
+                <div class="payment-methods" id="payment-methods"></div>
+                <div class="payment-details" id="payment-details"></div>
+            </div>
+
+            <!-- =============================================
+                 STEP 4: CONFIRMATION
+                 ============================================= -->
+            <div class="pay-step-panel" data-step="confirmation">
+                <div class="step-header">
+                    <h2>Booking Confirmed!</h2>
+                </div>
+                <div class="confirm-content" id="confirm-content"></div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div class="pay-bottom-bar" id="pay-bottom-bar">
+            <div class="pay-bottom-bar__inner">
+                <div class="pay-bottom-bar__total">
+                    <span class="pay-bottom-bar__label">Total</span>
+                    <span class="pay-bottom-bar__amount" id="bottom-total">0 EGP</span>
+                </div>
+                <div class="pay-bottom-bar__actions">
+                    <button class="pay-btn pay-btn--outline" id="btn-back">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="pay-btn pay-btn--primary" id="btn-next">
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Payment JS -->
+    <script src="js/payment.js"></script>
+</body>
+</html>
