@@ -1,8 +1,8 @@
 /**
  * users-admin.js
- * Real user management — loads registered accounts from API,
- * tracks login frequency, shows activity data.
- * Falls back to localStorage demo when backend is offline.
+ * Real user management — loads registered accounts from API.
+ * Provides delete, role management, and activity data.
+ * Shows "no users" state when backend is offline instead of fake data.
  */
 
 (function () {
@@ -11,8 +11,7 @@
     /* =========================================================
        CONFIG
        ========================================================= */
-    const API_BASE    = 'http://localhost:5000/api';
-    const STORAGE_KEY = 'scene_admin_users';
+    const API_BASE = 'http://localhost:5000/api';
 
     /* =========================================================
        STATE
@@ -24,6 +23,7 @@
     let currentSort   = 'created_desc';
     let deleteTargetId   = null;
     let deleteTargetName = '';
+    let backendOnline    = false;
 
     /* =========================================================
        AVATAR COLOURS (deterministic by user id)
@@ -39,6 +39,20 @@
        DOM REFS
        ========================================================= */
     const $ = id => document.getElementById(id);
+
+    /* =========================================================
+       AUTH
+       ========================================================= */
+    function getToken() {
+        return localStorage.getItem('admin_token') || localStorage.getItem('token') || '';
+    }
+
+    function apiHeaders() {
+        const token = getToken();
+        const h = { 'Content-Type': 'application/json' };
+        if (token) h['Authorization'] = `Bearer ${token}`;
+        return h;
+    }
 
     /* =========================================================
        INIT
@@ -107,20 +121,16 @@
     async function loadUsers() {
         showLoading(true);
         try {
-            const token = localStorage.getItem('admin_token') || '';
             const res = await fetch(`${API_BASE}/users`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
+                headers: apiHeaders()
             });
             if (!res.ok) throw new Error('API error ' + res.status);
             allUsers = await res.json();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
-        } catch (_) {
-            // Offline / no backend — use cached or demo
-            try { allUsers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (_) { allUsers = []; }
-            if (allUsers.length === 0) allUsers = DEMO_USERS;
+            backendOnline = true;
+        } catch (err) {
+            console.warn('Backend offline or error:', err.message);
+            backendOnline = false;
+            allUsers = [];
         }
         showLoading(false);
         applyFilters();
@@ -202,6 +212,11 @@
         if (filteredUsers.length === 0) {
             wrap .style.display = 'none';
             empty.style.display = 'flex';
+            if (!backendOnline && allUsers.length === 0) {
+                empty.innerHTML = '<i class="fas fa-plug"></i><p>Backend offline</p><span style="color:var(--text-muted);font-size:12px;">Start the server to see registered users</span>';
+            } else {
+                empty.innerHTML = '<i class="fas fa-user-slash"></i><p>No users found</p>';
+            }
             return;
         }
 
@@ -233,7 +248,7 @@
                 <td style="color:var(--text-secondary);font-size:13px;">${esc(user.email || '—')}</td>
                 <td style="color:var(--text-muted);font-size:12.5px;">${esc(user.phone || '—')}</td>
                 <td>
-                    <span class="role-badge role-${user.role || 'customer'}">
+                    <span class="role-badge role-${user.role || 'customer'}" style="cursor:pointer;" title="Click to toggle role">
                         <i class="fas ${user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
                         ${(user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
                     </span>
@@ -254,12 +269,18 @@
                 <td style="text-align:center;">
                     <div style="display:flex;gap:6px;justify-content:center;">
                         <button class="tbl-action-btn tbl-view"   data-id="${user.id}" title="View profile"><i class="fas fa-eye"></i></button>
+                        <button class="tbl-action-btn tbl-role"   data-id="${user.id}" title="Toggle role"><i class="fas fa-user-cog"></i></button>
                         <button class="tbl-action-btn tbl-danger" data-id="${user.id}" data-name="${esc(user.name)}" title="Delete user"><i class="fas fa-user-times"></i></button>
                     </div>
                 </td>`;
 
             tr.querySelector('.tbl-view')  .addEventListener('click', () => openUserDetail(user));
+            tr.querySelector('.tbl-role')  .addEventListener('click', () => toggleUserRole(user));
             tr.querySelector('.tbl-danger').addEventListener('click', () => openDelModal(user.id, user.name));
+
+            // Also allow clicking role badge to toggle
+            tr.querySelector('.role-badge').addEventListener('click', () => toggleUserRole(user));
+
             tbody.appendChild(tr);
         });
     }
@@ -298,7 +319,13 @@
         const labelsEl = $('lfreq-labels');
         if (!chartEl) return;
 
-        // Build day buckets based on last_login dates + login_counts
+        if (allUsers.length === 0) {
+            chartEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:var(--text-muted);font-size:13px;">No login data available</div>';
+            if (labelsEl) labelsEl.innerHTML = '';
+            return;
+        }
+
+        // Build day buckets based on last_login dates
         const days = 14;
         const buckets = [];
         const now = new Date();
@@ -309,35 +336,20 @@
             buckets.push({ date: d, label: d.toLocaleDateString('en-US', { weekday:'short' }), count: 0 });
         }
 
-        // Distribute login activity across days based on available data
+        // Count users who logged in on each day
         allUsers.forEach(user => {
             if (!user.last_login) return;
             const loginDate = new Date(user.last_login);
             const bucket = buckets.find(b => sameDay(b.date, loginDate));
             if (bucket) {
-                // Add a portion of their total logins to this day
                 bucket.count += 1;
-            }
-        });
-
-        // For users with no last_login data, simulate distribution of login_count
-        // across recent days (adds realistic variance)
-        allUsers.forEach(user => {
-            const lc = (user.login_count || 0);
-            if (lc > 1 && user.last_login) {
-                // Spread some of the historical logins randomly (seeded by user id)
-                const extra = Math.min(lc - 1, 10);
-                for (let j = 0; j < extra; j++) {
-                    const dayOffset = (Number(user.id) * 3 + j * 7) % days;
-                    buckets[dayOffset].count += 1;
-                }
             }
         });
 
         const maxCount = Math.max(1, ...buckets.map(b => b.count));
 
         chartEl .innerHTML = '';
-        labelsEl.innerHTML = '';
+        if (labelsEl) labelsEl.innerHTML = '';
 
         buckets.forEach((b, i) => {
             const pct = Math.round((b.count / maxCount) * 100);
@@ -354,10 +366,12 @@
             chartEl.appendChild(col);
 
             // Label
-            const lbl = document.createElement('div');
-            lbl.className   = 'lfreq-day-label';
-            lbl.textContent = i % 2 === 0 ? b.label : '';
-            labelsEl.appendChild(lbl);
+            if (labelsEl) {
+                const lbl = document.createElement('div');
+                lbl.className   = 'lfreq-day-label';
+                lbl.textContent = i % 2 === 0 ? b.label : '';
+                labelsEl.appendChild(lbl);
+            }
 
             // Animate bar
             setTimeout(() => { fill.style.height = pct + '%'; fill.style.transition = 'height 0.5s ease'; }, 50 + i * 30);
@@ -424,6 +438,33 @@
     }
 
     /* =========================================================
+       TOGGLE USER ROLE
+       ========================================================= */
+    async function toggleUserRole(user) {
+        const newRole = user.role === 'admin' ? 'customer' : 'admin';
+        const confirmMsg = `Change ${user.name}'s role from "${user.role}" to "${newRole}"?`;
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/users/${user.id}/role`, {
+                method: 'PUT',
+                headers: apiHeaders(),
+                body: JSON.stringify({ role: newRole })
+            });
+            if (!res.ok) throw new Error('Role update failed: ' + res.status);
+
+            // Update local state
+            user.role = newRole;
+            applyFilters();
+            updateKpis();
+            toast(`${user.name} is now ${newRole}.`, 'success');
+        } catch (err) {
+            console.error('Role update error:', err);
+            toast('Failed to update role. Backend may be offline.', 'error');
+        }
+    }
+
+    /* =========================================================
        DELETE USER
        ========================================================= */
     function openDelModal(id, name) {
@@ -447,21 +488,23 @@
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…';
 
         try {
-            const token = localStorage.getItem('admin_token') || '';
-            await fetch(`${API_BASE}/users/${deleteTargetId}`, {
+            const res = await fetch(`${API_BASE}/users/${deleteTargetId}`, {
                 method: 'DELETE',
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                headers: apiHeaders()
             });
-        } catch (_) { /* remove locally anyway */ }
+            if (!res.ok) throw new Error('Delete failed: ' + res.status);
 
-        allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
-
-        closeDelModal();
-        applyFilters();
-        updateKpis();
-        renderLoginChart();
-        toast(`User "${deleteTargetName}" deleted.`, 'success');
+            allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
+            closeDelModal();
+            applyFilters();
+            updateKpis();
+            renderLoginChart();
+            toast(`User "${deleteTargetName}" deleted.`, 'success');
+        } catch (err) {
+            console.error('Delete error:', err);
+            closeDelModal();
+            toast('Failed to delete user. Backend may be offline.', 'error');
+        }
 
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-user-times"></i> Delete';
@@ -471,6 +514,10 @@
        EXPORT CSV
        ========================================================= */
     function exportCsv() {
+        if (filteredUsers.length === 0) {
+            toast('No users to export.', 'info');
+            return;
+        }
         const rows = [['ID','Name','Email','Phone','Role','Registered','Last Login','Login Count']];
         filteredUsers.forEach(u => {
             rows.push([
@@ -530,22 +577,5 @@
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
     }
-
-    /* =========================================================
-       DEMO USERS (shown when backend offline)
-       ========================================================= */
-    const now = Date.now();
-    const DEMO_USERS = [
-        { id:1, name:'Sarah Mitchell',  email:'sarah.m@example.com',   phone:'+1 555-201-1234', role:'admin',    created_at: new Date(now - 90*86400000).toISOString(), last_login: new Date(now - 2*3600000).toISOString(),  login_count: 87 },
-        { id:2, name:'James Chen',      email:'j.chen@example.com',    phone:'+1 555-302-5678', role:'customer', created_at: new Date(now - 60*86400000).toISOString(), last_login: new Date(now - 1*86400000).toISOString(), login_count: 24 },
-        { id:3, name:'Amira Hassan',    email:'amira.h@example.com',   phone:'+1 555-401-9012', role:'customer', created_at: new Date(now - 30*86400000).toISOString(), last_login: new Date(now - 3*86400000).toISOString(), login_count: 11 },
-        { id:4, name:'Lucas Fernandez', email:'lucas.f@example.com',   phone:'+1 555-502-3456', role:'customer', created_at: new Date(now - 14*86400000).toISOString(),last_login: new Date(now - 6*3600000).toISOString(),  login_count: 5  },
-        { id:5, name:'Priya Sharma',    email:'priya.s@example.com',   phone:'+1 555-601-7890', role:'customer', created_at: new Date(now - 7*86400000).toISOString(), last_login: new Date(now - 10*86400000).toISOString(),login_count: 3  },
-        { id:6, name:'Thomas Wright',   email:'t.wright@example.com',  phone:'+1 555-701-2345', role:'customer', created_at: new Date(now - 45*86400000).toISOString(),last_login: null,                                       login_count: 0  },
-        { id:7, name:'Nina Kovač',      email:'nina.k@example.com',    phone:'+1 555-801-6789', role:'customer', created_at: new Date(now - 21*86400000).toISOString(),last_login: new Date(now - 2*86400000).toISOString(),  login_count: 9  },
-        { id:8, name:'Omar Al-Rashid',  email:'omar.r@example.com',    phone:'+1 555-901-0123', role:'customer', created_at: new Date(now - 5*86400000).toISOString(), last_login: new Date(now - 5*3600000).toISOString(),   login_count: 2  },
-        { id:9, name:'Elena Vasquez',   email:'elena.v@example.com',   phone:'+1 555-100-4567', role:'admin',    created_at: new Date(now - 120*86400000).toISOString(),last_login:new Date(now - 1*3600000).toISOString(),   login_count: 142},
-        { id:10,name:'Kevin Park',      email:'kevin.p@example.com',   phone:'+1 555-200-8901', role:'customer', created_at: new Date(now - 3*86400000).toISOString(), last_login: new Date(now - 30*60000).toISOString(),    login_count: 1  },
-    ];
 
 })();

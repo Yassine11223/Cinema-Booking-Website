@@ -242,6 +242,27 @@
 .tbl-action-btn:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
 .tbl-danger:hover     { background: rgba(239,83,80,0.12); border-color: rgba(239,83,80,0.3); color: #ef9a9a; }
 .tbl-view:hover       { background: rgba(66,165,245,0.1); border-color: rgba(66,165,245,0.2); color: #64b5f6; }
+.tbl-role:hover       { background: rgba(197,160,89,0.12); border-color: rgba(197,160,89,0.3); color: #c5a059; }
+
+/* Spinning animation for refresh button */
+.spinning i { animation: spin 0.8s linear infinite; }
+
+/* Admin refresh button */
+.admin-refresh-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.admin-refresh-btn:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
 
 /* ---- Login Frequency Chart ---- */
 .login-chart-section { margin-bottom: 24px; }

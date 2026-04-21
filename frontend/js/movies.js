@@ -197,15 +197,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Initialize movies listing page
+ * Priority: Backend API → TMDB → Mock data
  */
 async function initMoviesPage() {
     console.log('🎯 initMoviesPage called');
 
+    let loaded = false;
+
+    // 1. Try loading from backend API first (admin-managed movies)
     try {
-        // Try loading from TMDB API
-        await loadTMDBMovies();
-    } catch (error) {
-        console.warn('⚠️ TMDB failed, using mock data:', error.message);
+        loaded = await loadBackendMovies();
+    } catch (err) {
+        console.warn('⚠️ Backend API unavailable:', err.message);
+    }
+
+    // 2. If backend had no movies or was offline, try TMDB
+    if (!loaded) {
+        try {
+            await loadTMDBMovies();
+            loaded = true;
+        } catch (error) {
+            console.warn('⚠️ TMDB failed, using mock data:', error.message);
+        }
+    }
+
+    // 3. Last resort: mock data
+    if (!loaded) {
         useTMDB = false;
         loadMockMovies();
     }
@@ -221,6 +238,68 @@ async function initMoviesPage() {
 
     // Handle hash navigation on page load
     handleHashNavigation();
+}
+
+/**
+ * Load movies from Backend API (admin-managed database)
+ * Returns true if movies were loaded successfully
+ */
+async function loadBackendMovies() {
+    console.log('🗄️ Loading movies from backend API...');
+    const API_URL = 'http://localhost:5000/api/movies';
+
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error('API error ' + res.status);
+
+    const movies = await res.json();
+    if (!movies || movies.length === 0) {
+        console.log('ℹ️ Backend returned no movies');
+        return false;
+    }
+
+    // Separate by status
+    nowShowingMovies = movies
+        .filter(m => m.status === 'now_showing')
+        .map(normalizeDbMovie);
+
+    comingSoonMovies = movies
+        .filter(m => m.status === 'coming_soon')
+        .map(normalizeDbMovie);
+
+    console.log('✅ Backend loaded:', nowShowingMovies.length, 'now showing,', comingSoonMovies.length, 'coming soon');
+
+    renderNowShowing(nowShowingMovies);
+    renderComingSoon(comingSoonMovies);
+    return true;
+}
+
+/**
+ * Normalize a database movie object to match the TMDB-like format
+ * used by the card renderer (poster_path, genre_ids, vote_average, etc.)
+ */
+function normalizeDbMovie(dbMovie) {
+    // Map genre string to genre_ids for the genre filter
+    const reverseGenreMap = {};
+    Object.entries(MOVIES_GENRE_MAP).forEach(([id, name]) => {
+        reverseGenreMap[name.toLowerCase()] = parseInt(id);
+    });
+
+    const genreId = reverseGenreMap[(dbMovie.genre || '').toLowerCase()];
+    const genreIds = genreId ? [genreId] : [];
+
+    return {
+        id:            dbMovie.id,
+        title:         dbMovie.title,
+        overview:      dbMovie.description || '',
+        genre_ids:     genreIds,
+        vote_average:  0,
+        release_date:  dbMovie.release_date ? String(dbMovie.release_date).substring(0, 10) : null,
+        poster_path:   null,
+        poster_url:    dbMovie.poster_url || null,  // DB movies use poster_url directly
+        status:        dbMovie.status,
+        duration:      dbMovie.duration || 0,
+        _fromDb:       true  // Flag so card renderer knows to use poster_url
+    };
 }
 
 /**
@@ -1067,8 +1146,14 @@ function formatDuration(minutes) {
 
 /**
  * Get poster URL for a movie
+ * Supports both TMDB format (poster_path) and DB format (poster_url)
  */
 function getMoviePoster(movie) {
+    // DB movies store the full URL in poster_url
+    if (movie.poster_url) {
+        return movie.poster_url;
+    }
+    // TMDB movies use poster_path (relative)
     if (movie.poster_path) {
         return `${MOVIES_TMDB.IMAGE_BASE}${MOVIES_TMDB.POSTER_SIZE}${movie.poster_path}`;
     }

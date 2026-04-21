@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Explore our cinema food & drinks menu. Popcorn, nachos, hot dogs, drinks, and candy at great prices.">
+    <title>Food & Drinks | Scene Cinemas</title>
+    <link rel="stylesheet" href="css/food-drinks.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+
+            <!-- Left Nav Links -->
+            <ul class="nav-links left">
+                <li>
+                    <a href="index.html" class="nav-link">HOME</a>
+                </li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link active">FOOD & DRINKS</a>
+                </li>
+            </ul>
+
+            <!-- Center Logo -->
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">TEST</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+
+            <!-- Right Nav -->
+            <ul class="nav-links right">
+                <li>
+                    <a href="login.html" class="login-btn">
+                        <i class="fa-regular fa-user"></i> LOGIN
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+
+
+    <!-- ========================================
+         PAGE HEADER
+         ======================================== -->
+    <header class="food-header">
+        <div class="food-header-content">
+            <h1>Food & Drinks</h1>
+            <p>Elevate your movie experience with our delicious cinema snacks, refreshing drinks, and sweet treats</p>
+
+            <!-- Category Tabs -->
+            <div class="menu-categories-nav" id="menu-categories-nav">
+                <button class="category-tab active" data-category="all">ALL</button>
+                <button class="category-tab" data-category="popcorn">POPCORN</button>
+                <button class="category-tab" data-category="snacks">SNACKS</button>
+                <button class="category-tab" data-category="drinks">DRINKS</button>
+                <button class="category-tab" data-category="candy">CANDY</button>
+
+            </div>
+        </div>
+    </header>
+
+
+    <!-- ========================================
+         POPCORN SECTION
+         ======================================== -->
+    <section class="menu-section" id="popcorn" data-section="popcorn">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Popcorn</h2>
+                    <p class="menu-section-subtitle">Freshly popped, perfectly seasoned</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- Classic Butter Popcorn -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/classic-butter-popcorn.jpg" alt="Classic Butter Popcorn">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Classic Butter Popcorn</h3>
+                        </div>
+                        <p class="menu-card-desc">Our signature buttery popcorn, freshly popped and seasoned to perfection. A cinema classic.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">$5.99</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">$7.49</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">$8.99</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-fire"></i> Best Seller</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caramel Popcorn -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/caramel-popcorn.jpg" alt="Caramel Popcorn">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Caramel Popcorn</h3>
+                        </div>
+                        <p class="menu-card-desc">Sweet, crunchy caramel-coated popcorn. The perfect sweet treat for your movie.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">$6.49</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">$7.99</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">$9.49</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cheese Popcorn -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/cheese-popcorn.jpg" alt="Cheese Popcorn">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Cheddar Cheese Popcorn</h3>
+                        </div>
+                        <p class="menu-card-desc">Rich, cheesy flavor on every kernel. Made with real cheddar seasoning for a savory crunch.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">$6.49</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">$7.99</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">$9.49</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         SNACKS SECTION
+         ======================================== -->
+    <section class="menu-section" id="snacks" data-section="snacks">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-hotdog"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Snacks</h2>
+                    <p class="menu-section-subtitle">Hot & fresh from our kitchen</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- Nachos -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/loaded-nachos.jpg" alt="Loaded Nachos">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Loaded Nachos</h3>
+                            <span class="menu-card-price">$9.99</span>
+                        </div>
+                        <p class="menu-card-desc">Crispy tortilla chips loaded with warm cheese sauce, jalapeños, and salsa on the side.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                            <span class="menu-tag"><i class="fas fa-pepper-hot"></i> Spicy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hot Dog -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/classic-hotdog.jpg" alt="Classic Hot Dog">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Classic Hot Dog</h3>
+                            <span class="menu-card-price">$7.49</span>
+                        </div>
+                        <p class="menu-card-desc">All-beef hot dog in a toasted bun with your choice of ketchup, mustard, or relish.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-drumstick-bite"></i> Meat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mozzarella Sticks -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/mozzarella-sticks.jpg" alt="Mozzarella Sticks">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Mozzarella Sticks</h3>
+                            <span class="menu-card-price">$7.99</span>
+                        </div>
+                        <p class="menu-card-desc">Golden crispy mozzarella sticks served with marinara dipping sauce. 6 pieces per order.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chicken Tenders -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/chicken-tenders.jpg" alt="Chicken Tenders">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Chicken Tenders</h3>
+                            <span class="menu-card-price">$8.99</span>
+                        </div>
+                        <p class="menu-card-desc">Crispy breaded chicken tenders served with BBQ or ranch dipping sauce. 5 pieces per order.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-drumstick-bite"></i> Meat</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pretzel Bites -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/pretzel-bites.jpg" alt="Pretzel Bites">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Pretzel Bites</h3>
+                            <span class="menu-card-price">$6.49</span>
+                        </div>
+                        <p class="menu-card-desc">Warm, soft pretzel bites served with cheese dip. Perfectly salted and baked fresh.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         DRINKS SECTION
+         ======================================== -->
+    <section class="menu-section" id="drinks" data-section="drinks">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-glass-water"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Drinks</h2>
+                    <p class="menu-section-subtitle">Ice cold beverages to quench your thirst</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- Soft Drinks -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/soft-drinks.jpg" alt="Soft Drinks">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Soft Drinks</h3>
+                        </div>
+                        <p class="menu-card-desc">Choose from Coca-Cola, Pepsi, Sprite, Fanta, or Diet Coke. Free refills on large sizes.</p>
+                        <div class="size-options">
+                            <div class="size-option">
+                                <span class="size-label">Small</span>
+                                <span class="size-price">$4.49</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Medium</span>
+                                <span class="size-price">$5.49</span>
+                            </div>
+                            <div class="size-option">
+                                <span class="size-label">Large</span>
+                                <span class="size-price">$6.49</span>
+                            </div>
+                        </div>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-sync-alt"></i> Free Refill (L)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fresh Juice -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/fresh-juice.jpg" alt="Fresh Juice">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Fresh Juice</h3>
+                            <span class="menu-card-price">$6.99</span>
+                        </div>
+                        <p class="menu-card-desc">Freshly squeezed orange, apple, or mixed berry juice. No added sugar, 100% natural.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Natural</span>
+                            <span class="menu-tag"><i class="fas fa-heart"></i> Healthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Milkshakes -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/milkshakes.jpg" alt="Milkshakes">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Milkshakes</h3>
+                            <span class="menu-card-price">$7.99</span>
+                        </div>
+                        <p class="menu-card-desc">Thick, creamy milkshakes in chocolate, vanilla, strawberry, or cookies & cream flavors.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-ice-cream"></i> Creamy</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottled Water -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/bottled-water.jpg" alt="Bottled Water">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Bottled Water</h3>
+                            <span class="menu-card-price">$2.99</span>
+                        </div>
+                        <p class="menu-card-desc">Premium spring water, still or sparkling. Stay refreshed throughout your movie.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-heart"></i> Healthy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Iced Coffee -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/iced-coffee.jpg" alt="Iced Coffee">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Iced Coffee</h3>
+                            <span class="menu-card-price">$5.99</span>
+                        </div>
+                        <p class="menu-card-desc">Cold-brewed iced coffee with your choice of regular, vanilla, or caramel flavor. Served over ice.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-mug-hot"></i> Caffeinated</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         CANDY SECTION
+         ======================================== -->
+    <section class="menu-section" id="candy" data-section="candy">
+        <div class="container">
+
+            <div class="menu-section-header">
+                <div class="menu-section-icon">
+                    <i class="fas fa-candy-cane"></i>
+                </div>
+                <div>
+                    <h2 class="menu-section-title">Candy & Sweets</h2>
+                    <p class="menu-section-subtitle">Satisfy your sweet tooth</p>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+
+            <div class="menu-grid">
+
+                <!-- M&Ms -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/mms.jpg" alt="M&Ms">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">M&M's</h3>
+                            <span class="menu-card-price">$4.99</span>
+                        </div>
+                        <p class="menu-card-desc">Classic milk chocolate M&M's in a sharing size bag. Also available in peanut variety.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gummy Bears -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/gummy-bears.jpg" alt="Gummy Bears">
+                        <span class="menu-card-badge badge-popular">POPULAR</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Gummy Bears</h3>
+                            <span class="menu-card-price">$4.49</span>
+                        </div>
+                        <p class="menu-card-desc">Haribo Gold-Bears in assorted fruity flavors. A chewy, colorful classic loved by all ages.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-child"></i> Kid Fav</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chocolate Bar -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/chocolate-bars.jpg" alt="Chocolate Bars">
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Chocolate Bars</h3>
+                            <span class="menu-card-price">$3.99</span>
+                        </div>
+                        <p class="menu-card-desc">Choose from Snickers, Twix, KitKat, or Milky Way. King size available for $5.49.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-leaf"></i> Vegetarian</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ice Cream -->
+                <div class="menu-card">
+                    <div class="menu-card-image">
+                        <img src="images/food-drinks/ice-cream.jpg" alt="Ice Cream">
+                        <span class="menu-card-badge badge-new">NEW</span>
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="menu-card-top">
+                            <h3 class="menu-card-name">Ice Cream Cup</h3>
+                            <span class="menu-card-price">$5.99</span>
+                        </div>
+                        <p class="menu-card-desc">Premium ice cream in vanilla, chocolate, or strawberry. Served in a cup with toppings.</p>
+                        <div class="menu-card-tags">
+                            <span class="menu-tag"><i class="fas fa-ice-cream"></i> Frozen</span>
+                            <span class="menu-tag"><i class="fas fa-star"></i> New</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         ALLERGEN INFO
+         ======================================== -->
+    <section class="menu-section">
+        <div class="container">
+            <div class="allergen-bar">
+                <div class="allergen-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="allergen-text">
+                    <h4>Allergen Information</h4>
+                    <p>Our food may contain or come into contact with common allergens including wheat, peanuts, tree nuts, soy, milk, and eggs. Please inform our staff of any allergies before ordering. Full allergen information is available upon request.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer" id="footer">
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <!-- Get in Touch -->
+                <div class="footer-col">
+                    <h4 class="footer-title">GET IN TOUCH</h4>
+                    <div class="footer-links">
+                        <a href="pages/contact.html">Contact Us</a>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="footer-col">
+                    <h4 class="footer-title">ABOUT TEST CINEMAS</h4>
+                    <div class="footer-links">
+                        <a href="pages/about.html">About Us</a>
+                        <a href="pages/experience-imax.html">IMAX Cinema</a>
+                        <a href="pages/experience-dolby.html">Dolby Cinema</a>
+                        <a href="pages/experience-standard.html">Standard & Deluxe</a>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="footer-col">
+                    <h4 class="footer-title">LEGAL</h4>
+                    <div class="footer-links">
+                        <a href="pages/faq.html">FAQs</a>
+                        <a href="#">Terms & Conditions</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Support</a>
+                    </div>
+                </div>
+
+                <!-- Follow Us -->
+                <div class="footer-col">
+                    <h4 class="footer-title">FOLLOW US</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="TikTok">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="YouTube">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Scene Cinemas. All rights reserved.</p>
+            </div>
+
+        </div>
+    </footer>
+
+
+    <!-- ========================================
+         SCRIPTS
+         ======================================== -->
+    <script>
+        // ── Category Tab Filtering ──
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.category-tab');
+            const sections = document.querySelectorAll('.menu-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const category = tab.dataset.category;
+
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    // Show/hide sections
+                    if (category === 'all') {
+                        sections.forEach(s => {
+                            s.style.display = '';
+                            // Re-trigger animation
+                            s.querySelectorAll('.menu-card').forEach(card => {
+                                card.style.animation = 'none';
+                                card.offsetHeight; // trigger reflow
+                                card.style.animation = '';
+                            });
+                        });
+                    } else {
+                        sections.forEach(s => {
+                            if (s.dataset.section === category) {
+                                s.style.display = '';
+                                // Re-trigger animation
+                                s.querySelectorAll('.menu-card').forEach(card => {
+                                    card.style.animation = 'none';
+                                    card.offsetHeight;
+                                    card.style.animation = '';
+                                });
+                                // Smooth scroll to section
+                                s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            } else {
+                                s.style.display = 'none';
+                            }
+                        });
+                    }
+                });
+            });
+
+            // ── Navbar scroll effect ──
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

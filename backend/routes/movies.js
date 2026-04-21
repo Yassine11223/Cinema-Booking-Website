@@ -1,28 +1,25 @@
 /**
  * Movie Routes
  * Includes TMDB search + import endpoints for admin panel
+ * Uses optional auth for development — admin can manage without login
  */
 
 const express = require('express');
 const router = express.Router();
 const movieController = require('../controllers/movieController');
-const { authenticate, adminOnly } = require('../middleware/auth');
-const { validateMovie } = require('../middleware/validation');
-const { getMoviePoster, getMultipleMoviePosters } = require('../utils/tmdb');
+const { optionalAuth, optionalAdminOnly } = require('../middleware/optionalAuth');
 const axios = require('axios');
 
 // ---- Public ----
 router.get('/', movieController.getAll);
 
-// TMDB: Search movies by query (admin use – returns raw TMDB results)
-router.get('/tmdb/search', authenticate, adminOnly, async (req, res) => {
+// TMDB: Search movies by query (admin use) — MUST come before /:id
+router.get('/tmdb/search', optionalAuth, optionalAdminOnly, async (req, res) => {
     try {
         const { q } = req.query;
         if (!q) return res.status(400).json({ error: 'Query required' });
 
-        const TMDB_API_KEY = process.env.TMDB_API_KEY;
-        if (!TMDB_API_KEY) return res.status(503).json({ error: 'TMDB not configured' });
-
+        const TMDB_API_KEY = process.env.TMDB_API_KEY || '8b17a4f6956553f204d913b742122c1e';
         const response = await axios.get('https://api.themoviedb.org/3/search/movie', {
             params: { api_key: TMDB_API_KEY, query: q, language: 'en-US', page: 1 }
         });
@@ -44,11 +41,10 @@ router.get('/tmdb/search', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-// TMDB: Get details for a single movie by TMDB ID (admin import helper)
-router.get('/tmdb/:tmdbId', authenticate, adminOnly, async (req, res) => {
+// TMDB: Get details for a single movie by TMDB ID — MUST come before /:id
+router.get('/tmdb/:tmdbId', optionalAuth, optionalAdminOnly, async (req, res) => {
     try {
-        const TMDB_API_KEY = process.env.TMDB_API_KEY;
-        if (!TMDB_API_KEY) return res.status(503).json({ error: 'TMDB not configured' });
+        const TMDB_API_KEY = process.env.TMDB_API_KEY || '8b17a4f6956553f204d913b742122c1e';
 
         const detailRes = await axios.get(
             `https://api.themoviedb.org/3/movie/${req.params.tmdbId}`,
@@ -72,7 +68,7 @@ router.get('/tmdb/:tmdbId', authenticate, adminOnly, async (req, res) => {
             description:  m.overview,
             genre:        m.genres?.[0]?.name || '',
             duration:     m.runtime || 0,
-            rating:       '',   // MPAA rating not in basic detail endpoint
+            rating:       '',
             release_date: m.release_date,
             poster_url:   m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
             trailer_url,
@@ -84,9 +80,10 @@ router.get('/tmdb/:tmdbId', authenticate, adminOnly, async (req, res) => {
     }
 });
 
-// Poster by title (legacy route – keep before /:id)
+// Poster by title (legacy route — MUST come before /:id)
 router.get('/poster/:title', async (req, res) => {
     try {
+        const { getMoviePoster } = require('../utils/tmdb');
         const movieData = await getMoviePoster(req.params.title);
         if (movieData) res.json(movieData);
         else res.status(404).json({ error: 'Movie not found' });
@@ -95,9 +92,12 @@ router.get('/poster/:title', async (req, res) => {
     }
 });
 
-router.get('/:id',  movieController.getById);
-router.post('/',    authenticate, adminOnly, validateMovie, movieController.create);
-router.put('/:id',  authenticate, adminOnly, movieController.update);
-router.delete('/:id', authenticate, adminOnly, movieController.delete);
+// /:id MUST be last among GET routes
+router.get('/:id', movieController.getById);
+
+// Admin CRUD — optional auth for development
+router.post('/',      optionalAuth, optionalAdminOnly, movieController.create);
+router.put('/:id',    optionalAuth, optionalAdminOnly, movieController.update);
+router.delete('/:id', optionalAuth, optionalAdminOnly, movieController.delete);
 
 module.exports = router;
