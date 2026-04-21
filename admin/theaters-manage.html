@@ -1,1 +1,365 @@
-<!-- Manage Theaters -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Theater Management — manage cinema halls, seating layouts, capacity, and status.">
+    <title>Theater Management | Cinema Admin</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/theaters.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Layout fix: sidebar is position:fixed and out of flow.
+           The admin.css grid squeezes .admin-main into 260px. */
+        .admin-layout {
+            display: block !important;
+            grid-template-columns: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="admin-layout">
+
+        <!-- ============================================
+             SIDEBAR NAVIGATION
+             ============================================ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-film" style="color:var(--primary);margin-right:8px;"></i> CINEMAX</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="index.html" id="nav-dashboard">
+                        <i class="fas fa-grid-2"></i> Dashboard
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="movies-manage.html" id="nav-movies">
+                        <i class="fas fa-clapperboard"></i> Movies
+                    </a>
+                    <a href="theaters-manage.html" class="active" id="nav-theaters">
+                        <i class="fas fa-building-columns"></i> Theaters
+                    </a>
+                    <a href="shows-manage.html" id="nav-showtimes">
+                        <i class="fas fa-clock"></i> Showtimes
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Operations</div>
+                    <a href="bookings-list.html" id="nav-bookings">
+                        <i class="fas fa-ticket"></i> Bookings
+                    </a>
+                    <a href="users-list.html" id="nav-users">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                    <a href="reports.html" id="nav-reports">
+                        <i class="fas fa-chart-line"></i> Reports
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">System</div>
+                    <a href="#" id="nav-settings">
+                        <i class="fas fa-gear"></i> Settings
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="admin-avatar">AD</div>
+                    <div class="admin-info">
+                        <span class="admin-name">Admin User</span>
+                        <span class="admin-role">Super Admin</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================
+             MAIN CONTENT AREA
+             ============================================ -->
+        <main class="admin-main">
+
+            <!-- ---- Top Header Bar ---- -->
+            <header class="admin-header" id="admin-header">
+                <div class="header-left">
+                    <h1 class="admin-title">Theater Management</h1>
+                    <p class="header-subtitle">Manage cinema halls, capacity, layout, and status</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-add-theater" id="btn-add-theater">
+                        <i class="fas fa-plus"></i> Add Theater
+                    </button>
+                </div>
+            </header>
+
+            <!-- ---- Summary Stat Cards ---- -->
+            <section class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Total Theaters</div>
+                            <div class="value" id="stat-total">0</div>
+                        </div>
+                        <div class="icon icon-total">
+                            <i class="fas fa-building-columns"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">All registered halls</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Active Theaters</div>
+                            <div class="value" id="stat-active">0</div>
+                        </div>
+                        <div class="icon icon-active">
+                            <i class="fas fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Currently operational</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Under Maintenance</div>
+                            <div class="value" id="stat-maintenance">0</div>
+                        </div>
+                        <div class="icon icon-maintenance">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Temporarily unavailable</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <div class="label">Total Capacity</div>
+                            <div class="value" id="stat-capacity">0</div>
+                        </div>
+                        <div class="icon icon-capacity">
+                            <i class="fas fa-chair"></i>
+                        </div>
+                    </div>
+                    <div class="stat-change">Combined seat count</div>
+                </div>
+            </section>
+
+            <!-- ---- Filters Row ---- -->
+            <section class="filters-row" id="filters-row">
+                <div class="filter-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="filter-search" placeholder="Search theaters...">
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-type">
+                        <option value="">All Types</option>
+                        <option value="imax">IMAX</option>
+                        <option value="dolby">Dolby</option>
+                        <option value="standard">Standard</option>
+                        <option value="deluxe">Deluxe</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-status">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-branch">
+                        <option value="">All Branches</option>
+                        <option value="Nasr City">Nasr City</option>
+                        <option value="New Cairo">New Cairo</option>
+                        <option value="Sheikh Zayed">Sheikh Zayed</option>
+                    </select>
+                </div>
+
+                <div class="filter-select">
+                    <select id="filter-sort">
+                        <option value="">Sort By</option>
+                        <option value="name-asc">Name (A–Z)</option>
+                        <option value="name-desc">Name (Z–A)</option>
+                        <option value="capacity-desc">Capacity (High–Low)</option>
+                        <option value="capacity-asc">Capacity (Low–High)</option>
+                        <option value="updated-desc">Recently Updated</option>
+                        <option value="updated-asc">Oldest Updated</option>
+                    </select>
+                </div>
+
+                <div class="filter-count" id="filter-count">
+                    Showing <span>0</span> of <span>0</span> theaters
+                </div>
+            </section>
+
+            <!-- ---- Theaters Data Table ---- -->
+            <section class="table-container" id="table-container">
+                <div class="table-header-bar">
+                    <span class="table-title"><i class="fas fa-list" style="margin-right:8px;opacity:0.5;"></i>Theater List</span>
+                </div>
+                <div class="table-scroll">
+                    <table class="theaters-table" id="theaters-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="name">Theater</th>
+                                <th class="sortable" data-sort="type">Type</th>
+                                <th class="sortable" data-sort="branch">Branch</th>
+                                <th>Rows</th>
+                                <th>Seats/Row</th>
+                                <th class="sortable" data-sort="capacity">Capacity</th>
+                                <th class="sortable" data-sort="status">Status</th>
+                                <th class="sortable" data-sort="updated">Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="theaters-tbody">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ---- Empty State ---- -->
+            <div class="empty-state" id="empty-state" style="display:none;">
+                <div class="empty-state-icon">
+                    <i class="fas fa-building-columns"></i>
+                </div>
+                <h3>No Theaters Found</h3>
+                <p>No theaters match your current filters, or you haven't added any theaters yet.</p>
+                <button class="btn-add-theater" id="empty-add-btn">
+                    <i class="fas fa-plus"></i> Add Theater
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ============================================
+         MODAL — Add / Edit Theater
+         ============================================ -->
+    <div class="theater-modal-overlay" id="theater-modal-overlay">
+        <div class="theater-modal">
+            <div class="modal-head">
+                <h2 id="modal-title">Add New Theater</h2>
+                <button class="modal-close-btn" id="modal-close-btn">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="form-name">Theater Name <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="form-name" placeholder="e.g. IMAX Hall 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-type">Theater Type <span class="required">*</span></label>
+                        <select class="form-control" id="form-type">
+                            <option value="imax">IMAX</option>
+                            <option value="dolby">Dolby</option>
+                            <option value="standard" selected>Standard</option>
+                            <option value="deluxe">Deluxe</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-branch">Branch / Location <span class="required">*</span></label>
+                        <input type="text" class="form-control" id="form-branch" placeholder="e.g. Nasr City">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-rows">Number of Rows <span class="required">*</span></label>
+                        <input type="number" class="form-control" id="form-rows" placeholder="e.g. 10" min="1" max="30">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-seats-per-row">Seats Per Row <span class="required">*</span></label>
+                        <input type="number" class="form-control" id="form-seats-per-row" placeholder="e.g. 12" min="1" max="30">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <div class="capacity-preview">
+                            <i class="fas fa-calculator"></i>
+                            <div class="capacity-calc">
+                                <span class="capacity-label">Calculated Capacity</span>
+                                <span class="capacity-value" id="capacity-value">—</span>
+                                <span class="capacity-formula" id="capacity-formula">Enter rows and seats per row</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-status">Status</label>
+                        <select class="form-control" id="form-status">
+                            <option value="active">Active</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <!-- Spacer for alignment -->
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="form-notes">Notes / Description <span style="opacity:0.5;">(optional)</span></label>
+                        <textarea class="form-control" id="form-notes" rows="3" placeholder="Additional notes about this theater..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" id="btn-cancel">Cancel</button>
+                <button class="btn-save" id="btn-save">Create Theater</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         DETAIL DRAWER — Theater Details & Seat Layout
+         ============================================ -->
+    <div class="detail-overlay" id="detail-overlay"></div>
+
+    <div class="detail-drawer" id="detail-drawer">
+        <div class="drawer-header">
+            <h2><i class="fas fa-building-columns" style="margin-right:8px;opacity:0.6;"></i> Theater Details</h2>
+            <button class="modal-close-btn" id="detail-close-btn">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div class="drawer-body" id="detail-body">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- ============================================
+         TOAST CONTAINER
+         ============================================ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/theaters.js"></script>
+
+</body>
+
+</html>
