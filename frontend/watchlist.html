@@ -4,14 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Browse now showing and coming soon movies at Vision X Cinemas. Book your tickets today.">
-    <title>Movies | Vision X Cinemas</title>
+    <meta name="description" content="Your personal movie watchlist — save films you want to see at Vision X Cinemas.">
+    <title>My Watchlist | Vision X Cinemas</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/watchlist.css">
     <link rel="stylesheet" href="../shared/css/preloader.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/chatbot.css">
     <script src="../shared/js/preloader.js"></script>
+    <!-- Auth guard -->
+    <script>
+        (function () {
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+            if (!token || !userData) {
+                window.location.replace('login.html?redirect=watchlist.html');
+            }
+        })();
+    </script>
 </head>
 
 <body>
@@ -21,19 +30,15 @@
          ======================================== -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-
-            <!-- Left Nav Links -->
             <ul class="nav-links left">
-                <li>
-                    <a href="index.html" class="nav-link">HOME</a>
-                </li>
+                <li><a href="index.html" class="nav-link">HOME</a></li>
                 <li class="dropdown">
-                    <a href="movies.html" class="nav-link active dropdown-trigger">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
                         MOVIES <span class="dropdown-arrow"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="#now-showing">NOW SHOWING</a></li>
-                        <li><a href="#coming-soon">COMING SOON</a></li>
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
                     </ul>
                 </li>
                 <li class="dropdown">
@@ -50,15 +55,11 @@
                     <a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a>
                 </li>
             </ul>
-
-            <!-- Center Logo -->
             <div class="logo">
                 <a href="index.html">
                     <span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span>
                 </a>
             </div>
-
-            <!-- Right Nav -->
             <ul class="nav-links right">
                 <li>
                     <a href="login.html" class="login-btn" id="auth-nav-link">
@@ -66,105 +67,58 @@
                     </a>
                 </li>
             </ul>
-
         </div>
     </nav>
 
-    <!-- ========================================
-         PAGE HEADER
-         ======================================== -->
-    <header class="page-header">
-        <div class="header-content">
-            <h1>MOVIES</h1>
-            <p>Explore the latest blockbusters and upcoming releases</p>
-            <!-- Sub-Navigation -->
-            <div class="movies-sub-nav" id="movies-sub-nav">
-                <a href="#now-showing" class="movies-sub-nav-link active" data-target="now-showing">NOW SHOWING</a>
-                <a href="#coming-soon" class="movies-sub-nav-link" data-target="coming-soon">COMING SOON</a>
-            </div>
-        </div>
-    </header>
 
     <!-- ========================================
-         NOW SHOWING SECTION
+         WATCHLIST SECTION
          ======================================== -->
-    <section class="section" id="now-showing">
-        <div class="container">
+    <section class="watchlist-wrapper">
+        <div class="watchlist-container">
 
-            <div class="section-header">
-                <h2>NOW SHOWING</h2>
-                <p>Currently playing in our cinemas</p>
-            </div>
-
-            <!-- Filters -->
-            <div class="filter-bar">
-                <div class="filter-group">
-                    <label for="genre-filter">Genre:</label>
-                    <select id="genre-filter" class="filter-select">
-                        <option value="">All Genres</option>
-                        <option value="Action">Action</option>
-                        <option value="Comedy">Comedy</option>
-                        <option value="Drama">Drama</option>
-                        <option value="Horror">Horror</option>
-                        <option value="Sci-Fi">Sci-Fi</option>
-                        <option value="Romance">Romance</option>
-                        <option value="Thriller">Thriller</option>
-                    </select>
+            <!-- Header -->
+            <div class="watchlist-header">
+                <div class="watchlist-header-icon">
+                    <i class="fas fa-heart"></i>
                 </div>
+                <h1>My Watchlist</h1>
+                <div class="watchlist-header-count" id="watchlist-count">0 movies</div>
             </div>
 
-            <!-- Movies Grid -->
-            <div class="movies-grid" id="now-showing-grid">
-                <div class="loading-spinner">
-                    <i class="fas fa-circle-notch"></i>
+            <!-- Movie Grid -->
+            <div class="watchlist-grid" id="watchlist-grid">
+                <!-- Cards injected by watchlist.js -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="watchlist-empty" id="watchlist-empty" style="display: none;">
+                <div class="watchlist-empty-icon">
+                    <i class="far fa-heart"></i>
                 </div>
+                <h2>Your Watchlist is Empty</h2>
+                <p>Start adding movies you want to see! Tap the heart icon on any movie to save it here.</p>
+                <a href="movies.html" class="watchlist-empty-btn">
+                    <i class="fas fa-film"></i> BROWSE MOVIES
+                </a>
             </div>
 
-            <!-- Error Message -->
-            <div id="now-showing-error" class="error-alert" style="display: none;"></div>
         </div>
     </section>
 
-    <!-- ========================================
-         COMING SOON SECTION
-         ======================================== -->
-    <section class="section" id="coming-soon">
-        <div class="container">
-
-            <div class="section-header">
-                <h2>COMING SOON</h2>
-                <p>Upcoming movies arriving at our cinemas</p>
-            </div>
-
-            <!-- Movies Grid -->
-            <div class="movies-grid" id="coming-soon-grid">
-                <div class="loading-spinner">
-                    <i class="fas fa-circle-notch"></i>
-                </div>
-            </div>
-
-            <!-- Error Message -->
-            <div id="coming-soon-error" class="error-alert" style="display: none;"></div>
-        </div>
-    </section>
 
     <!-- ========================================
          FOOTER
          ======================================== -->
     <footer class="footer" id="footer">
         <div class="container">
-
             <div class="footer-grid">
-
-                <!-- Get in Touch -->
                 <div class="footer-col">
                     <h4 class="footer-title">GET IN TOUCH</h4>
                     <div class="footer-links">
                         <a href="pages/contact.html">Contact Us</a>
                     </div>
                 </div>
-
-                <!-- About -->
                 <div class="footer-col">
                     <h4 class="footer-title">ABOUT VISION X CINEMAS</h4>
                     <div class="footer-links">
@@ -174,8 +128,6 @@
                         <a href="pages/experience-standard.html">Standard & Deluxe</a>
                     </div>
                 </div>
-
-                <!-- Legal -->
                 <div class="footer-col">
                     <h4 class="footer-title">LEGAL</h4>
                     <div class="footer-links">
@@ -185,39 +137,24 @@
                         <a href="pages/support.html">Support</a>
                     </div>
                 </div>
-
-                <!-- Follow Us -->
                 <div class="footer-col">
                     <h4 class="footer-title">FOLLOW US</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link" aria-label="Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="TikTok">
-                            <i class="fab fa-tiktok"></i>
-                        </a>
-                        <a href="#" class="social-link" aria-label="YouTube">
-                            <i class="fab fa-youtube"></i>
-                        </a>
+                        <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                        <a href="#" class="social-link" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
-
             </div>
-
             <div class="footer-bottom">
                 <p>&copy; 2026 Vision X Cinemas. All rights reserved.</p>
             </div>
-
         </div>
     </footer>
 
     <script src="js/main.js"></script>
-    <script src="js/movies.js"></script>
     <script src="js/watchlist.js"></script>
-    <script src="js/chatbot.js"></script>
 
 </body>
 

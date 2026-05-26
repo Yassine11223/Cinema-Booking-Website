@@ -409,6 +409,15 @@ function createMovieCardElement(movie, section) {
         });
     }
 
+    // Add watchlist heart button if VXWatchlist is available
+    if (typeof VXWatchlist !== 'undefined') {
+        const wrapper = card.querySelector('.movie-card-image-wrapper');
+        if (wrapper) {
+            const heartBtn = VXWatchlist.createHeartBtn(movie);
+            wrapper.appendChild(heartBtn);
+        }
+    }
+
     return card;
 }
 
@@ -653,10 +662,39 @@ function renderHeroSection(movie) {
                     <button class="btn btn-primary" onclick="document.getElementById('booking-section').scrollIntoView({behavior: 'smooth'})">
                         <i class="fas fa-ticket-alt"></i> BOOK NOW
                     </button>
+                    <button class="wl-detail-btn" id="wl-detail-toggle" onclick="toggleDetailWatchlist()">
+                        <i class="far fa-heart"></i> ADD TO WATCHLIST
+                    </button>
                 </div>
             </div>
         </div>
     `;
+
+    // Update watchlist button state after rendering hero
+    updateDetailWatchlistBtn(movie);
+}
+
+/**
+ * Toggle watchlist on movie detail page
+ */
+function toggleDetailWatchlist() {
+    if (!currentMovieData || typeof VXWatchlist === 'undefined') return;
+    const added = VXWatchlist.toggle(currentMovieData);
+    updateDetailWatchlistBtn(currentMovieData);
+}
+
+/**
+ * Update the watchlist button appearance on movie detail page
+ */
+function updateDetailWatchlistBtn(movie) {
+    if (typeof VXWatchlist === 'undefined') return;
+    const btn = document.getElementById('wl-detail-toggle');
+    if (!btn) return;
+    const inList = VXWatchlist.isInWatchlist(movie.id);
+    btn.innerHTML = inList
+        ? '<i class="fas fa-heart"></i> IN WATCHLIST'
+        : '<i class="far fa-heart"></i> ADD TO WATCHLIST';
+    btn.classList.toggle('active', inList);
 }
 
 /**
