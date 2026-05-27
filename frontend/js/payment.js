@@ -2,10 +2,29 @@
  * payment.js — 3-step payment flow
  * Step 1: Food & Drinks add-on
  * Step 2: Payment method (Visa / Fawry)
- * Step 3: Booking confirmation
+ * Step 3: Booking confirmation + QR ticket cards (backend-generated)
+ *
+ * QR TICKET INTEGRATION:
+ * After payment is confirmed, the frontend sends booking data to
+ * POST /api/tickets/generate on the Express backend. The backend
+ * generates one unique QR code per seat and returns them as base64
+ * data URLs. Tickets are rendered as premium cards in Step 3.
+ *
+ * Graceful fallback: If the backend is unavailable, confirmation
+ * still renders without QR codes (degraded but functional).
  */
 (function () {
     'use strict';
+
+    /* =========================================================
+       CONFIGURATION
+       ========================================================= */
+
+    /**
+     * Backend API base URL.
+     * FUTURE: Read from environment config or window.__CONFIG__
+     */
+    const BACKEND_URL = 'http://localhost:5000';
 
     /* =========================================================
        FOOD MENU DATA (matching food-drinks.html)
@@ -35,6 +54,13 @@
     let booking = null;
     let paymentMethod = 'card';
     let bookingNumber = '';
+
+    /**
+     * Stores the backend ticket response after successful generation.
+     * Shape: { bookingId, purchaseTimestamp, tickets: [ { ticketId, seatNumber, qrCodeDataUrl, ... } ] }
+     * Null if ticket generation hasn't happened or failed.
+     */
+    let generatedTicketData = null;
 
     /* =========================================================
        DOM
@@ -158,6 +184,9 @@
 
         // Print ticket
         $('btn-print-ticket')?.addEventListener('click', () => window.print());
+
+        // Download all tickets
+        $('btn-download-all')?.addEventListener('click', downloadAllTickets);
     }
 
     /* =========================================================
@@ -304,11 +333,79 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
         }
 
-        setTimeout(() => {
+        // After simulated payment delay, generate QR tickets via backend
+        setTimeout(async () => {
             bookingNumber = generateBookingNumber();
+
+            // Attempt to generate QR tickets from backend
+            await generateTicketsFromBackend();
+
+            // Save booking (includes tickets if generated)
             saveBooking();
+
+            // Navigate to confirmation step
             goToStep(3);
         }, 2000);
+    }
+
+    /* =========================================================
+       BACKEND QR TICKET GENERATION
+       =========================================================
+       Sends booking data to the Express backend which generates
+       unique QR codes per seat using the `qrcode` npm package.
+       
+       On failure, sets generatedTicketData to null — the
+       confirmation page still renders without QR codes (fallback).
+       ========================================================= */
+
+    /**
+     * Call the backend ticket generation endpoint.
+     * Stores response in `generatedTicketData` on success.
+     * Gracefully handles errors without breaking the booking flow.
+     */
+    async function generateTicketsFromBackend() {
+        try {
+            const seatCount = booking.seats ? booking.seats.length : 0;
+            const pricePerSeat = seatCount > 0 ? (booking.total || 0) / seatCount : 0;
+
+            const payload = {
+                movieTitle: booking.movie?.title || 'Unknown Movie',
+                seats: booking.seats || [],
+                date: booking.date || '',
+                time: booking.showtime?.time || '',
+                experience: booking.experience || 'Standard',
+                hall: booking.showtime?.hall || 'Main Hall',
+                pricePerSeat: pricePerSeat,
+                currency: booking.currency || 'EGP',
+            };
+
+            const response = await fetch(`${BACKEND_URL}/api/tickets/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.warn('[Payment] Ticket generation failed:', response.status, errorData);
+                generatedTicketData = null;
+                return;
+            }
+
+            generatedTicketData = await response.json();
+
+            // Use backend-provided booking ID if available
+            if (generatedTicketData.bookingId) {
+                bookingNumber = generatedTicketData.bookingId;
+            }
+
+            console.info('[Payment] Tickets generated successfully:', generatedTicketData.tickets?.length, 'tickets');
+
+        } catch (error) {
+            // Network error, backend offline, etc.
+            console.warn('[Payment] Backend ticket generation unavailable:', error.message);
+            generatedTicketData = null;
+        }
     }
 
     /* =========================================================
@@ -350,10 +447,294 @@
                     <span class="dv" style="font-size:20px;color:var(--primary-light);font-weight:700;">${grandTotal.toLocaleString()} ${currency}</span>
                 </div>
             </div>`;
+
+        // Render QR ticket cards (if backend generated them)
+        renderTicketCards();
     }
 
     /* =========================================================
+       QR TICKET CARD RENDERING
+       =========================================================
+       Renders premium-styled ticket cards into #tickets-container.
+       Each card displays: QR code, movie title, seat, IDs,
+       date, time, experience, hall, price, and purchase time.
+       
+       Matches the dark cinema aesthetic with red accent borders,
+       glass-morphism backgrounds, and cinema tear-line dividers.
+       ========================================================= */
+
+    /**
+     * Render individual QR ticket cards for each booked seat.
+     * Called by renderConfirmation() after the existing confirmation
+     * details have been rendered. Shows fallback message if no
+     * QR data is available.
+     */
+    function renderTicketCards() {
+        const container = $('tickets-container');
+        if (!container) return;
+
+        // No ticket data — show fallback (backend was unreachable)
+        if (!generatedTicketData || !generatedTicketData.tickets || generatedTicketData.tickets.length === 0) {
+            container.innerHTML = `
+                <div class="tickets-fallback">
+                    <i class="fas fa-info-circle"></i>
+                    <p>QR tickets are currently unavailable. Your booking is confirmed — please present your booking number at the counter.</p>
+                </div>`;
+            // Hide download-all button
+            const dlBtn = $('btn-download-all');
+            if (dlBtn) dlBtn.style.display = 'none';
+            return;
+        }
+
+        const { bookingId, purchaseTimestamp, tickets } = generatedTicketData;
+        const purchaseDate = new Date(purchaseTimestamp);
+        const purchaseDisplay = purchaseDate.toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+        });
+
+        let html = `
+            <div class="tickets-section">
+                <div class="tickets-section-title">
+                    <i class="fas fa-ticket-alt"></i>
+                    Your Tickets (${tickets.length})
+                </div>
+                <div class="tickets-grid">`;
+
+        tickets.forEach((ticket, index) => {
+            html += `
+                    <div class="ticket-card" data-ticket-index="${index}">
+                        <!-- Ticket Header -->
+                        <div class="ticket-header">
+                            <div class="ticket-cinema">
+                                <span class="ticket-cinema-name">SCENE</span>
+                                <span class="ticket-cinema-sub">CINEMAS</span>
+                            </div>
+                            <span class="ticket-experience-badge">${ticket.experience}</span>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div class="ticket-qr">
+                            <img src="${ticket.qrCodeDataUrl}"
+                                 alt="QR Code for seat ${ticket.seatNumber}"
+                                 class="ticket-qr-img"
+                                 id="qr-img-${index}" />
+                            <div class="ticket-qr-label">Scan at entrance</div>
+                        </div>
+
+                        <!-- Ticket Divider (cinema tear-line) -->
+                        <div class="ticket-divider"></div>
+
+                        <!-- Ticket Details -->
+                        <div class="ticket-details">
+                            <div class="ticket-movie-title">${ticket.movieTitle}</div>
+                            <div class="ticket-info-grid">
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">SEAT</span>
+                                    <span class="ticket-info-value ticket-seat-highlight">${ticket.seatNumber}</span>
+                                </div>
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">HALL</span>
+                                    <span class="ticket-info-value">${ticket.hall}</span>
+                                </div>
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">DATE</span>
+                                    <span class="ticket-info-value">${ticket.date}</span>
+                                </div>
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">TIME</span>
+                                    <span class="ticket-info-value">${ticket.time}</span>
+                                </div>
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">PRICE</span>
+                                    <span class="ticket-info-value">${ticket.pricePerSeat?.toLocaleString() || '—'} ${ticket.currency || 'EGP'}</span>
+                                </div>
+                                <div class="ticket-info-item">
+                                    <span class="ticket-info-label">PURCHASED</span>
+                                    <span class="ticket-info-value">${purchaseDisplay}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ticket IDs -->
+                        <div class="ticket-ids">
+                            <span class="ticket-id-badge booking-id">${bookingId}</span>
+                            <span class="ticket-id-badge ticket-id">${ticket.ticketId}</span>
+                        </div>
+
+                        <!-- Per-ticket Download Button -->
+                        <div class="ticket-footer">
+                            <button class="ticket-download-btn"
+                                    onclick="window.__downloadTicket(${index})"
+                                    id="btn-download-ticket-${index}">
+                                <i class="fas fa-download"></i> Download Ticket
+                            </button>
+                        </div>
+                    </div>`;
+        });
+
+        html += `
+                </div>
+            </div>`;
+
+        container.innerHTML = html;
+
+        // Show Download All button
+        const dlBtn = $('btn-download-all');
+        if (dlBtn) dlBtn.style.display = '';
+    }
+
+    /* =========================================================
+       TICKET DOWNLOAD — Individual & Bulk
+       =========================================================
+       Creates a canvas with the ticket QR code and info,
+       then triggers a PNG file download for the user.
+       ========================================================= */
+
+    /**
+     * Download a single ticket as a PNG image.
+     * Draws a styled canvas with ticket info and QR code.
+     * @param {number} index — Index of the ticket in generatedTicketData.tickets
+     */
+    function downloadTicket(index) {
+        if (!generatedTicketData || !generatedTicketData.tickets[index]) return;
+
+        const ticket = generatedTicketData.tickets[index];
+        const { bookingId } = generatedTicketData;
+
+        // Create an off-screen canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = 500;
+        const height = 700;
+        canvas.width = width;
+        canvas.height = height;
+
+        // Dark cinema background
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, width, height);
+
+        // Red accent top border
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, '#b71c1c');
+        gradient.addColorStop(1, '#e53935');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, 5);
+
+        // Cinema name
+        ctx.fillStyle = '#e53935';
+        ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SCENE CINEMAS', width / 2, 50);
+
+        // Experience badge
+        ctx.fillStyle = 'rgba(183, 28, 28, 0.3)';
+        const badgeText = ticket.experience;
+        const badgeWidth = ctx.measureText(badgeText).width + 30;
+        ctx.fillRect((width - badgeWidth) / 2, 60, badgeWidth, 28);
+        ctx.fillStyle = '#ef9a9a';
+        ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
+        ctx.fillText(badgeText, width / 2, 79);
+
+        // Load QR image and draw
+        const qrImg = new Image();
+        qrImg.onload = function () {
+            // QR white background
+            const qrSize = 200;
+            const qrX = (width - qrSize) / 2;
+            const qrY = 105;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+            ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+            // Scan label
+            ctx.fillStyle = '#757575';
+            ctx.font = '11px "Segoe UI", Arial, sans-serif';
+            ctx.fillText('Scan at entrance', width / 2, qrY + qrSize + 25);
+
+            // Dashed divider
+            const divY = qrY + qrSize + 45;
+            ctx.setLineDash([8, 6]);
+            ctx.strokeStyle = 'rgba(183, 28, 28, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(30, divY);
+            ctx.lineTo(width - 30, divY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Movie title
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px "Segoe UI", Arial, sans-serif';
+            ctx.fillText(ticket.movieTitle, width / 2, divY + 35);
+
+            // Info grid
+            const infoY = divY + 60;
+            const infoItems = [
+                ['SEAT', ticket.seatNumber],
+                ['HALL', ticket.hall],
+                ['DATE', ticket.date],
+                ['TIME', ticket.time],
+                ['PRICE', `${ticket.pricePerSeat?.toLocaleString() || '—'} ${ticket.currency || 'EGP'}`],
+            ];
+
+            ctx.textAlign = 'left';
+            infoItems.forEach((item, i) => {
+                const x = i % 2 === 0 ? 50 : 280;
+                const y = infoY + Math.floor(i / 2) * 45;
+
+                ctx.fillStyle = '#9e9e9e';
+                ctx.font = '600 10px "Segoe UI", Arial, sans-serif';
+                ctx.fillText(item[0], x, y);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '500 15px "Segoe UI", Arial, sans-serif';
+                ctx.fillText(item[1], x, y + 18);
+            });
+
+            // IDs at bottom
+            const idsY = height - 60;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#9e9e9e';
+            ctx.font = '600 10px "Segoe UI", Arial, sans-serif';
+            ctx.fillText(bookingId, width / 2 - 90, idsY);
+            ctx.fillText(ticket.ticketId, width / 2 + 90, idsY);
+
+            // Bottom border
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, height - 5, width, 5);
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.download = `ticket_${ticket.ticketId}_${ticket.seatNumber}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        qrImg.src = ticket.qrCodeDataUrl;
+    }
+
+    /**
+     * Download all tickets sequentially with a small delay
+     * to avoid being blocked by the browser's download manager.
+     */
+    function downloadAllTickets() {
+        if (!generatedTicketData || !generatedTicketData.tickets) return;
+
+        generatedTicketData.tickets.forEach((_, index) => {
+            setTimeout(() => downloadTicket(index), index * 500);
+        });
+    }
+
+    // Expose download function to global scope for onclick handlers
+    window.__downloadTicket = downloadTicket;
+
+    /* =========================================================
        SAVE BOOKING
+       =========================================================
+       Persists booking data to localStorage (scene_bookings).
+       Now includes the generated ticket data for offline viewing.
+       
+       FUTURE: Replace localStorage with backend database.
        ========================================================= */
     function saveBooking() {
         try {
@@ -372,6 +753,12 @@
                 paymentMethod,
                 currency: booking.currency,
                 createdAt: new Date().toISOString(),
+                // Include ticket data for offline reference
+                tickets: generatedTicketData ? generatedTicketData.tickets.map(t => ({
+                    ticketId: t.ticketId,
+                    seatNumber: t.seatNumber,
+                    qrCodeDataUrl: t.qrCodeDataUrl,
+                })) : null,
             });
             localStorage.setItem('scene_bookings', JSON.stringify(bookings));
         } catch (_) {}

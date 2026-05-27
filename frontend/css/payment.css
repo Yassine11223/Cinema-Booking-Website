@@ -641,6 +641,333 @@
     box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
 }
 
+/* --- QR Ticket Cards (Step 3: Confirmation) --- */
+
+/* Section wrapper */
+.tickets-section {
+    margin-top: var(--space-2xl);
+    text-align: left;
+}
+
+.tickets-section-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--primary-light);
+    margin-bottom: var(--space-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.tickets-section-title i {
+    font-size: 20px;
+}
+
+/* Responsive ticket grid */
+.tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-xl);
+}
+
+/* Individual ticket card */
+.ticket-card {
+    background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.98));
+    border: 1px solid rgba(183, 28, 28, 0.3);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.4s ease;
+    animation: ticketSlideIn 0.5s ease both;
+    position: relative;
+}
+
+.ticket-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #b71c1c, #e53935, #b71c1c);
+}
+
+.ticket-card:hover {
+    border-color: rgba(229, 57, 53, 0.5);
+    box-shadow: 0 8px 32px rgba(183, 28, 28, 0.2), 0 0 60px rgba(183, 28, 28, 0.06);
+    transform: translateY(-4px);
+}
+
+@keyframes ticketSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.ticket-card:nth-child(2) { animation-delay: 0.1s; }
+.ticket-card:nth-child(3) { animation-delay: 0.2s; }
+.ticket-card:nth-child(4) { animation-delay: 0.3s; }
+.ticket-card:nth-child(5) { animation-delay: 0.4s; }
+.ticket-card:nth-child(6) { animation-delay: 0.5s; }
+
+/* Ticket Header */
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg) var(--space-xl);
+    padding-top: calc(var(--space-lg) + 3px); /* account for top accent border */
+}
+
+.ticket-cinema {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.ticket-cinema-name {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #e53935;
+    text-transform: uppercase;
+}
+
+.ticket-cinema-sub {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.ticket-experience-badge {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #ef9a9a;
+    background: rgba(183, 28, 28, 0.2);
+    border: 1px solid rgba(183, 28, 28, 0.3);
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+}
+
+/* QR Code Section */
+.ticket-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-lg) var(--space-xl);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.ticket-qr-img {
+    width: 200px;
+    height: 200px;
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    padding: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease;
+}
+
+.ticket-card:hover .ticket-qr-img {
+    transform: scale(1.03);
+}
+
+.ticket-qr-label {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+}
+
+/* Ticket Divider — Cinema tear-line aesthetic */
+.ticket-divider {
+    position: relative;
+    height: 1px;
+    margin: 0 var(--space-xl);
+    border: none;
+    background: transparent;
+}
+
+.ticket-divider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-top: 2px dashed rgba(183, 28, 28, 0.25);
+}
+
+.ticket-divider::after {
+    content: '✂';
+    position: absolute;
+    top: -9px;
+    left: -8px;
+    font-size: 14px;
+    color: rgba(183, 28, 28, 0.4);
+    background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.98));
+    padding-right: 6px;
+}
+
+/* Ticket Details */
+.ticket-details {
+    padding: var(--space-lg) var(--space-xl);
+}
+
+.ticket-movie-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--space-lg);
+    line-height: 1.3;
+}
+
+.ticket-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.ticket-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ticket-info-label {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.ticket-info-value {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.ticket-seat-highlight {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    color: #e53935;
+    letter-spacing: 2px;
+}
+
+/* Ticket ID Badges */
+.ticket-ids {
+    display: flex;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-xl);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ticket-id-badge {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+
+.ticket-id-badge.booking-id {
+    color: #ef9a9a;
+    border-color: rgba(183, 28, 28, 0.2);
+    background: rgba(183, 28, 28, 0.08);
+}
+
+/* Ticket Footer */
+.ticket-footer {
+    padding: var(--space-md) var(--space-xl) var(--space-lg);
+    text-align: center;
+}
+
+.ticket-download-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    width: 100%;
+    justify-content: center;
+}
+
+.ticket-download-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+    background: rgba(183, 28, 28, 0.08);
+    box-shadow: 0 0 12px rgba(183, 28, 28, 0.15);
+}
+
+/* Fallback message when QR generation fails */
+.tickets-fallback {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    margin-top: var(--space-xl);
+    background: rgba(255, 152, 0, 0.06);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+    border-radius: var(--radius-lg);
+    color: #ffb74d;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.tickets-fallback i {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.tickets-fallback p {
+    margin: 0;
+}
+
+/* Expand confirm-card max-width when tickets are present */
+#step-3 .confirm-card:has(#tickets-container:not(:empty)) {
+    max-width: 900px;
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .step-label { display: none; }
@@ -651,4 +978,16 @@
     .cart-bar { flex-direction: column; gap: var(--space-md); text-align: center; }
     .confirm-card { padding: var(--space-2xl) var(--space-lg); }
     .booking-number { font-size: 24px; }
+
+    /* QR Ticket Cards — Mobile */
+    .tickets-grid { grid-template-columns: 1fr; }
+    .ticket-qr-img { width: 160px; height: 160px; }
+    .ticket-movie-title { font-size: 15px; }
+    .ticket-seat-highlight { font-size: 18px; }
+    .ticket-info-value { font-size: 13px; }
+    .ticket-header { padding: var(--space-md) var(--space-lg); padding-top: calc(var(--space-md) + 3px); }
+    .ticket-qr { padding: var(--space-md) var(--space-lg); }
+    .ticket-details { padding: var(--space-md) var(--space-lg); }
+    .ticket-ids { padding: var(--space-sm) var(--space-lg); }
+    .ticket-footer { padding: var(--space-sm) var(--space-lg) var(--space-md); }
 }
