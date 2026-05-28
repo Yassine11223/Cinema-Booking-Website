@@ -8,14 +8,36 @@
 (function () {
     'use strict';
 
+    // ============================================
+    // AUTH GUARD — Redirect to login if not admin
+    // ============================================
+    (function enforceAdminAuth() {
+        const token = localStorage.getItem('admin_token');
+        const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+
+        let isAdmin = false;
+        if (token && userData) {
+            try {
+                const user = JSON.parse(userData);
+                if (user && user.role === 'admin') isAdmin = true;
+            } catch (_) { }
+        }
+
+        if (!isAdmin) {
+            // Not authenticated as admin — redirect to login page
+            window.location.href = 'login.html';
+            return;
+        }
+    })();
+
     // Map page filenames → nav link IDs
     const PAGE_NAV_MAP = {
-        'index.html':            'nav-dashboard',
-        'movies-manage.html':    'nav-movies',
-        'shows-manage.html':     'nav-shows',
-        'theaters-manage.html':  'nav-theaters',
-        'bookings-list.html':    'nav-bookings',
-        'users-list.html':       'nav-users',
+        'index.html': 'nav-dashboard',
+        'movies-manage.html': 'nav-movies',
+        'shows-manage.html': 'nav-shows',
+        'theaters-manage.html': 'nav-theaters',
+        'bookings-list.html': 'nav-bookings',
+        'users-list.html': 'nav-users',
     };
 
     /**
@@ -59,8 +81,8 @@
      */
     function initMobileToggle() {
         const toggleBtn = document.getElementById('sidebar-toggle');
-        const sidebar   = document.getElementById('sidebar');
-        const backdrop  = document.getElementById('sidebar-backdrop');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
 
         if (!toggleBtn || !sidebar) return;
 
@@ -89,7 +111,7 @@
 
     /**
      * Logout button handler.
-     * Clears admin auth tokens and redirects to the frontend login page.
+     * Clears all admin auth tokens and redirects to the admin login page.
      */
     function initLogout() {
         const logoutBtn = document.getElementById('nav-logout');
@@ -98,13 +120,14 @@
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
 
-            // Clear admin-related data from localStorage
+            // Clear all auth data set during login
             localStorage.removeItem('admin_token');
-            localStorage.removeItem('adminLoggedIn');
-            localStorage.removeItem('admin_user');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('scene_user');
+            localStorage.removeItem('userData');
 
-            // Redirect to frontend login page
-            window.location.href = '../frontend/login.html';
+            // Redirect to admin login page
+            window.location.href = 'login.html';
         });
     }
 
