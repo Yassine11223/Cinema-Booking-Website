@@ -53,6 +53,66 @@ const userController = {
         }
     },
 
+    // POST /api/users/login/customer — customer-only login
+    async loginCustomer(req, res, next) {
+        try {
+            const { email, password } = req.body;
+
+            const user = await User.findByEmail(email);
+            if (!user) {
+                return res.status(401).json({ message: 'Invalid email or password' });
+            }
+
+            const isValid = await User.comparePassword(password, user.password);
+            if (!isValid) {
+                return res.status(401).json({ message: 'Invalid email or password' });
+            }
+
+            // Block admin users from customer portal
+            if (user.role === 'admin') {
+                return res.status(403).json({ message: 'Please use the admin login portal to sign in.' });
+            }
+
+            await User.recordLogin(user.id);
+            const token = generateToken(user);
+            const { password: _, ...userWithoutPassword } = user;
+
+            res.json({ user: userWithoutPassword, token });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // POST /api/users/login/admin — admin-only login
+    async loginAdmin(req, res, next) {
+        try {
+            const { email, password } = req.body;
+
+            const user = await User.findByEmail(email);
+            if (!user) {
+                return res.status(401).json({ message: 'Invalid email or password' });
+            }
+
+            const isValid = await User.comparePassword(password, user.password);
+            if (!isValid) {
+                return res.status(401).json({ message: 'Invalid email or password' });
+            }
+
+            // Block non-admin users from admin portal
+            if (user.role !== 'admin') {
+                return res.status(403).json({ message: 'Access denied. This portal is for administrators only.' });
+            }
+
+            await User.recordLogin(user.id);
+            const token = generateToken(user);
+            const { password: _, ...userWithoutPassword } = user;
+
+            res.json({ user: userWithoutPassword, token });
+        } catch (error) {
+            next(error);
+        }
+    },
+
     // GET /api/users/profile
     async getProfile(req, res, next) {
         try {
