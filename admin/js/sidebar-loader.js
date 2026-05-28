@@ -2,19 +2,42 @@
  * sidebar-loader.js
  * Loads the sidebar component and highlights the active nav link
  * based on the current page filename.
+ * Also handles the logout button.
  */
 
 (function () {
     'use strict';
 
+    // ============================================
+    // AUTH GUARD — Redirect to login if not admin
+    // ============================================
+    (function enforceAdminAuth() {
+        const token = localStorage.getItem('admin_token');
+        const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+
+        let isAdmin = false;
+        if (token && userData) {
+            try {
+                const user = JSON.parse(userData);
+                if (user && user.role === 'admin') isAdmin = true;
+            } catch (_) { }
+        }
+
+        if (!isAdmin) {
+            // Not authenticated as admin — redirect to login page
+            window.location.href = 'login.html';
+            return;
+        }
+    })();
+
     // Map page filenames → nav link IDs
     const PAGE_NAV_MAP = {
-        'index.html':            'nav-dashboard',
-        'movies-manage.html':    'nav-movies',
-        'shows-manage.html':     'nav-shows',
-        'theaters-manage.html':  'nav-theaters',
-        'bookings-list.html':    'nav-bookings',
-        'users-list.html':       'nav-users',
+        'index.html': 'nav-dashboard',
+        'movies-manage.html': 'nav-movies',
+        'shows-manage.html': 'nav-shows',
+        'theaters-manage.html': 'nav-theaters',
+        'bookings-list.html': 'nav-bookings',
+        'users-list.html': 'nav-users',
     };
 
     /**
@@ -33,6 +56,7 @@
 
             activateCurrentLink();
             initMobileToggle();
+            initLogout();
 
         } catch (err) {
             console.warn('[Sidebar] Could not load sidebar component:', err);
@@ -57,31 +81,53 @@
      */
     function initMobileToggle() {
         const toggleBtn = document.getElementById('sidebar-toggle');
-        const sidebar   = document.getElementById('sidebar');
-        const backdrop  = document.getElementById('sidebar-backdrop');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
 
         if (!toggleBtn || !sidebar) return;
 
         function openSidebar() {
             sidebar.classList.add('open');
-            backdrop.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
 
         function closeSidebar() {
             sidebar.classList.remove('open');
-            backdrop.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
             document.body.style.overflow = '';
         }
 
         toggleBtn.addEventListener('click', openSidebar);
-        backdrop.addEventListener('click', closeSidebar);
+        if (backdrop) backdrop.addEventListener('click', closeSidebar);
 
         // Close on nav link click (mobile UX)
         sidebar.querySelectorAll('.sidebar-nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 768) closeSidebar();
             });
+        });
+    }
+
+    /**
+     * Logout button handler.
+     * Clears all admin auth tokens and redirects to the admin login page.
+     */
+    function initLogout() {
+        const logoutBtn = document.getElementById('nav-logout');
+        if (!logoutBtn) return;
+
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Clear all auth data set during login
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('scene_user');
+            localStorage.removeItem('userData');
+
+            // Redirect to admin login page
+            window.location.href = 'login.html';
         });
     }
 

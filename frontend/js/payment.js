@@ -11,20 +11,20 @@
        FOOD MENU DATA (matching food-drinks.html)
        ========================================================= */
     const FOOD_MENU = [
-        { id:'popcorn-butter',   cat:'Popcorn',   emoji:'🧈', name:'Classic Butter Popcorn',   price:7.50 },
-        { id:'popcorn-caramel',  cat:'Popcorn',   emoji:'🍯', name:'Caramel Drizzle Popcorn',  price:8.00 },
-        { id:'popcorn-cheese',   cat:'Popcorn',   emoji:'🧀', name:'Cheddar Cheese Popcorn',   price:8.00 },
-        { id:'popcorn-spicy',    cat:'Popcorn',   emoji:'🌶️', name:'Spicy Jalapeño Popcorn',   price:8.00 },
-        { id:'nachos',           cat:'Snacks',    emoji:'🫕', name:'Loaded Nachos',            price:8.50 },
-        { id:'hotdog',           cat:'Snacks',    emoji:'🌭', name:'Classic Hot Dog',          price:6.50 },
-        { id:'pretzel',          cat:'Snacks',    emoji:'🥨', name:'Soft Pretzel',             price:5.50 },
-        { id:'mozz-sticks',      cat:'Snacks',    emoji:'🧀', name:'Mozzarella Sticks',        price:7.00 },
-        { id:'candy',            cat:'Snacks',    emoji:'🍬', name:'Candy Box',                price:4.50 },
-        { id:'soft-drink',       cat:'Drinks',    emoji:'🥤', name:'Soft Drink (Medium)',      price:5.50 },
-        { id:'iced-tea',         cat:'Drinks',    emoji:'🍵', name:'Iced Tea (Medium)',        price:6.00 },
-        { id:'water',            cat:'Drinks',    emoji:'💧', name:'Bottled Water',            price:3.00 },
-        { id:'slushie',          cat:'Drinks',    emoji:'🧊', name:'Frozen Slushie',           price:6.50 },
-        { id:'coffee',           cat:'Drinks',    emoji:'☕', name:'Hot Coffee',               price:4.50 },
+        { id:'popcorn-butter',   cat:'Popcorn',   emoji:'🧈', name:'Classic Butter Popcorn',   price:160 },
+        { id:'popcorn-caramel',  cat:'Popcorn',   emoji:'🍯', name:'Caramel Drizzle Popcorn',  price:170 },
+        { id:'popcorn-cheese',   cat:'Popcorn',   emoji:'🧀', name:'Cheddar Cheese Popcorn',   price:170 },
+        { id:'popcorn-spicy',    cat:'Popcorn',   emoji:'🌶️', name:'Spicy Jalapeño Popcorn',   price:170 },
+        { id:'nachos',           cat:'Snacks',    emoji:'🫕', name:'Loaded Nachos',            price:180 },
+        { id:'hotdog',           cat:'Snacks',    emoji:'🌭', name:'Classic Hot Dog',          price:140 },
+        { id:'pretzel',          cat:'Snacks',    emoji:'🥨', name:'Soft Pretzel',             price:120 },
+        { id:'mozz-sticks',      cat:'Snacks',    emoji:'🧀', name:'Mozzarella Sticks',        price:150 },
+        { id:'candy',            cat:'Snacks',    emoji:'🍬', name:'Candy Box',                price:100 },
+        { id:'soft-drink',       cat:'Drinks',    emoji:'🥤', name:'Soft Drink (Medium)',      price:120 },
+        { id:'iced-tea',         cat:'Drinks',    emoji:'🍵', name:'Iced Tea (Medium)',        price:130 },
+        { id:'water',            cat:'Drinks',    emoji:'💧', name:'Bottled Water',            price:60 },
+        { id:'slushie',          cat:'Drinks',    emoji:'🧊', name:'Frozen Slushie',           price:140 },
+        { id:'coffee',           cat:'Drinks',    emoji:'☕', name:'Hot Coffee',               price:100 },
     ];
 
     /* =========================================================
@@ -88,7 +88,7 @@
                         <div class="food-emoji">${item.emoji}</div>
                         <div class="food-info">
                             <div class="food-name">${item.name}</div>
-                            <div class="food-price">$${item.price.toFixed(2)}</div>
+                            <div class="food-price">${item.price} EGP</div>
                         </div>
                         <div class="food-controls">
                             <button class="food-btn food-minus" data-id="${item.id}" ${qty === 0 ? 'style="visibility:hidden"' : ''}>−</button>
@@ -186,7 +186,7 @@
         if (totalItems > 0) {
             bar.classList.add('visible');
             $('cart-count-text').textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
-            $('cart-total-text').textContent = `$${totalPrice.toFixed(2)}`;
+            $('cart-total-text').textContent = `${totalPrice} EGP`;
         } else {
             bar.classList.remove('visible');
         }
@@ -260,12 +260,12 @@
             <div class="order-line"><span class="label">Tickets</span><span class="value">${ticketTotal.toLocaleString()} ${currency}</span></div>`;
 
         if (foodTotal > 0) {
-            html += `<div class="order-line"><span class="label">Food & Drinks</span><span class="value">$${foodTotal.toFixed(2)}</span></div>`;
+            html += `<div class="order-line"><span class="label">Food & Drinks</span><span class="value">${foodTotal} ${currency}</span></div>`;
             // Individual items
             Object.entries(cart).forEach(([id, qty]) => {
                 const item = FOOD_MENU.find(f => f.id === id);
                 if (item && qty > 0) {
-                    html += `<div class="order-line" style="padding-left:16px;font-size:13px;"><span class="label" style="color:var(--text-muted);">${item.emoji} ${item.name} ×${qty}</span><span class="value" style="font-size:13px;">$${(item.price * qty).toFixed(2)}</span></div>`;
+                    html += `<div class="order-line" style="padding-left:16px;font-size:13px;"><span class="label" style="color:var(--text-muted);">${item.emoji} ${item.name} ×${qty}</span><span class="value" style="font-size:13px;">${(item.price * qty)} ${currency}</span></div>`;
                 }
             });
         }
