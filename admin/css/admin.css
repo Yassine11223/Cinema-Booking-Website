@@ -6,6 +6,7 @@
 
 @import url('../../shared/css/global.css');
 @import url('../../shared/css/components.css');
+@import url('admin-theme.css');
 
 /* --- Admin Layout --- */
 .admin-layout {
@@ -51,8 +52,8 @@
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
     color: var(--text-primary);
-    background: rgba(183, 28, 28, 0.12);
-    border-left-color: var(--primary);
+    background: var(--admin-accent-soft);
+    border-left-color: var(--admin-accent);
 }
 
 /* --- Main Content --- */
@@ -105,7 +106,7 @@
     font-size: 32px;
     font-weight: 600;
     font-family: var(--font-display);
-    color: var(--primary-light);
+    color: var(--admin-accent);
 }
 
 /* --- Admin Table Overrides --- */

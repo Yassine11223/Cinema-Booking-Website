@@ -78,13 +78,13 @@
     align-items: center;
     gap: 8px;
     padding: 11px 24px;
-    background: var(--primary);
-    color: #fff;
+    background: var(--admin-accent, #f5a623);
+    color: #000;
     font-family: var(--font-display);
     font-size: 13px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    border: 1px solid var(--primary);
+    border: 1px solid var(--admin-accent, #f5a623);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: var(--transition);
@@ -92,8 +92,8 @@
 }
 
 .btn-add-theater:hover {
-    background: var(--primary-light);
-    box-shadow: var(--shadow-red);
+    background: var(--admin-accent-light, #ffb94a);
+    box-shadow: var(--shadow-accent, 0 4px 20px rgba(245,166,35,0.2));
     transform: translateY(-1px);
 }
 
@@ -729,7 +729,7 @@
 }
 
 .form-group label .required {
-    color: var(--primary-light);
+    color: var(--admin-accent-light, #ffb94a);
     margin-left: 2px;
 }
 
@@ -844,9 +844,9 @@ textarea.form-control {
 
 .btn-save {
     padding: 10px 28px;
-    background: var(--primary);
-    color: #fff;
-    border: 1px solid var(--primary);
+    background: var(--admin-accent, #f5a623);
+    color: #000;
+    border: 1px solid var(--admin-accent, #f5a623);
     border-radius: var(--radius-md);
     font-family: var(--font-display);
     font-size: 13px;
@@ -857,8 +857,8 @@ textarea.form-control {
 }
 
 .btn-save:hover {
-    background: var(--primary-light);
-    box-shadow: var(--shadow-red);
+    background: var(--admin-accent-light, #ffb94a);
+    box-shadow: var(--shadow-accent, 0 4px 20px rgba(245,166,35,0.2));
 }
 
 /* ============================================
@@ -1136,7 +1136,7 @@ textarea.form-control {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, var(--admin-accent, #f5a623), var(--admin-accent-dark, #d4900a));
     display: flex;
     align-items: center;
     justify-content: center;

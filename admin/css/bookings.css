@@ -650,7 +650,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, var(--admin-accent, #f5a623), var(--admin-accent-dark, #d4900a));
     display: flex;
     align-items: center;
     justify-content: center;
