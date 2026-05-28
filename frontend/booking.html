@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Choose your seats — premium cinema booking experience with interactive seat map.">
+    <title>Choose Seats | Cinema Booking</title>
+    <link rel="stylesheet" href="css/booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Auth guard: redirect to login if not signed in -->
+    <script>
+        (function () {
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+            if (!token || !userData) {
+                var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.replace('login.html?redirect=' + returnUrl);
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <div class="booking-page">
+
+        <!-- ==============================
+             VIEW 1 — DATE & SHOWTIME
+             ============================== -->
+        <div class="view-selection active" id="view-selection">
+
+            <div class="selection-movie" id="movie-header"></div>
+
+            <div class="selection-container">
+                <section class="selection-step">
+                    <h2 class="selection-step__label">Select Date</h2>
+                    <div id="date-selector"></div>
+                </section>
+
+                <section class="selection-step">
+                    <h2 class="selection-step__label">Select Showtime</h2>
+                    <div id="showtime-selector"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ==============================
+             VIEW 2 — SEAT MAP
+             ============================== -->
+        <div class="view-seatmap" id="view-seatmap">
+
+            <div class="seatmap-topbar">
+                <button class="change-btn" id="change-btn">
+                    <i class="far fa-calendar-alt"></i> Change Date &amp; Showtime
+                </button>
+            </div>
+
+            <div class="seatmap-header">
+                <h1 class="seatmap-header__title">Choose Seats</h1>
+                <div id="timer-display"></div>
+            </div>
+
+            <div class="seat-legend" id="seat-legend"></div>
+
+            <div class="screen-wrapper">
+                <div class="screen-arc"></div>
+                <span class="screen-label">Screen</span>
+            </div>
+
+            <div class="seatmap-body">
+                <div class="seatmap-inner" id="seat-map"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bottom checkout bar -->
+    <div class="bottom-bar" id="bottom-bar"></div>
+
+    <!-- Modal overlay -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-box" id="modal-box"></div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/booking.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Scene Cinemas Admin — User Management">
+    <title>Scene Cinemas | Users</title>
+
+    <!-- Shared Design System -->
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/users.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="admin-body">
+
+    <div class="admin-layout" id="admin-layout">
+
+        <!-- SIDEBAR -->
+        <div id="sidebar-container"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-main" id="admin-main">
+
+            <!-- TOP HEADER -->
+            <header class="admin-header" id="admin-header">
+                <div class="admin-header-left">
+                    <h1 class="admin-page-title">
+                        <i class="fas fa-users admin-title-icon"></i>
+                        User Management
+                    </h1>
+                    <p class="admin-page-subtitle">Real registered accounts — with login activity data</p>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-date-badge">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="today-date-text"></span>
+                    </div>
+                    <button class="admin-refresh-btn" id="btn-refresh-users" title="Refresh">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- KPI CARDS -->
+            <section class="users-kpi-grid" id="users-kpi-grid">
+
+                <div class="ukpi-card" id="ukpi-total">
+                    <div class="ukpi-icon ukpi-icon-blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="ukpi-body">
+                        <span class="ukpi-label">Total Users</span>
+                        <span class="ukpi-value" id="kpi-total">—</span>
+                    </div>
+                </div>
+
+                <div class="ukpi-card" id="ukpi-active">
+                    <div class="ukpi-icon ukpi-icon-green">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="ukpi-body">
+                        <span class="ukpi-label">Logged in This Week</span>
+                        <span class="ukpi-value" id="kpi-active">—</span>
+                    </div>
+                </div>
+
+                <div class="ukpi-card" id="ukpi-new">
+                    <div class="ukpi-icon ukpi-icon-gold">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="ukpi-body">
+                        <span class="ukpi-label">New This Month</span>
+                        <span class="ukpi-value" id="kpi-new">—</span>
+                    </div>
+                </div>
+
+                <div class="ukpi-card" id="ukpi-admins">
+                    <div class="ukpi-icon ukpi-icon-red">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="ukpi-body">
+                        <span class="ukpi-label">Admins</span>
+                        <span class="ukpi-value" id="kpi-admins">—</span>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- FILTERS -->
+            <section class="users-filters" id="users-filters">
+                <div class="ufilter-left">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="user-search" class="search-input" placeholder="Search by name or email…" autocomplete="off">
+                    </div>
+                    <div class="filter-tabs">
+                        <button class="ftab ftab-active" data-role="all"      id="urtab-all">All</button>
+                        <button class="ftab"             data-role="customer" id="urtab-customer">Customers</button>
+                        <button class="ftab"             data-role="admin"    id="urtab-admin">Admins</button>
+                    </div>
+                </div>
+                <div class="ufilter-right">
+                    <select id="sort-users" class="filter-select">
+                        <option value="created_desc">Newest first</option>
+                        <option value="created_asc">Oldest first</option>
+                        <option value="logins_desc">Most logins</option>
+                        <option value="last_login_desc">Last active</option>
+                        <option value="name_asc">A → Z</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- USERS TABLE -->
+            <section class="users-table-section" id="users-table-section">
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header">
+                        <h2 class="chart-title">Registered Accounts</h2>
+                        <div class="table-header-right" id="table-header-right">
+                            <span class="users-count-badge" id="users-count-badge"> </span>
+                            <button class="btn-export" id="btn-export-csv" title="Export CSV">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div class="users-loading" id="users-loading">
+                        <div class="spinner"></div>
+                        <p>Loading users…</p>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-scroll" id="users-table-wrap" style="display:none;">
+                        <table class="admin-table users-table" id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th>Last Login</th>
+                                    <th class="th-center">Login Count</th>
+                                    <th>Activity</th>
+                                    <th class="th-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty -->
+                    <div class="users-empty" id="users-empty" style="display:none;">
+                        <i class="fas fa-user-slash"></i>
+                        <p>No users found</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LOGIN FREQUENCY CHART -->
+            <section class="login-chart-section" id="login-chart-section">
+                <div class="chart-card" style="margin-top:0;">
+                    <div class="chart-card-header">
+                        <div>
+                            <h2 class="chart-title">Login Frequency</h2>
+                            <p class="chart-subtitle">Daily logins over the last 14 days (simulated from login_count data)</p>
+                        </div>
+                        <div class="chart-legend">
+                            <span class="legend-dot" style="background:var(--primary);"></span>
+                            <span class="legend-label">Logins / Day</span>
+                        </div>
+                    </div>
+                    <div class="lfreq-chart" id="lfreq-chart">
+                        <!-- JS renders bars -->
+                    </div>
+                    <div class="lfreq-labels" id="lfreq-labels"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =============================================
+         MODAL: DELETE USER CONFIRM
+         ============================================= -->
+    <div class="modal-overlay" id="modal-del-user" role="dialog" aria-modal="true" aria-labelledby="modal-del-user-title">
+        <div class="modal-panel modal-panel-sm">
+            <div class="modal-header">
+                <h2 class="modal-title modal-title-danger" id="modal-del-user-title">
+                    <i class="fas fa-user-times"></i>
+                    Delete User
+                </h2>
+                <button class="modal-close" id="modal-del-user-close" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-text">
+                <p>Delete account of <strong id="del-user-name">this user</strong>?</p>
+                <p class="danger-note">All their bookings and data will also be permanently removed.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-cancel" id="del-user-cancel">Cancel</button>
+                <button class="btn-modal-danger" id="btn-confirm-del-user">
+                    <i class="fas fa-user-times"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============================================
+         MODAL: USER DETAIL / PROFILE
+         ============================================= -->
+    <div class="modal-overlay" id="modal-user-detail" role="dialog" aria-modal="true" aria-labelledby="modal-user-detail-title">
+        <div class="modal-panel modal-panel-wide">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-user-detail-title">
+                    <i class="fas fa-id-card"></i>
+                    User Profile
+                </h2>
+                <button class="modal-close" id="modal-detail-close" aria-label="Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="user-detail-body" id="user-detail-body">
+                <!-- JS fills this -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCRIPTS -->
+    <script src="js/sidebar-loader.js"></script>
+    <script src="js/users-admin.js?v=2"></script>
+
+</body>
+</html>

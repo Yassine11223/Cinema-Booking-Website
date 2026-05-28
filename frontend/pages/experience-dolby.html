@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Experience Dolby Cinema at Vision X Cinemas — Dolby Vision dual-laser projection, Dolby Atmos immersive sound, and premium reclining seats.">
+    <title>Vision X Cinemas | Dolby Cinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../css/experiences.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar" style="background: transparent; border-bottom: none;">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="../index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger active">EXPERIENCES <span class="dropdown-arrow"></span></span>
+                    <ul class="dropdown-menu">
+                        <li><a href="experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="../index.html"><span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span></a>
+            </div>
+            <ul class="nav-links right">
+                <li><a href="../login.html" class="login-btn"><i class="fa-regular fa-user"></i> LOGIN</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO — Full Viewport Video Background -->
+    <section class="experience-hero">
+        <video autoplay muted loop playsinline src="../assets/videos/dolby.mp4"></video>
+        <div class="experience-hero-overlay"></div>
+        <div class="experience-hero-content">
+            <p class="experience-hero-subtitle" style="margin-top: 0;">Spectacular Visuals and Sound</p>
+        </div>
+        <div class="scroll-indicator">
+            <span>EXPLORE</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <section class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number" data-target="500000" data-suffix=":1">0</div>
+            <div class="stat-label">Contrast Ratio</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="108" data-suffix="%">0</div>
+            <div class="stat-label">Rec. 2020 Color</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="64">0</div>
+            <div class="stat-label">Atmos Speakers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-target="31" data-suffix=" fL">0</div>
+            <div class="stat-label">Peak Brightness</div>
+        </div>
+    </section>
+
+    <!-- DESCRIPTION -->
+    <section class="experience-description-section">
+        <p class="experience-description">
+            Dolby Cinema is specially designed to elevate every type of movie experience. Spectacular Dolby Vision dual-laser projection brings the story alive with ultra-vivid colors, dramatically enhanced contrast, and deeper darks. Combined with Dolby Atmos immersive sound that flows around you, you'll feel like you're inside the movie. From the moment you enter, every detail is engineered to deliver a truly captivating cinematic event.
+        </p>
+    </section>
+
+    <!-- FEATURES -->
+    <div class="feature-container">
+        <div class="feature-row">
+            <div class="feature-image">
+                <img src="../assets/images/dolby_1.jpg" alt="Dolby Vision Projection">
+            </div>
+            <div class="feature-text">
+                <span class="feature-badge"><i class="fa-solid fa-eye"></i> HDR VISUALS</span>
+                <h3>Dolby Vision® Dual-Laser Projection</h3>
+                <p>An ultra-vivid picture that brings the story to life with incredible brightness, stunning contrast, and captivating color that makes you feel like you are inside the movie.</p>
+            </div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-image">
+                <img src="../assets/images/dolby_3.png" alt="Dolby Atmos Sound">
+            </div>
+            <div class="feature-text">
+                <span class="feature-badge"><i class="fa-solid fa-volume-high"></i> 3D AUDIO</span>
+                <h3>Dolby Atmos® Immersive Sound</h3>
+                <p>Powerful, moving audio that flows all around you—even overhead. Every sound is precisely placed in the three-dimensional space to completely immerse you in the action.</p>
+            </div>
+        </div>
+
+        <div class="feature-row">
+            <div class="feature-image">
+                <img src="../assets/images/dolby_2.png" alt="Premium Comfort">
+            </div>
+            <div class="feature-text">
+                <span class="feature-badge"><i class="fa-solid fa-couch"></i> VIP LEVEL</span>
+                <h3>Premium Cinema Seating</h3>
+                <p>Experience ultimate comfort with spacious, fully-reclining leather seats. Intelligently designed sightlines guarantee an unobstructed, perfect view of the screen from anywhere.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <section class="experience-cta">
+        <a href="../movies.html" class="cta-button">
+            <i class="fas fa-ticket-alt"></i> BOOK YOUR DOLBY EXPERIENCE
+        </a>
+    </section>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/experience.js"></script>
+</body>
+</html>

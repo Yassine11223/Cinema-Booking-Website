@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vision X Cinemas Staff Dashboard">
+    <title>Staff Dashboard | Vision X Cinemas</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/staff.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="../index.html"><span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span></a>
+            </div>
+            <ul class="nav-links right">
+                <li><a href="#" id="staffLogoutBtn" class="staff-logout-btn"><i class="fas fa-sign-out-alt"></i> LOGOUT</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <div class="staff-page">
+
+        <div class="staff-header">
+            <div class="staff-header-left">
+                <h1><i class="fas fa-clipboard-list"></i> Staff Dashboard</h1>
+                <p>Manage today's screenings and customer check-ins.</p>
+            </div>
+            <div class="staff-header-right">
+                <div class="staff-user-badge">
+                    <div class="avatar" id="staffAvatar">S</div>
+                    <span id="staffName">Staff Member</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboardContent">
+            <!-- Loading State -->
+            <div id="loadingState" class="staff-loading">
+                <i class="fas fa-circle-notch"></i>
+                <p>Loading dashboard data...</p>
+            </div>
+
+            <!-- Dashboard Data (Hidden by default) -->
+            <div id="dashboardData" style="display: none;">
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-icon blue"><i class="fas fa-ticket-alt"></i></div>
+                        <div class="stat-card-info">
+                            <h3 id="statTotalBookings">0</h3>
+                            <p>Today's Bookings</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon green"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-card-info">
+                            <h3 id="statConfirmed">0</h3>
+                            <p>Confirmed</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon orange"><i class="fas fa-clock"></i></div>
+                        <div class="stat-card-info">
+                            <h3 id="statPending">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Shows -->
+                <h2 class="section-title"><i class="fas fa-film"></i> Today's Screenings</h2>
+                <div class="shows-grid" id="showsContainer">
+                    <!-- Shows injected here by JS -->
+                </div>
+
+                <!-- Recent Bookings Table -->
+                <h2 class="section-title"><i class="fas fa-users"></i> Recent Check-ins & Bookings</h2>
+                <div class="table-wrapper">
+                    <table class="staff-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer</th>
+                                <th>Movie</th>
+                                <th>Show Time</th>
+                                <th>Seats</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTableBody">
+                            <!-- Rows injected here by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Offline Script -->
+    <script src="../js/staff.js"></script>
+</body>
+</html>
