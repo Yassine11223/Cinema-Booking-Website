@@ -18,6 +18,8 @@ const userRoutes = require('./routes/users');
 const paymentRoutes = require('./routes/payments');
 const showRoutes = require('./routes/shows');
 const theaterRoutes = require('./routes/theaters');
+const ticketRoutes = require('./routes/tickets');
+const chatbotRoutes = require('./routes/chatbot');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,6 +45,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/shows', showRoutes);
 app.use('/api/theaters', theaterRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
