@@ -1,0 +1,476 @@
+/* ============================================
+   WATCHLIST PAGE — Vision X Cinemas
+   ============================================ */
+
+/* --- Page Wrapper --- */
+.watchlist-wrapper {
+    min-height: 100vh;
+    padding-top: calc(var(--nav-height, 70px) + 40px);
+    padding-bottom: 80px;
+    background: linear-gradient(180deg, rgba(139, 0, 0, 0.06) 0%, rgba(10, 10, 10, 0.98) 30%);
+    position: relative;
+}
+
+.watchlist-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -150px;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(183, 28, 28, 0.07) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.watchlist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+}
+
+/* --- Header --- */
+.watchlist-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.watchlist-header-icon {
+    font-size: 42px;
+    color: #e53935;
+    margin-bottom: 16px;
+    text-shadow: 0 0 30px rgba(229, 57, 53, 0.4);
+    animation: wlIconPulse 2s ease-in-out infinite;
+}
+
+@keyframes wlIconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.watchlist-header h1 {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 36px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: #fff;
+    margin: 0 0 8px;
+}
+
+.watchlist-header-count {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Movie Grid --- */
+.watchlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 28px;
+}
+
+/* --- Movie Card --- */
+.wl-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.35s ease,
+                border-color 0.35s ease;
+    animation: wlCardIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.wl-card:nth-child(1)  { animation-delay: 0.05s; }
+.wl-card:nth-child(2)  { animation-delay: 0.1s; }
+.wl-card:nth-child(3)  { animation-delay: 0.15s; }
+.wl-card:nth-child(4)  { animation-delay: 0.2s; }
+.wl-card:nth-child(5)  { animation-delay: 0.25s; }
+.wl-card:nth-child(6)  { animation-delay: 0.3s; }
+.wl-card:nth-child(7)  { animation-delay: 0.35s; }
+.wl-card:nth-child(8)  { animation-delay: 0.4s; }
+.wl-card:nth-child(9)  { animation-delay: 0.45s; }
+.wl-card:nth-child(10) { animation-delay: 0.5s; }
+.wl-card:nth-child(11) { animation-delay: 0.55s; }
+.wl-card:nth-child(12) { animation-delay: 0.6s; }
+
+@keyframes wlCardIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wl-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(183, 28, 28, 0.1);
+    border-color: rgba(183, 28, 28, 0.2);
+}
+
+.wl-card-removing {
+    animation: wlCardOut 0.35s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes wlCardOut {
+    to {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+}
+
+/* --- Card Link --- */
+.wl-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* --- Poster --- */
+.wl-card-poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: #111;
+}
+
+.wl-card-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wl-card:hover .wl-card-poster img {
+    transform: scale(1.06);
+}
+
+/* --- Hover Overlay --- */
+.wl-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, 0.85) 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20px;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.wl-card:hover .wl-card-overlay {
+    opacity: 1;
+}
+
+.wl-card-view-btn {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    padding: 10px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.wl-card:hover .wl-card-view-btn {
+    background: rgba(183, 28, 28, 0.7);
+    border-color: #e53935;
+}
+
+/* --- Card Info --- */
+.wl-card-info {
+    padding: 14px 14px 16px;
+}
+
+.wl-card-title {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #fff;
+    margin: 0 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wl-card-genre {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wl-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wl-card-rating {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #ffc107;
+}
+
+.wl-card-rating i {
+    font-size: 11px;
+    margin-right: 3px;
+}
+
+.wl-card-added {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.5px;
+}
+
+/* --- Remove Button --- */
+.wl-card-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.25s ease;
+    opacity: 0;
+    z-index: 3;
+}
+
+.wl-card:hover .wl-card-remove {
+    opacity: 1;
+}
+
+.wl-card-remove:hover {
+    background: rgba(229, 57, 53, 0.8);
+    border-color: #e53935;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* --- Empty State --- */
+.watchlist-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.watchlist-empty-icon {
+    font-size: 64px;
+    color: rgba(255, 255, 255, 0.08);
+    margin-bottom: 24px;
+}
+
+.watchlist-empty h2 {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 10px;
+}
+
+.watchlist-empty p {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0 0 28px;
+    max-width: 400px;
+}
+
+.watchlist-empty-btn {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(183, 28, 28, 0.3);
+}
+
+.watchlist-empty-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(183, 28, 28, 0.5);
+}
+
+/* ============================================
+   HEART BUTTON (on movie cards site-wide)
+   ============================================ */
+
+.wl-heart-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 5;
+    opacity: 0;
+}
+
+.movie-card:hover .wl-heart-btn,
+.wl-heart-btn.active {
+    opacity: 1;
+}
+
+.wl-heart-btn:hover {
+    background: rgba(229, 57, 53, 0.3);
+    border-color: rgba(229, 57, 53, 0.5);
+    transform: scale(1.1);
+}
+
+.wl-heart-btn.active {
+    color: #e53935;
+    background: rgba(229, 57, 53, 0.15);
+    border-color: rgba(229, 57, 53, 0.3);
+}
+
+.wl-heart-btn.active:hover {
+    color: #fff;
+    background: rgba(229, 57, 53, 0.5);
+}
+
+/* Pop animation on toggle */
+.wl-heart-pop {
+    animation: heartPop 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.28);
+}
+
+@keyframes heartPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* ============================================
+   WATCHLIST BUTTON (on movie detail page)
+   ============================================ */
+
+.wl-detail-btn {
+    font-family: var(--font-display, 'Oswald', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.wl-detail-btn:hover {
+    background: rgba(229, 57, 53, 0.1);
+    border-color: rgba(229, 57, 53, 0.4);
+    color: #fff;
+}
+
+.wl-detail-btn.active {
+    background: rgba(229, 57, 53, 0.15);
+    border-color: rgba(229, 57, 53, 0.4);
+    color: #e53935;
+}
+
+.wl-detail-btn.active:hover {
+    background: rgba(229, 57, 53, 0.25);
+}
+
+.wl-detail-btn i {
+    font-size: 15px;
+    transition: transform 0.3s ease;
+}
+
+.wl-detail-btn:hover i {
+    transform: scale(1.15);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .watchlist-header h1 {
+        font-size: 26px;
+        letter-spacing: 3px;
+    }
+
+    .watchlist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+    }
+
+    .wl-heart-btn {
+        opacity: 1;
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    .wl-card-remove {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .watchlist-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .wl-card-info {
+        padding: 10px 10px 12px;
+    }
+
+    .wl-card-title {
+        font-size: 13px;
+    }
+}
