@@ -145,7 +145,7 @@
         } catch (err) {
             console.log('[Users] Backend offline, using local data. Reason:', err.message);
             try {
-                const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+                const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
                 const cachedUsers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
                 
                 const emailSet = new Set();
@@ -456,9 +456,9 @@
         allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
         try {
-            let localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             localUsers = localUsers.filter(u => String(u.id) !== String(deleteTargetId));
-            localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+            localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
         } catch(_) {}
 
         closeDelModal();
@@ -485,7 +485,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `scene-users-${new Date().toISOString().substring(0,10)}.csv`;
+        a.download = `thehall-users-${new Date().toISOString().substring(0,10)}.csv`;
         a.click();
         URL.revokeObjectURL(url);
         toast('CSV exported!', 'success');

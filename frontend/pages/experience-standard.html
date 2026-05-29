@@ -3,28 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Explore Standard & Deluxe Cinema experiences at Vision X Cinemas — premium comfort, HD projection, and surrounding audio.">
-    <title>Vision X Cinemas | Standard & Deluxe</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>THE HALL CINEMAS | Standard & Deluxe</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="stylesheet" href="../../shared/css/preloader.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../../shared/js/preloader.js"></script>
     <link rel="stylesheet" href="../css/experiences.css">
 </head>
 <body>
 
-    <!-- NAVBAR (Consistent & Transparent) -->
-    <nav class="navbar" id="navbar" style="background: transparent; border-bottom: none;">
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar" style="background-color: var(--color-bg-light); border-bottom: 1px solid #333;">
         <div class="nav-container">
             <ul class="nav-links left">
                 <li><a href="../index.html" class="nav-link">HOME</a></li>
-                <li class="dropdown">
-                    <a href="../movies.html" class="nav-link dropdown-trigger">MOVIES <span class="dropdown-arrow"></span></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="../movies.html#now-showing">NOW SHOWING</a></li>
-                        <li><a href="../movies.html#coming-soon">COMING SOON</a></li>
-                    </ul>
-                </li>
                 <li class="dropdown">
                     <span class="nav-link dropdown-trigger active">EXPERIENCES <span class="dropdown-arrow"></span></span>
                     <ul class="dropdown-menu">
@@ -35,7 +27,33 @@
                 </li>
             </ul>
             <div class="logo">
-                <a href="../index.html"><span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span></a>
+                <a href="../index.html" style="display: flex; align-items: center; justify-content: center; text-decoration: none;" aria-label="Home">
+                    <svg viewBox="0 0 100 100" width="55" height="55" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer Arch -->
+                        <path d="M 22 85 L 22 45 A 28 28 0 0 1 78 45 L 78 85" fill="none" stroke="#e60000" stroke-width="4" />
+                        <!-- Inner Arch -->
+                        <path d="M 30 85 L 30 45 A 20 20 0 0 1 70 45 L 70 85" fill="none" stroke="#e60000" stroke-width="3" />
+                        
+                        <!-- Bases -->
+                        <rect x="18" y="85" width="16" height="3" fill="#e60000" />
+                        <rect x="66" y="85" width="16" height="3" fill="#e60000" />
+
+                        <!-- Left Curtain -->
+                        <path d="M 50 25 A 20 20 0 0 0 30 45 L 30 85 L 42 85 Q 40 65, 48 55 Q 52 40, 50 25 Z" fill="#e60000" />
+                        
+                        <!-- Right Curtain -->
+                        <path d="M 50 25 A 20 20 0 0 1 70 45 L 70 85 L 58 85 Q 60 65, 52 55 Q 48 40, 50 25 Z" fill="#e60000" />
+
+                        <!-- Curtain folds -->
+                        <path d="M 34 85 Q 35 70, 43 55" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                        <path d="M 38 85 Q 38 70, 45 55" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                        <path d="M 45 55 Q 48 40, 45 30" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                        
+                        <path d="M 66 85 Q 65 70, 57 55" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                        <path d="M 62 85 Q 62 70, 55 55" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                        <path d="M 55 55 Q 52 40, 55 30" fill="none" stroke="#7a0000" stroke-width="1.5" />
+                    </svg>
+                </a>
             </div>
             <ul class="nav-links right">
                 <li><a href="../login.html" class="login-btn"><i class="fa-regular fa-user"></i> LOGIN</a></li>
@@ -43,88 +61,54 @@
         </div>
     </nav>
 
-    <!-- HERO (Full Viewport Static Image Background - No Video) -->
-    <section class="experience-hero static-hero" style="background-image: url('../images/banners/experience-standard.png');">
-        <div class="experience-hero-overlay"></div>
-        <div class="experience-hero-content">
-            <h1 class="experience-hero-title">STANDARD & DELUXE</h1>
-            <p class="experience-hero-subtitle">Premium Comfort and Entertainment</p>
-        </div>
-        <div class="scroll-indicator" onclick="document.querySelector('.stats-bar').scrollIntoView({ behavior: 'smooth' })">
-            <span>EXPLORE</span>
-            <i class="fas fa-chevron-down"></i>
-        </div>
-    </section>
+    <!-- CONTENT -->
+    <div class="experience-header">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; color: #fff;">STANDARD & DELUXE</h1>
+        <p style="color: #e50914; font-size: 1.2rem;">Premium Comfort and Entertainment</p>
+    </div>
+    
+    <div class="experience-content">
 
-    <!-- STATS BAR -->
-    <section class="stats-bar">
-        <div class="stat-item">
-            <div class="stat-number" data-target="4" data-suffix="K">0</div>
-            <div class="stat-label">Resolution</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" data-target="7.1">0</div>
-            <div class="stat-label">Surround Sound</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" data-target="320">0</div>
-            <div class="stat-label">Premium Seats</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-number" data-target="8">0</div>
-            <div class="stat-label">Screens</div>
-        </div>
-    </section>
-
-    <!-- DESCRIPTION -->
-    <section class="experience-description-section">
         <p class="experience-description">
             Our Standard and Deluxe theaters offer uncompromising comfort and excellent visual and audio quality for the perfect everyday movie outing. Lean back in our generously spaced premium seating, grab your favorite snacks, and simply enjoy the show. With state-of-the-art laser projection and surround sound, we ensure every screening is a top-tier entertainment experience tailored to your maximal relaxation.
         </p>
-    </section>
 
-    <!-- FEATURES -->
-    <div class="feature-container">
-        <div class="feature-row">
-            <div class="feature-image">
-                <img src="../assets/images/standard_1.png" alt="4K Digital Projection">
+        <div class="feature-container">
+            <div class="feature-row">
+                <div class="feature-image">
+                    <img src="../assets/images/standard_1.png" alt="4K Digital Projection">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-desktop"></i> ULTRA HD 4K</span>
+                    <h3>Crisp Digital Projection</h3>
+                    <p>Experience stunning visuals with incredible color accuracy. Our digital projectors ensure every movie is shown exactly as the director intended, crisp and clear on massive silver screens.</p>
+                </div>
             </div>
-            <div class="feature-text">
-                <span class="feature-badge"><i class="fa-solid fa-desktop"></i> ULTRA HD 4K</span>
-                <h3>Crisp Digital Projection</h3>
-                <p>Experience stunning visuals with incredible color accuracy. Our digital projectors ensure every movie is shown exactly as the director intended, crisp and clear on massive silver screens.</p>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <img src="../assets/images/standard_2.png" alt="Surround Sound Dynamics">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-headphones-simple"></i> DYNAMIC SOUND</span>
+                    <h3>Surround Sound Dynamics</h3>
+                    <p>Crystal-clear 7.1 surround sound wraps the theatre. Feel the deep bass and hear the quietest whispers with pin-drop precision for a fantastic audio-visual journey.</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="feature-row">
-            <div class="feature-image">
-                <img src="../assets/images/standard_2.png" alt="Surround Sound Dynamics">
-            </div>
-            <div class="feature-text">
-                <span class="feature-badge"><i class="fa-solid fa-headphones-simple"></i> DYNAMIC SOUND</span>
-                <h3>Surround Sound Dynamics</h3>
-                <p>Crystal-clear 7.1 surround sound wraps the theatre. Feel the deep bass and hear the quietest whispers with pin-drop precision for a fantastic audio-visual journey.</p>
-            </div>
-        </div>
-        
-        <div class="feature-row">
-            <div class="feature-image">
-                <img src="../assets/images/standard_3.jpg" alt="Modern Comfort">
-            </div>
-            <div class="feature-text">
-                <span class="feature-badge"><i class="fa-solid fa-chair"></i> RELAXATION</span>
-                <h3>Modern Acoustic Comfort</h3>
-                <p>Sink into our newly upgraded seating. With wide armrests, plush backings, and plenty of legroom, our standard theaters provide exceptional comfort without compromise.</p>
+            
+            <div class="feature-row">
+                <div class="feature-image">
+                    <img src="../assets/images/standard_3.jpg" alt="Modern Comfort">
+                </div>
+                <div class="feature-text">
+                    <span class="feature-badge"><i class="fa-solid fa-chair"></i> RELAXATION</span>
+                    <h3>Modern Acoustic Comfort</h3>
+                    <p>Sink into our newly upgraded seating. With wide armrests, plush backings, and plenty of legroom, our standard theaters provide exceptional comfort without compromise.</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- CTA -->
-    <section class="experience-cta">
-        <a href="../movies.html" class="cta-button"><i class="fas fa-ticket-alt"></i> BOOK YOUR EXPERIENCE</a>
-    </section>
-
     <script src="../js/main.js"></script>
-    <script src="../js/experience.js"></script>
 </body>
 </html>

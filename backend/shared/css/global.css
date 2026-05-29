@@ -1,0 +1,200 @@
+/* ============================================
+   GLOBAL STYLES - Cinema Booking System
+   Theme: Dark Red + Black
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+/* --- Design Tokens --- */
+:root {
+    /* Brand Colors - Dark Red Theme */
+    --primary: #b71c1c;
+    --primary-light: #d32f2f;
+    --primary-dark: #8b0000;
+    --primary-glow: rgba(183, 28, 28, 0.3);
+
+    /* Accent */
+    --accent: #ff1744;
+    --accent-soft: rgba(255, 23, 68, 0.15);
+
+    /* Backgrounds */
+    --dark-bg: #0a0a0a;
+    --dark-surface: #141414;
+    --dark-elevated: #1e1e1e;
+    --dark-card: #181818;
+
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+
+    /* Borders */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-red: rgba(183, 28, 28, 0.3);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+    --shadow-red: 0 4px 20px rgba(183, 28, 28, 0.25);
+
+    /* Glass Effect */
+    --glass-bg: rgba(10, 10, 10, 0.92);
+    --glass-blur: blur(20px);
+
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --space-4xl: 96px;
+
+    /* Typography */
+    --font-display: 'Oswald', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    /* Transitions */
+    --transition-fast: all 0.2s ease;
+    --transition: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+
+    /* Layout */
+    --max-width: 1400px;
+    --nav-height: 80px;
+}
+
+/* --- CSS Reset --- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    color: inherit;
+}
+
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    outline: none;
+}
+
+/* --- Utility Classes --- */
+.container {
+    width: 90%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+/* --- Shared Button Styles --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 12px 28px;
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+    box-shadow: var(--shadow-red);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--dark-elevated);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* --- Selection --- */
+::selection {
+    background: var(--primary);
+    color: #fff;
+}

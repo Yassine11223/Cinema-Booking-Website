@@ -152,7 +152,7 @@ async function generateTickets(req, res) {
                 bookingId,
                 ticketId,
                 movie: movieTitle.trim(),
-                cinema: 'Scene Cinemas',
+                cinema: 'THE HALL CINEMASs',
                 experience: experience.trim(),
                 hall: (hall || 'Main Hall').trim(),
                 seat: seat,

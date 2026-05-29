@@ -30,9 +30,9 @@ function checkAuth() {
         window.location.href = 'login.html?redirect=profile.html';
         return;
     }
-    // Ensure userData is available from scene_user if missing
-    if (!localStorage.getItem('userData') && localStorage.getItem('scene_user')) {
-        localStorage.setItem('userData', localStorage.getItem('scene_user'));
+    // Ensure userData is available from thehall_user if missing
+    if (!localStorage.getItem('userData') && localStorage.getItem('thehall_user')) {
+        localStorage.setItem('userData', localStorage.getItem('thehall_user'));
     }
 }
 
@@ -85,7 +85,7 @@ async function loadProfile() {
 
     // Demo/offline mode: load from localStorage directly
     if (isDemoMode()) {
-        const userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
         if (userData) {
             try {
                 populateProfile(JSON.parse(userData));
@@ -126,7 +126,7 @@ async function loadProfile() {
     } catch (error) {
         console.warn('Backend unavailable, trying localStorage:', error.message);
         // Fallback: try to load from localStorage
-        const userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
         if (userData) {
             try {
                 populateProfile(JSON.parse(userData));
@@ -282,7 +282,7 @@ function initLogout() {
     logoutBtn?.addEventListener('click', () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
-        localStorage.removeItem('scene_user');
+        localStorage.removeItem('thehall_user');
         localStorage.removeItem('admin_token');
         window.location.href = 'index.html';
     });

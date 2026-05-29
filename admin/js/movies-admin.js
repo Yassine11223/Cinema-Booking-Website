@@ -18,7 +18,7 @@
        CONFIG
        ========================================================= */
     const API_BASE    = 'http://localhost:5000/api';
-    const STORAGE_KEY = 'scene_movies_catalog';
+    const STORAGE_KEY = 'thehall_movies_catalog';
     const API_TIMEOUT = 3000;  // 3 seconds — fail fast when backend is down
 
     // Free TMDB read-only API key (v3 public demo – rate limited)

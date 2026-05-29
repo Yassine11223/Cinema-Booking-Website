@@ -222,7 +222,12 @@
             const url = movieId
                 ? `${CFG.API_BASE}/shows?movieId=${movieId}&date=${dateKey}`
                 : `${CFG.API_BASE}/shows?date=${dateKey}`;
-            const res = await fetch(url);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1000);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
             if (!res.ok) return null;
             const shows = await res.json();
             if (!shows || shows.length === 0) return null;
@@ -261,7 +266,12 @@
         try {
             // showId must be a numeric backend ID
             if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null; // mock ID like 'imx1-..'
-            const res = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`);
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1000);
+            const res = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
             if (!res.ok) return null;
             const availableSeats = await res.json();
             if (!availableSeats) return null;
@@ -327,31 +337,47 @@
     // MOCK FALLBACKS — used when backend is offline
     // ============================================
     function genShowtimes(dateKey) {
-        const h = hash(dateKey);
+        const movieIdStr = (typeof MOVIE !== 'undefined' && MOVIE) ? (MOVIE.id || MOVIE.title || '') : '';
+        const h = hash(dateKey + movieIdStr);
+        
+        // Generate an offset in 15 minute increments (between -45 and +135 minutes)
+        // using the movie ID hash so it's consistent per movie but different across movies.
+        const mHash = hash(movieIdStr || 'default');
+        const offsetMins = ((mHash % 13) - 3) * 15;
+        
+        function t(baseTime) {
+            const [hh, mm] = baseTime.split(':').map(Number);
+            let totalMins = hh * 60 + mm + offsetMins;
+            if (totalMins < 0) totalMins += 24 * 60;
+            const newH = Math.floor(totalMins / 60) % 24;
+            const newM = totalMins % 60;
+            return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+        }
+        
         return {
             IMAX: [
-                { id: `imx1-${dateKey}`, time: '12:00', hall: 'IMAX Theatre', sold: false },
-                { id: `imx2-${dateKey}`, time: '15:30', hall: 'IMAX Theatre', sold: false },
-                { id: `imx3-${dateKey}`, time: '19:00', hall: 'IMAX Theatre', sold: (h % 4 === 0) },
-                { id: `imx4-${dateKey}`, time: '22:15', hall: 'IMAX Theatre', sold: false },
+                { id: `imx1-${dateKey}`, time: t('12:00'), hall: 'IMAX Theatre', sold: false },
+                { id: `imx2-${dateKey}`, time: t('15:30'), hall: 'IMAX Theatre', sold: false },
+                { id: `imx3-${dateKey}`, time: t('19:00'), hall: 'IMAX Theatre', sold: (h % 4 === 0) },
+                { id: `imx4-${dateKey}`, time: t('22:15'), hall: 'IMAX Theatre', sold: false },
             ],
             Dolby: [
-                { id: `dlb1-${dateKey}`, time: '11:00', hall: 'Dolby Atmos', sold: false },
-                { id: `dlb2-${dateKey}`, time: '14:00', hall: 'Dolby Atmos', sold: (h % 5 === 0) },
-                { id: `dlb3-${dateKey}`, time: '17:30', hall: 'Dolby Atmos', sold: false },
-                { id: `dlb4-${dateKey}`, time: '21:00', hall: 'Dolby Atmos', sold: false },
+                { id: `dlb1-${dateKey}`, time: t('11:00'), hall: 'Dolby Atmos', sold: false },
+                { id: `dlb2-${dateKey}`, time: t('14:00'), hall: 'Dolby Atmos', sold: (h % 5 === 0) },
+                { id: `dlb3-${dateKey}`, time: t('17:30'), hall: 'Dolby Atmos', sold: false },
+                { id: `dlb4-${dateKey}`, time: t('21:00'), hall: 'Dolby Atmos', sold: false },
             ],
             Standard: [
-                { id: `std1-${dateKey}`, time: '11:30', hall: 'Hall 1', sold: false },
-                { id: `std2-${dateKey}`, time: '14:15', hall: 'Hall 1', sold: false },
-                { id: `std3-${dateKey}`, time: '17:00', hall: 'Hall 3', sold: (h % 7 === 0) },
-                { id: `std4-${dateKey}`, time: '20:30', hall: 'Hall 1', sold: false },
-                { id: `std5-${dateKey}`, time: '23:00', hall: 'Hall 3', sold: false },
+                { id: `std1-${dateKey}`, time: t('11:30'), hall: 'Hall 1', sold: false },
+                { id: `std2-${dateKey}`, time: t('14:15'), hall: 'Hall 1', sold: false },
+                { id: `std3-${dateKey}`, time: t('17:00'), hall: 'Hall 3', sold: (h % 7 === 0) },
+                { id: `std4-${dateKey}`, time: t('20:30'), hall: 'Hall 1', sold: false },
+                { id: `std5-${dateKey}`, time: t('23:00'), hall: 'Hall 3', sold: false },
             ],
             Deluxe: [
-                { id: `dlx1-${dateKey}`, time: '13:00', hall: 'Deluxe Suite', sold: false },
-                { id: `dlx2-${dateKey}`, time: '16:30', hall: 'Deluxe Suite', sold: (h % 6 === 0) },
-                { id: `dlx3-${dateKey}`, time: '19:45', hall: 'Deluxe Suite', sold: false },
+                { id: `dlx1-${dateKey}`, time: t('13:00'), hall: 'Deluxe Suite', sold: false },
+                { id: `dlx2-${dateKey}`, time: t('16:30'), hall: 'Deluxe Suite', sold: (h % 6 === 0) },
+                { id: `dlx3-${dateKey}`, time: t('19:45'), hall: 'Deluxe Suite', sold: false },
             ],
         };
     }
@@ -519,16 +545,33 @@
                 <i class="far fa-calendar-alt"></i>Please select a date first</div>`;
             return;
         }
+        
+        const now = new Date();
+        const [year, month, day] = S.dateKey.split('-');
+        
         const st = S.showtimes;
         const order = ['IMAX', 'Dolby', 'Standard', 'Deluxe'];
         let html = '<div class="showtime-groups">';
+        let hasAnyShowtimes = false;
+        
         order.forEach(type => {
             const times = st[type];
             if (!times || !times.length) return;
+            
+            // Filter out past showtimes if the selected date is today
+            const validTimes = times.filter(t => {
+                const [hours, minutes] = t.time.split(':');
+                const showtimeDate = new Date(year, month - 1, day, hours, minutes);
+                return showtimeDate > now;
+            });
+            
+            if (validTimes.length === 0) return;
+            
+            hasAnyShowtimes = true;
             html += `<div>
                 <div class="showtime-group__label showtime-group__label--${type.toLowerCase()}">${type}</div>
                 <div class="showtime-chips">
-                    ${times.map(t => `
+                    ${validTimes.map(t => `
                         <button class="showtime-chip ${t.id === S.stId ? 'showtime-chip--selected' : ''} ${t.sold ? 'showtime-chip--disabled' : ''}"
                                 data-id="${t.id}" data-exp="${type}" ${t.sold ? 'disabled' : ''}>
                             <span class="showtime-chip__time">${t.time}</span>
@@ -540,6 +583,12 @@
             </div>`;
         });
         html += '</div>';
+        
+        if (!hasAnyShowtimes) {
+            html = `<div class="showtime-placeholder">
+                <i class="far fa-clock"></i>No more showtimes available for this date.</div>`;
+        }
+        
         D.timeSel.innerHTML = html;
     }
 

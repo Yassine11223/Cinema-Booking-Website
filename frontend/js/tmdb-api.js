@@ -422,7 +422,7 @@ function showError(message) {
    ============================================ */
 function getAdminCatalog() {
     try {
-        const stored = localStorage.getItem('scene_movies_catalog');
+        const stored = localStorage.getItem('thehall_movies_catalog');
         if (!stored) return null;
         const movies = JSON.parse(stored);
         // Only use catalog if it has now_showing movies

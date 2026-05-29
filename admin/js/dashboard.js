@@ -87,7 +87,7 @@
             else movies = JSON.parse(localStorage.getItem('scene_admin_movies')) || [];
 
             if (uRes && uRes.ok) users = await uRes.json();
-            else users = JSON.parse(localStorage.getItem('scene_users_local')) || JSON.parse(localStorage.getItem('scene_admin_users')) || [];
+            else users = JSON.parse(localStorage.getItem('thehall_users_local')) || JSON.parse(localStorage.getItem('scene_admin_users')) || [];
 
             // Fetch real bookings from backend
             if (bRes && bRes.ok) {

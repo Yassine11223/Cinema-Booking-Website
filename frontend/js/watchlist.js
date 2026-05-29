@@ -1,5 +1,5 @@
 /**
- * watchlist.js — Vision X Cinemas
+ * watchlist.js — THE HALL CINEMAS
  * Manages user's movie watchlist with localStorage persistence.
  * Each user (by email) has their own separate watchlist.
  */
@@ -28,7 +28,7 @@
 
     function getCurrentUserKey() {
         try {
-            const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
             if (!userData) return null;
             const user = JSON.parse(userData);
             return 'vx_watchlist_' + (user.email || user.id || 'guest');
@@ -39,7 +39,7 @@
 
     function isLoggedIn() {
         const token = localStorage.getItem('authToken');
-        const user = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+        const user = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
         return !!(token && user);
     }
 

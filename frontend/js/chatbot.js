@@ -1,6 +1,6 @@
 /**
  * ============================================
- * SCENE AI — Cinema Chatbot (Frontend)
+ * THE HALL AI — Cinema Chatbot (Frontend)
  * Self-contained IIFE with singleton guard.
  * Context-aware, session-persistent, premium UI.
  * ============================================
@@ -15,7 +15,7 @@
     // ── Config ─────────────────────────────────────────
     const CFG = {
         API_URL: 'http://localhost:5000/api/chatbot',
-        HISTORY_KEY: 'scene_chatbot_history',
+        HISTORY_KEY: 'thehall_chatbot_history',
         MAX_HISTORY: 20,       // max messages in sessionStorage
         MAX_API_HISTORY: 10,   // max messages sent to backend
         TYPING_DELAY_MIN: 600,
@@ -151,7 +151,7 @@
             <div class="chatbot-header">
                 <div class="chatbot-header-icon"><i class="fas fa-film"></i></div>
                 <div class="chatbot-header-info">
-                    <div class="chatbot-header-title">Scene AI Assistant</div>
+                    <div class="chatbot-header-title">THE HALL AI Assistant</div>
                     <div class="chatbot-header-status">
                         <span class="chatbot-status-dot"></span>
                         <span>Online • Powered by AI</span>
@@ -205,7 +205,7 @@
         welcome.className = 'chatbot-welcome';
         welcome.innerHTML = `
             <span class="chatbot-welcome-icon">🎬</span>
-            <div class="chatbot-welcome-title">Welcome to Scene AI</div>
+            <div class="chatbot-welcome-title">Welcome to THE HALL AI</div>
             <div class="chatbot-welcome-subtitle">Your personal cinema assistant. Ask me about movies, seats, experiences, showtimes, or anything cinema-related!</div>
         `;
         DOM.messages.appendChild(welcome);
@@ -230,7 +230,7 @@
                 <div class="chatbot-msg-avatar"><i class="fas fa-film"></i></div>
                 <div>
                     <div class="chatbot-msg-bubble">${formatted}</div>
-                    ${source ? `<div class="chatbot-msg-source">${source === 'openai' ? '✨ AI Powered' : '🎯 Scene Assistant'}</div>` : ''}
+                    ${source ? `<div class="chatbot-msg-source">${source === 'openai' ? '✨ AI Powered' : '🎯 THE HALL Assistant'}</div>` : ''}
                 </div>
             `;
         } else {

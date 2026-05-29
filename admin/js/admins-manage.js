@@ -128,7 +128,7 @@
         } catch (err) {
             console.log('[Admins] Backend offline, using local data. Reason:', err.message);
             try {
-                const localUsers  = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+                const localUsers  = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
                 const cachedUsers = JSON.parse(localStorage.getItem('scene_admin_users')) || [];
 
                 const emailSet = new Set();
@@ -209,7 +209,7 @@
         // Get current user to prevent self-deletion
         let currentUserId = null;
         try {
-            const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
             if (userData) currentUserId = JSON.parse(userData).id;
         } catch (_) {}
 
@@ -382,12 +382,12 @@
             };
 
             // Check duplicate
-            const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             if (localUsers.find(u => u.email === email)) {
                 toast('Email already registered.', 'error');
             } else {
                 localUsers.push(newAdmin);
-                localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+                localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
                 toast(`Admin "${name}" created locally!`, 'success');
                 closeAddModal();
                 await loadAdmins();
@@ -442,9 +442,9 @@
         // Remove from local data
         allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
         try {
-            let localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             localUsers = localUsers.filter(u => String(u.id) !== String(deleteTargetId));
-            localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+            localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
         } catch (_) {}
 
         adminUsers = allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin');

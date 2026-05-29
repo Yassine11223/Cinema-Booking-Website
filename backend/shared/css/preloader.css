@@ -1,0 +1,306 @@
+/* ============================================
+   PRELOADER — Vision X Cinemas
+   Premium cinematic loading screen
+   ============================================ */
+
+/* --- Overlay --- */
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.preloader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* --- Background Grain / Texture --- */
+.preloader::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(139, 0, 0, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* --- Animated Film Strips (left & right) --- */
+.preloader-strip {
+    position: absolute;
+    width: 40px;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 8px,
+        rgba(183, 28, 28, 0.08) 8px,
+        rgba(183, 28, 28, 0.08) 10px,
+        transparent 10px,
+        transparent 30px
+    );
+    animation: filmScroll 2s linear infinite;
+}
+
+.preloader-strip--left {
+    left: 0;
+    border-right: 2px solid rgba(183, 28, 28, 0.12);
+}
+
+.preloader-strip--right {
+    right: 0;
+    border-left: 2px solid rgba(183, 28, 28, 0.12);
+    animation-direction: reverse;
+}
+
+@keyframes filmScroll {
+    0%   { background-position-y: 0; }
+    100% { background-position-y: 30px; }
+}
+
+/* --- Center Content --- */
+.preloader-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    z-index: 2;
+}
+
+/* --- Pulse Ring --- */
+.preloader-ring {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid rgba(183, 28, 28, 0.15);
+    animation: pulseRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    pointer-events: none;
+}
+
+.preloader-ring:nth-child(2) {
+    animation-delay: 0.5s;
+    width: 170px;
+    height: 170px;
+}
+
+.preloader-ring:nth-child(3) {
+    animation-delay: 1s;
+    width: 200px;
+    height: 200px;
+}
+
+@keyframes pulseRing {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.6;
+        border-color: rgba(183, 28, 28, 0.25);
+    }
+    50% {
+        opacity: 0.2;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+        border-color: rgba(183, 28, 28, 0);
+    }
+}
+
+/* --- Logo --- */
+.preloader-logo {
+    font-family: 'Oswald', 'Impact', sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    animation: logoReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: scale(0.85);
+    position: relative;
+    z-index: 3;
+}
+
+.preloader-logo-red {
+    color: #b71c1c;
+    text-shadow: 0 0 30px rgba(183, 28, 28, 0.5),
+                 0 0 60px rgba(183, 28, 28, 0.2);
+}
+
+.preloader-logo-white {
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+@keyframes logoReveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.85) translateY(8px);
+        filter: blur(4px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* --- Loading Bar --- */
+.preloader-bar-track {
+    width: 180px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    z-index: 3;
+    animation: barFadeIn 0.8s 0.4s ease forwards;
+    opacity: 0;
+}
+
+.preloader-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #b71c1c, #e53935, #b71c1c);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: barFill 1.8s 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+               barShimmer 1.2s linear infinite;
+}
+
+@keyframes barFadeIn {
+    to { opacity: 1; }
+}
+
+@keyframes barFill {
+    0%   { width: 0%; }
+    30%  { width: 40%; }
+    60%  { width: 70%; }
+    85%  { width: 88%; }
+    100% { width: 100%; }
+}
+
+@keyframes barShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* --- Loading Text --- */
+.preloader-text {
+    font-family: 'Oswald', 'Impact', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    animation: textPulse 1.5s ease-in-out infinite,
+               barFadeIn 0.8s 0.6s ease forwards;
+    opacity: 0;
+    position: relative;
+    z-index: 3;
+}
+
+@keyframes textPulse {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.7; }
+}
+
+/* --- Particle Dots (subtle ambient) --- */
+.preloader-particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.preloader-dot {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(183, 28, 28, 0.3);
+    border-radius: 50%;
+    animation: floatDot linear infinite;
+}
+
+.preloader-dot:nth-child(1) { left: 15%; top: 20%; animation-duration: 6s; animation-delay: 0s; }
+.preloader-dot:nth-child(2) { left: 75%; top: 60%; animation-duration: 8s; animation-delay: 1s; }
+.preloader-dot:nth-child(3) { left: 40%; top: 80%; animation-duration: 7s; animation-delay: 0.5s; }
+.preloader-dot:nth-child(4) { left: 85%; top: 30%; animation-duration: 9s; animation-delay: 2s; }
+.preloader-dot:nth-child(5) { left: 25%; top: 50%; animation-duration: 5s; animation-delay: 1.5s; }
+.preloader-dot:nth-child(6) { left: 60%; top: 15%; animation-duration: 7s; animation-delay: 0.8s; }
+
+@keyframes floatDot {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-100px) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+    .preloader-logo {
+        font-size: 26px;
+        letter-spacing: 4px;
+    }
+
+    .preloader-bar-track {
+        width: 140px;
+    }
+
+    .preloader-strip {
+        width: 24px;
+    }
+
+    .preloader-ring {
+        width: 100px;
+        height: 100px;
+    }
+    .preloader-ring:nth-child(2) {
+        width: 130px;
+        height: 130px;
+    }
+    .preloader-ring:nth-child(3) {
+        width: 160px;
+        height: 160px;
+    }
+}
+
+/* --- Reduce Motion --- */
+@media (prefers-reduced-motion: reduce) {
+    .preloader-ring,
+    .preloader-dot,
+    .preloader-strip {
+        animation: none;
+    }
+
+    .preloader-bar-fill {
+        animation: barFill 1s ease forwards;
+    }
+
+    .preloader-logo {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+
+    .preloader {
+        transition-duration: 0.2s;
+    }
+}

@@ -117,7 +117,7 @@ function hideGlobalError() {
 // ============================================
 function trackLocalUser(user, isRegistration = false) {
     try {
-        let localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
         let uIdx = localUsers.findIndex(u => String(u.email) === String(user.email));
         if (uIdx !== -1) {
             localUsers[uIdx].name = user.name || localUsers[uIdx].name;
@@ -134,7 +134,7 @@ function trackLocalUser(user, isRegistration = false) {
                 created_at: user.created_at || new Date().toISOString()
             });
         }
-        localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
     } catch (e) { }
 }
 
@@ -145,16 +145,16 @@ function trackLocalUser(user, isRegistration = false) {
 // ============================================
 function seedDemoUsers() {
     try {
-        const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
         // Only seed if we have fewer than 3 users (avoid re-seeding)
         if (localUsers.length >= 3) return;
 
         const demoUsers = [
-            { id: 1001, name: 'Ahmed Hassan', email: 'ahmed@scene.com', phone: '+20 100 123 4567', role: 'customer', password: 'Password1', created_at: '2026-01-15T09:30:00Z', last_login: '2026-04-20T14:22:00Z', login_count: 34 },
-            { id: 1002, name: 'Sara Mohamed', email: 'sara@scene.com', phone: '+20 101 234 5678', role: 'customer', password: 'Password1', created_at: '2026-02-03T11:45:00Z', last_login: '2026-04-19T18:10:00Z', login_count: 21 },
-            { id: 1003, name: 'Omar Ali', email: 'omar@scene.com', phone: '+20 102 345 6789', role: 'customer', password: 'Password1', created_at: '2026-02-20T16:00:00Z', last_login: '2026-04-21T10:05:00Z', login_count: 47 },
-            { id: 1004, name: 'Nour Ibrahim', email: 'nour@scene.com', phone: '+20 103 456 7890', role: 'customer', password: 'Password1', created_at: '2026-03-10T08:20:00Z', last_login: '2026-04-18T22:30:00Z', login_count: 12 },
-            { id: 1005, name: 'Admin User', email: 'admin@scene.com', phone: '+20 100 000 0000', role: 'admin', password: 'admin112', created_at: '2026-01-01T00:00:00Z', last_login: '2026-04-21T15:00:00Z', login_count: 156 },
+            { id: 1001, name: 'Ahmed Hassan', email: 'ahmed@thehallcinemas.com', phone: '+20 100 123 4567', role: 'customer', password: 'Password1', created_at: '2026-01-15T09:30:00Z', last_login: '2026-04-20T14:22:00Z', login_count: 34 },
+            { id: 1002, name: 'Sara Mohamed', email: 'sara@thehallcinemas.com', phone: '+20 101 234 5678', role: 'customer', password: 'Password1', created_at: '2026-02-03T11:45:00Z', last_login: '2026-04-19T18:10:00Z', login_count: 21 },
+            { id: 1003, name: 'Omar Ali', email: 'omar@thehallcinemas.com', phone: '+20 102 345 6789', role: 'customer', password: 'Password1', created_at: '2026-02-20T16:00:00Z', last_login: '2026-04-21T10:05:00Z', login_count: 47 },
+            { id: 1004, name: 'Nour Ibrahim', email: 'nour@thehallcinemas.com', phone: '+20 103 456 7890', role: 'customer', password: 'Password1', created_at: '2026-03-10T08:20:00Z', last_login: '2026-04-18T22:30:00Z', login_count: 12 },
+            { id: 1005, name: 'Admin User', email: 'admin@thehallcinemas.com', phone: '+20 100 000 0000', role: 'admin', password: 'admin112', created_at: '2026-01-01T00:00:00Z', last_login: '2026-04-21T15:00:00Z', login_count: 156 },
         ];
 
         const emailSet = new Set(localUsers.map(u => u.email));
@@ -163,7 +163,7 @@ function seedDemoUsers() {
                 localUsers.push(du);
             }
         });
-        localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
         console.log('[Auth] Demo users seeded:', demoUsers.length);
     } catch (e) { }
 }
@@ -177,7 +177,7 @@ seedDemoUsers();
 document.addEventListener('DOMContentLoaded', () => {
     // If already logged in and on the login page, redirect to home
     const token = localStorage.getItem('authToken');
-    const user = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+    const user = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
     const isLoginPage = !!document.getElementById('loginForm');
     const isRegisterPage = !!document.getElementById('registerForm');
     const urlParams = new URLSearchParams(window.location.search);
@@ -215,7 +215,7 @@ function initLoginForm(form) {
     passEl?.addEventListener('focus', () => clearFieldStatus('password'));
 
     // Pre-fill remembered email
-    const remembered = localStorage.getItem('scene_remember_email');
+    const remembered = localStorage.getItem('thehall_remember_email');
     if (remembered && emailEl) {
         emailEl.value = remembered;
         const rem = form.querySelector('#rememberMe');
@@ -268,7 +268,7 @@ function initLoginForm(form) {
 
                 // Store auth data
                 localStorage.setItem('authToken', data.token);
-                localStorage.setItem('scene_user', JSON.stringify(data.user));
+                localStorage.setItem('thehall_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
 
                 // Also store as admin_token if user is admin
@@ -278,9 +278,9 @@ function initLoginForm(form) {
 
                 const rem = form.querySelector('#rememberMe');
                 if (rem?.checked) {
-                    localStorage.setItem('scene_remember_email', email);
+                    localStorage.setItem('thehall_remember_email', email);
                 } else {
-                    localStorage.removeItem('scene_remember_email');
+                    localStorage.removeItem('thehall_remember_email');
                 }
 
                 // Redirect — admins go to admin dashboard
@@ -296,30 +296,30 @@ function initLoginForm(form) {
         } catch (err) {
             // Offline fallback
             console.log('Backend offline, trying local storage...', err.message);
-            const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             const user = localUsers.find(u => String(u.email) === String(email));
 
             if (user && user.password === password) {
                 trackLocalUser(user, false);
                 localStorage.setItem('authToken', 'offline_token_' + Date.now());
-                localStorage.setItem('scene_user', JSON.stringify(user));
+                localStorage.setItem('thehall_user', JSON.stringify(user));
                 localStorage.setItem('userData', JSON.stringify(user));
                 if (user.role === 'admin') localStorage.setItem('admin_token', 'offline_admin_token');
 
                 const rem = form.querySelector('#rememberMe');
-                if (rem?.checked) localStorage.setItem('scene_remember_email', email);
-                else localStorage.removeItem('scene_remember_email');
+                if (rem?.checked) localStorage.setItem('thehall_remember_email', email);
+                else localStorage.removeItem('thehall_remember_email');
 
                 const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
                 let redirect = urlRedirect || 'index.html';
                 if (user.role === 'admin') redirect = '../admin/index.html';
                 window.location.href = redirect;
-            } else if (email === 'admin@scene.com' && password === 'admin112') {
+            } else if (email === 'admin@thehallcinemas.com' && password === 'admin112') {
                 // Hardcoded fallback admin for offline debugging
-                const adminUser = { id: 1, name: 'Super Admin', email: 'admin@scene.com', role: 'admin', password: 'admin112' };
+                const adminUser = { id: 1, name: 'Super Admin', email: 'admin@thehallcinemas.com', role: 'admin', password: 'admin112' };
                 trackLocalUser(adminUser, false);
                 localStorage.setItem('authToken', 'offline_token_admin');
-                localStorage.setItem('scene_user', JSON.stringify(adminUser));
+                localStorage.setItem('thehall_user', JSON.stringify(adminUser));
                 localStorage.setItem('userData', JSON.stringify(adminUser));
                 localStorage.setItem('admin_token', 'offline_admin_token');
                 window.location.href = '../admin/index.html';
@@ -421,7 +421,7 @@ function initRegisterForm(form) {
             if (res.ok) {
                 // Store token and redirect to login with success message
                 localStorage.setItem('authToken', data.token);
-                localStorage.setItem('scene_user', JSON.stringify(data.user));
+                localStorage.setItem('thehall_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
                 localStorage.setItem('scene_register_success', name);
 
@@ -441,7 +441,7 @@ function initRegisterForm(form) {
         } catch (_) {
             // Offline fallback registration
             console.log('Backend offline, registering to local storage...');
-            const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             if (localUsers.some(u => String(u.email) === String(email))) {
                 showGlobalError('Email already registered.');
                 setFieldStatus('email', false, 'Email already in use');
@@ -449,7 +449,7 @@ function initRegisterForm(form) {
                 const newUser = { id: Date.now(), name, email, phone, role: 'customer', password };
                 trackLocalUser(newUser, true);
                 localStorage.setItem('authToken', 'offline_token_' + Date.now());
-                localStorage.setItem('scene_user', JSON.stringify(newUser));
+                localStorage.setItem('thehall_user', JSON.stringify(newUser));
                 localStorage.setItem('userData', JSON.stringify(newUser));
                 localStorage.setItem('scene_register_success', name);
                 window.location.href = 'login.html?registered=1';

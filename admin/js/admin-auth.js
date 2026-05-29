@@ -68,13 +68,13 @@ function hideGlobalError() {
 // ============================================
 function seedDemoAdmins() {
     try {
-        const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
 
         // Demo admin
         const adminData = {
             id: 1005,
             name: 'Admin User',
-            email: 'admin@scene.com',
+            email: 'admin@thehallcinemas.com',
             phone: '+20 100 000 0000',
             role: 'admin',
             password: 'admin112',
@@ -87,7 +87,7 @@ function seedDemoAdmins() {
         const superAdminData = {
             id: 1006,
             name: 'Super Admin',
-            email: 'superadmin@scene.com',
+            email: 'superadmin@thehallcinemas.com',
             phone: '+20 100 000 0001',
             role: 'superadmin',
             password: 'superadmin112',
@@ -114,7 +114,7 @@ function seedDemoAdmins() {
             localUsers.push(superAdminData);
         }
 
-        localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
     } catch (e) { }
 }
 
@@ -125,7 +125,7 @@ seedDemoAdmins();
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('admin_token');
-    const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+    const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
 
     if (token && userData) {
         try {
@@ -204,7 +204,7 @@ function initAdminLoginForm() {
                 // Store auth data
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('admin_token', data.token);
-                localStorage.setItem('scene_user', JSON.stringify(data.user));
+                localStorage.setItem('thehall_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
 
                 // Track in local storage
@@ -223,7 +223,7 @@ function initAdminLoginForm() {
         } catch (err) {
             // Offline fallback — check local storage
             console.log('Backend offline, trying local storage...', err.message);
-            const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
             const user = localUsers.find(u => String(u.email) === String(email));
 
             if (user && user.password === password) {
@@ -235,7 +235,7 @@ function initAdminLoginForm() {
                     trackLocalAdmin(user);
                     localStorage.setItem('authToken', 'offline_token_admin_' + Date.now());
                     localStorage.setItem('admin_token', 'offline_admin_token');
-                    localStorage.setItem('scene_user', JSON.stringify(user));
+                    localStorage.setItem('thehall_user', JSON.stringify(user));
                     localStorage.setItem('userData', JSON.stringify(user));
                     window.location.href = 'index.html';
                 }
@@ -255,7 +255,7 @@ function initAdminLoginForm() {
 // ============================================
 function trackLocalAdmin(user) {
     try {
-        let localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
         let idx = localUsers.findIndex(u => String(u.email) === String(user.email));
         if (idx !== -1) {
             localUsers[idx].last_login = new Date().toISOString();
@@ -268,6 +268,6 @@ function trackLocalAdmin(user) {
                 created_at: user.created_at || new Date().toISOString()
             });
         }
-        localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
+        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
     } catch (e) { }
 }

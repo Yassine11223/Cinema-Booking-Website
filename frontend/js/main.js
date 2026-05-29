@@ -35,7 +35,7 @@ function updateNavbarAuth() {
     if (!authNavLink) return;
 
     const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+    const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
 
     if (token && userData) {
         try {

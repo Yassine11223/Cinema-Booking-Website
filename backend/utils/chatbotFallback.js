@@ -59,8 +59,8 @@ function detectIntent(message) {
 const RESPONSES = {
     greeting: {
         replies: [
-            "Hey there! 🎬 Welcome to Scene Cinemas! I'm your AI cinema assistant. I can help you pick the perfect movie, find the best seats, compare experiences, and much more. What can I help you with?",
-            "Hello! 🍿 I'm Scene AI, your personal cinema copilot. Whether you need movie recommendations, seat advice, or help with your booking — I've got you covered. What would you like to know?",
+            "Hey there! 🎬 Welcome to THE HALL CINEMASs! I'm your AI cinema assistant. I can help you pick the perfect movie, find the best seats, compare experiences, and much more. What can I help you with?",
+            "Hello! 🍿 I'm THE HALL AI, your personal cinema copilot. Whether you need movie recommendations, seat advice, or help with your booking — I've got you covered. What would you like to know?",
         ],
         type: 'greeting',
         suggestions: ['Recommend me a movie', 'Help me choose seats', 'What experiences do you offer?'],
@@ -68,7 +68,7 @@ const RESPONSES = {
 
     recommend_movie: {
         replies: [
-            "🎥 Great choice wanting a recommendation! Here are some top picks at Scene Cinemas:\n\n• **Action/Sci-Fi lovers**: Anything with epic visuals is best enjoyed in IMAX — think Dune, Interstellar-level epics.\n• **Horror fans**: Grab some nachos and settle in for a thrilling ride in Dolby for maximum audio immersion.\n• **Drama/Romance**: A Deluxe experience gives you comfort to enjoy emotional storytelling.\n• **Comedy/Friends night**: Standard is a great budget-friendly pick for group outings.\n\nWhat mood are you in tonight? I can narrow it down! 🎬",
+            "🎥 Great choice wanting a recommendation! Here are some top picks at THE HALL CINEMASs:\n\n• **Action/Sci-Fi lovers**: Anything with epic visuals is best enjoyed in IMAX — think Dune, Interstellar-level epics.\n• **Horror fans**: Grab some nachos and settle in for a thrilling ride in Dolby for maximum audio immersion.\n• **Drama/Romance**: A Deluxe experience gives you comfort to enjoy emotional storytelling.\n• **Comedy/Friends night**: Standard is a great budget-friendly pick for group outings.\n\nWhat mood are you in tonight? I can narrow it down! 🎬",
             "🍿 Let me help you find the perfect film! Consider what you're in the mood for:\n\n• **Something epic?** → Go for big-screen spectacles in IMAX\n• **Something immersive?** → Dolby Atmos sound makes thrillers unforgettable\n• **Something cozy?** → Deluxe comfort seating for dramas and romances\n• **Budget-friendly fun?** → Standard halls are perfect for comedies with friends\n\nTell me more about what you're looking for and I'll give you a tailored recommendation!",
         ],
         type: 'movie_recommendation',
@@ -77,7 +77,7 @@ const RESPONSES = {
 
     recommend_seats: {
         replies: [
-            "🎯 Here's my expert seat guide for Scene Cinemas:\n\n**IMAX** — Center-middle rows (D-H) give the most immersive viewing angle. Avoid the first 2 rows and extreme sides.\n\n**Dolby** — The audio sweet spot is center rows (D-G). Dolby Atmos sound surrounds you regardless, but center is where it all balances perfectly.\n\n**Standard** — Middle rows offer the best value-to-view ratio. Rows C-F are ideal.\n\n**Deluxe** — Every seat is premium comfort, but center positions still offer the best visual balance.\n\n💡 **Group tip:** Always pick adjacent seats in the center section for the best shared experience!",
+            "🎯 Here's my expert seat guide for THE HALL CINEMASs:\n\n**IMAX** — Center-middle rows (D-H) give the most immersive viewing angle. Avoid the first 2 rows and extreme sides.\n\n**Dolby** — The audio sweet spot is center rows (D-G). Dolby Atmos sound surrounds you regardless, but center is where it all balances perfectly.\n\n**Standard** — Middle rows offer the best value-to-view ratio. Rows C-F are ideal.\n\n**Deluxe** — Every seat is premium comfort, but center positions still offer the best visual balance.\n\n💡 **Group tip:** Always pick adjacent seats in the center section for the best shared experience!",
         ],
         type: 'seat_recommendation',
         suggestions: ['Best seats for IMAX?', 'I\'m booking for 2 people', 'Which experience should I choose?'],
@@ -85,7 +85,7 @@ const RESPONSES = {
 
     compare_experiences: {
         replies: [
-            "🎬 Here's your Scene Cinemas experience breakdown:\n\n**🖥️ IMAX** — The biggest screen in the house. Perfect for action, sci-fi, and visually stunning films. Go big or go home!\n\n**🔊 Dolby Cinema** — The best sound immersion with Dolby Atmos. A balanced premium experience with stunning visuals AND audio.\n\n**🎟️ Standard** — The affordable everyday option. Great quality at a friendly price — perfect for casual moviegoers.\n\n**✨ Deluxe** — Smaller premium hall with luxury comfort seating. Ideal for intimate viewing and maximum comfort.\n\n**Quick comparison:**\n• Biggest screen → IMAX\n• Best sound → Dolby\n• Best value → Standard\n• Most comfort → Deluxe",
+            "🎬 Here's your THE HALL CINEMASs experience breakdown:\n\n**🖥️ IMAX** — The biggest screen in the house. Perfect for action, sci-fi, and visually stunning films. Go big or go home!\n\n**🔊 Dolby Cinema** — The best sound immersion with Dolby Atmos. A balanced premium experience with stunning visuals AND audio.\n\n**🎟️ Standard** — The affordable everyday option. Great quality at a friendly price — perfect for casual moviegoers.\n\n**✨ Deluxe** — Smaller premium hall with luxury comfort seating. Ideal for intimate viewing and maximum comfort.\n\n**Quick comparison:**\n• Biggest screen → IMAX\n• Best sound → Dolby\n• Best value → Standard\n• Most comfort → Deluxe",
         ],
         type: 'experience_info',
         suggestions: ['Best seats for IMAX?', 'Best seats for Dolby?', 'Recommend me a movie for IMAX'],
@@ -101,7 +101,7 @@ const RESPONSES = {
 
     booking_help: {
         replies: [
-            "📋 Here's how to book at Scene Cinemas in 8 easy steps:\n\n1️⃣ **Choose a movie** from our Now Showing section\n2️⃣ **Select a date** from the available calendar\n3️⃣ **Pick a showtime** — choose from IMAX, Dolby, Standard, or Deluxe\n4️⃣ **Select your seats** on the interactive seat map\n5️⃣ **Add food & drinks** (optional but highly recommended! 🍿)\n6️⃣ **Choose payment method** — Visa/Credit Card or Fawry\n7️⃣ **Complete payment** securely\n8️⃣ **Get your QR tickets** — one per seat, ready for entry!\n\n💡 You have a 10-minute reservation window once you start selecting seats, so don't wait too long!",
+            "📋 Here's how to book at THE HALL CINEMASs in 8 easy steps:\n\n1️⃣ **Choose a movie** from our Now Showing section\n2️⃣ **Select a date** from the available calendar\n3️⃣ **Pick a showtime** — choose from IMAX, Dolby, Standard, or Deluxe\n4️⃣ **Select your seats** on the interactive seat map\n5️⃣ **Add food & drinks** (optional but highly recommended! 🍿)\n6️⃣ **Choose payment method** — Visa/Credit Card or Fawry\n7️⃣ **Complete payment** securely\n8️⃣ **Get your QR tickets** — one per seat, ready for entry!\n\n💡 You have a 10-minute reservation window once you start selecting seats, so don't wait too long!",
         ],
         type: 'booking_help',
         suggestions: ['How does the QR ticket work?', 'What payment methods?', 'Help me choose seats'],
@@ -125,7 +125,7 @@ const RESPONSES = {
 
     payment_help: {
         replies: [
-            "💳 Scene Cinemas offers secure payment options:\n\n**Visa / Credit Card** — Enter your card details securely during checkout. Quick and instant confirmation.\n\n**Fawry** — Get a reference number and pay at any Fawry outlet, ATM, or through the Fawry app.\n\n💡 Your seats are reserved for 10 minutes once selected, so complete payment promptly to secure your booking!\n\nAfter payment, you'll receive your QR ticket(s) instantly on the confirmation page.",
+            "💳 THE HALL CINEMASs offers secure payment options:\n\n**Visa / Credit Card** — Enter your card details securely during checkout. Quick and instant confirmation.\n\n**Fawry** — Get a reference number and pay at any Fawry outlet, ATM, or through the Fawry app.\n\n💡 Your seats are reserved for 10 minutes once selected, so complete payment promptly to secure your booking!\n\nAfter payment, you'll receive your QR ticket(s) instantly on the confirmation page.",
         ],
         type: 'payment_help',
         suggestions: ['How does the QR ticket work?', 'How do I book a ticket?', 'Recommend me a movie'],

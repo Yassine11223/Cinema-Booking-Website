@@ -507,7 +507,7 @@
                         <!-- Ticket Header -->
                         <div class="ticket-header">
                             <div class="ticket-cinema">
-                                <span class="ticket-cinema-name">SCENE</span>
+                                <span class="ticket-cinema-name">THE HALL</span>
                                 <span class="ticket-cinema-sub">CINEMAS</span>
                             </div>
                             <span class="ticket-experience-badge">${ticket.experience}</span>
@@ -625,7 +625,7 @@
         ctx.fillStyle = '#e53935';
         ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('SCENE CINEMAS', width / 2, 50);
+        ctx.fillText('THE HALL CINEMASS', width / 2, 50);
 
         // Experience badge
         ctx.fillStyle = 'rgba(183, 28, 28, 0.3)';
@@ -731,7 +731,7 @@
     /* =========================================================
        SAVE BOOKING
        =========================================================
-       Persists booking data to localStorage (scene_bookings).
+       Persists booking data to localStorage (thehall_bookings).
        Now includes the generated ticket data for offline viewing.
        
        FUTURE: Replace localStorage with backend database.
@@ -762,7 +762,7 @@
 
         // ── 2. Save to localStorage as cache/offline backup ──
         try {
-            const bookings = JSON.parse(localStorage.getItem('scene_bookings') || '[]');
+            const bookings = JSON.parse(localStorage.getItem('thehall_bookings') || '[]');
             bookings.push({
                 bookingNumber,
                 backendBookingId: backendBookingId || null,
@@ -785,7 +785,7 @@
                     qrCodeDataUrl: t.qrCodeDataUrl,
                 })) : null,
             });
-            localStorage.setItem('scene_bookings', JSON.stringify(bookings));
+            localStorage.setItem('thehall_bookings', JSON.stringify(bookings));
         } catch (_) {}
 
         // Clear session

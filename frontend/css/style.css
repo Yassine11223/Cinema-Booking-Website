@@ -1739,6 +1739,7 @@
 .social-links {
     display: flex;
     gap: var(--space-md);
+    justify-content: center;
 }
 
 .social-link {
