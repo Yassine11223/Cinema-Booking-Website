@@ -528,14 +528,8 @@ async function populateFromCatalog(catalogMovies) {
    INITIALIZATION
    ============================================ */
 async function initTMDB() {
-    // FIRST: Check if admin has curated a movie catalog in localStorage
-    const catalogMovies = getAdminCatalog();
-    if (catalogMovies && catalogMovies.length > 0) {
-        console.log(`✅ Using admin catalog (${catalogMovies.length} movies)`);
-        showLoadingState();
-        await populateFromCatalog(catalogMovies);
-        return;
-    }
+    // ALWAYS: Fetch from TMDB API as requested
+
 
     // FALLBACK: Fetch from TMDB API
     if (TMDB_CONFIG.API_KEY === 'YOUR_TMDB_API_KEY_HERE' || !TMDB_CONFIG.API_KEY) {

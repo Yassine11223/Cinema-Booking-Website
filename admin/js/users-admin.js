@@ -44,7 +44,11 @@
     /* =========================================================
        INIT
        ========================================================= */
-    document.addEventListener('DOMContentLoaded', init);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     async function init() {
         setDate();
@@ -206,7 +210,7 @@
         animateCount($('kpi-total'),   1247 + realCount);
         animateCount($('kpi-active'),  834 + Math.min(realCount, 5));
         animateCount($('kpi-new'),     156 + realCount);
-        animateCount($('kpi-admins'),  3 + allUsers.filter(u => u.role === 'admin').length);
+        animateCount($('kpi-admins'),  3 + allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin').length);
     }
 
     function animateCount(el, target) {
@@ -264,8 +268,8 @@
                 <td style="color:var(--text-muted);font-size:12.5px;">${esc(user.phone || '—')}</td>
                 <td>
                     <span class="role-badge role-${user.role || 'customer'}">
-                        <i class="fas ${user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                        ${(user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
+                        <i class="fas ${user.role === 'superadmin' ? 'fa-crown' : user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
+                        ${user.role === 'superadmin' ? 'Super Admin' : (user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
                     </span>
                 </td>
                 <td style="font-size:12.5px;color:var(--text-muted);">${regDate}</td>
@@ -395,8 +399,8 @@
                     <div class="udetail-email">${esc(user.email || '—')}</div>
                     <div style="margin-top:8px;">
                         <span class="role-badge role-${user.role || 'customer'}">
-                            <i class="fas ${user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                            ${(user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
+                            <i class="fas ${user.role === 'superadmin' ? 'fa-crown' : user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
+                            ${user.role === 'superadmin' ? 'Super Admin' : (user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
                         </span>
                     </div>
                 </div>

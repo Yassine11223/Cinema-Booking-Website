@@ -1,6 +1,7 @@
 /**
  * User Controller - Handles auth and user management
  * Tracks login_count and last_login on every successful login
+ * Supports customer, admin, and superadmin roles
  */
 
 const User = require('../models/User');
@@ -68,8 +69,8 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            // Block admin users from customer portal
-            if (user.role === 'admin') {
+            // Block admin and superadmin users from customer portal
+            if (user.role === 'admin' || user.role === 'superadmin') {
                 return res.status(403).json({ message: 'Please use the admin login portal to sign in.' });
             }
 
@@ -83,7 +84,7 @@ const userController = {
         }
     },
 
-    // POST /api/users/login/admin — admin-only login
+    // POST /api/users/login/admin — admin & superadmin login
     async loginAdmin(req, res, next) {
         try {
             const { email, password } = req.body;
@@ -98,8 +99,8 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            // Block non-admin users from admin portal
-            if (user.role !== 'admin') {
+            // Block non-admin/non-superadmin users from admin portal
+            if (user.role !== 'admin' && user.role !== 'superadmin') {
                 return res.status(403).json({ message: 'Access denied. This portal is for administrators only.' });
             }
 
@@ -167,11 +168,36 @@ const userController = {
         try {
             const { id } = req.params;
             const { role } = req.body;
-            if (!['customer', 'admin'].includes(role)) {
+            if (!['customer', 'admin', 'superadmin'].includes(role)) {
                 return res.status(400).json({ message: 'Invalid role' });
+            }
+            // Only superadmin can assign superadmin role
+            if (role === 'superadmin' && req.user.role !== 'superadmin') {
+                return res.status(403).json({ message: 'Only super admins can assign the superadmin role.' });
             }
             const user = await User.update(id, { role });
             res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // POST /api/users/admin/create  (superadmin only)
+    async createAdmin(req, res, next) {
+        try {
+            const { name, email, password, phone } = req.body;
+
+            if (!name || !email || !password) {
+                return res.status(400).json({ message: 'Name, email, and password are required.' });
+            }
+
+            const existing = await User.findByEmail(email);
+            if (existing) {
+                return res.status(409).json({ message: 'Email already registered.' });
+            }
+
+            const user = await User.create({ name, email, password, phone, role: 'admin' });
+            res.status(201).json({ user, message: 'Admin account created successfully.' });
         } catch (error) {
             next(error);
         }

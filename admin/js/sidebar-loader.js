@@ -2,14 +2,14 @@
  * sidebar-loader.js
  * Loads the sidebar component and highlights the active nav link
  * based on the current page filename.
- * Also handles the logout button.
+ * Also handles the logout button and superadmin-only visibility.
  */
 
 (function () {
     'use strict';
 
     // ============================================
-    // AUTH GUARD — Redirect to login if not admin
+    // AUTH GUARD — Redirect to login if not admin/superadmin
     // ============================================
     (function enforceAdminAuth() {
         const token = localStorage.getItem('admin_token');
@@ -19,12 +19,12 @@
         if (token && userData) {
             try {
                 const user = JSON.parse(userData);
-                if (user && user.role === 'admin') isAdmin = true;
+                if (user && (user.role === 'admin' || user.role === 'superadmin')) isAdmin = true;
             } catch (_) { }
         }
 
         if (!isAdmin) {
-            // Not authenticated as admin — redirect to login page
+            // Not authenticated as admin/superadmin — redirect to login page
             window.location.href = 'login.html';
             return;
         }
@@ -38,6 +38,7 @@
         'theaters-manage.html': 'nav-theaters',
         'bookings-list.html': 'nav-bookings',
         'users-list.html': 'nav-users',
+        'admins-manage.html': 'nav-admins',
     };
 
     /**
@@ -57,6 +58,8 @@
             activateCurrentLink();
             initMobileToggle();
             initLogout();
+            applySuperadminVisibility();
+            updateSidebarUserInfo();
 
         } catch (err) {
             console.warn('[Sidebar] Could not load sidebar component:', err);
@@ -74,6 +77,74 @@
             const link = document.getElementById(activeLinkId);
             if (link) link.classList.add('active');
         }
+    }
+
+    /**
+     * Show/hide elements with data-superadmin-only based on user role.
+     * Also enforce page-level access: if current page is admins-manage.html
+     * and user is not superadmin, redirect to dashboard.
+     */
+    function applySuperadminVisibility() {
+        let isSuperadmin = false;
+        try {
+            const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+            if (userData) {
+                const user = JSON.parse(userData);
+                isSuperadmin = user && user.role === 'superadmin';
+            }
+        } catch (_) { }
+
+        // Show/hide superadmin-only nav items
+        document.querySelectorAll('[data-superadmin-only]').forEach(el => {
+            el.style.display = isSuperadmin ? '' : 'none';
+        });
+
+        // Page-level access control: redirect non-superadmin from superadmin pages
+        const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+        if (currentFile === 'admins-manage.html' && !isSuperadmin) {
+            window.location.href = 'index.html';
+        }
+    }
+
+    /**
+     * Update sidebar user info (name and role badge) from stored user data.
+     */
+    function updateSidebarUserInfo() {
+        try {
+            const userData = localStorage.getItem('scene_user') || localStorage.getItem('userData');
+            if (!userData) return;
+            const user = JSON.parse(userData);
+            if (!user) return;
+
+            // Update admin name
+            const nameEl = document.getElementById('sidebar-admin-name');
+            if (nameEl && user.name) nameEl.textContent = user.name;
+
+            // Update role label
+            const roleEl = document.getElementById('sidebar-admin-role');
+            if (roleEl) {
+                if (user.role === 'superadmin') {
+                    roleEl.textContent = 'Super Admin';
+                    roleEl.style.color = '#e040fb';
+                } else {
+                    roleEl.textContent = 'Admin';
+                }
+            }
+
+            // Update brand sub label
+            const brandSub = document.getElementById('sidebar-role-label');
+            if (brandSub) {
+                brandSub.textContent = user.role === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN';
+            }
+
+            // Update avatar icon
+            const avatarEl = document.getElementById('sidebar-avatar-icon');
+            if (avatarEl && user.role === 'superadmin') {
+                avatarEl.innerHTML = '<i class="fas fa-crown"></i>';
+                avatarEl.style.background = 'linear-gradient(135deg, rgba(224,64,251,0.2), rgba(156,39,176,0.1))';
+                avatarEl.style.borderColor = 'rgba(224,64,251,0.3)';
+            }
+        } catch (_) { }
     }
 
     /**

@@ -16,5 +16,8 @@
     "movies"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^25.1.0"
+  }
 }

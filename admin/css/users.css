@@ -178,8 +178,9 @@
     border-radius: var(--radius-full);
 }
 
-.role-admin    { background: rgba(183,28,28,0.15); color: var(--primary-light); border: 1px solid rgba(183,28,28,0.3); }
-.role-customer { background: rgba(66,165,245,0.1);  color: #64b5f6;             border: 1px solid rgba(66,165,245,0.2); }
+.role-admin      { background: rgba(183,28,28,0.15); color: var(--primary-light); border: 1px solid rgba(183,28,28,0.3); }
+.role-customer   { background: rgba(66,165,245,0.1);  color: #64b5f6;             border: 1px solid rgba(66,165,245,0.2); }
+.role-superadmin { background: rgba(224,64,251,0.12); color: #e040fb;             border: 1px solid rgba(224,64,251,0.25); }
 
 /* Activity bar */
 .activity-bar-wrap {

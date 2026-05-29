@@ -29,11 +29,21 @@ const authenticate = (req, res, next) => {
 };
 
 /**
- * Admin-only access
+ * Admin-only access (allows both admin and superadmin)
  */
 const adminOnly = (req, res, next) => {
-    if (req.user.role !== ROLES.ADMIN) {
+    if (req.user.role !== ROLES.ADMIN && req.user.role !== ROLES.SUPERADMIN) {
         return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+    next();
+};
+
+/**
+ * Super Admin-only access
+ */
+const superAdminOnly = (req, res, next) => {
+    if (req.user.role !== ROLES.SUPERADMIN) {
+        return res.status(403).json({ message: 'Access denied. Super Admin only.' });
     }
     next();
 };
@@ -49,4 +59,4 @@ const generateToken = (user) => {
     );
 };
 
-module.exports = { authenticate, adminOnly, generateToken };
+module.exports = { authenticate, adminOnly, superAdminOnly, generateToken };
