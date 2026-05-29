@@ -5,12 +5,16 @@
 
 -- Admin user (password: admin123)
 INSERT INTO users (name, email, password, phone, role) VALUES
-('Admin User', 'admin@scenecinemas.com', '$2a$12$LJ3m4ys3uz2rOPWgiQbSzO3LsijVc5S5kEqL9mBRwWOdQGFR0gEOy', '+1234567890', 'admin');
+('Admin User', 'admin@scenecinemas.com', '$2b$12$9xIWkDIUKFEwTlGOznQbFOyn4a6r64a8Kn0I5L04oZbTkmrznuh2C', '+1234567890', 'admin');
+
+-- Super Admin user (password: superadmin112)
+INSERT INTO users (name, email, password, phone, role) VALUES
+('Super Admin', 'superadmin@scene.com', '$2b$12$Xz5xp7/.9w0Xfef84V5ae.ZiepTC1dg6uiSMSVKH8pbF4KHA/azwi', '+20 100 000 0001', 'superadmin');
 
 -- Test customers (password: test123)
 INSERT INTO users (name, email, password, phone, role) VALUES
-('John Doe', 'john@example.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1987654321', 'customer'),
-('Jane Smith', 'jane@example.com', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1122334455', 'customer');
+('John Doe', 'john@example.com', '$2b$12$u6IhtOYN3r/c2KuN1lp12.Nxd9cpf5zPqP4vzbATKKXLXBmnR.kbK', '+1987654321', 'customer'),
+('Jane Smith', 'jane@example.com', '$2b$12$u6IhtOYN3r/c2KuN1lp12.Nxd9cpf5zPqP4vzbATKKXLXBmnR.kbK', '+1122334455', 'customer');
 
 -- Movies
 INSERT INTO movies (title, description, genre, duration, rating, release_date, status) VALUES

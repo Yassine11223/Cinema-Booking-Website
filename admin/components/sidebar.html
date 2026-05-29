@@ -12,19 +12,19 @@
             </div>
             <div>
                 <span class="sidebar-brand">VISION X</span>
-                <span class="sidebar-brand-sub">ADMIN</span>
+                <span class="sidebar-brand-sub" id="sidebar-role-label">ADMIN</span>
             </div>
         </div>
     </div>
 
     <!-- Admin Info -->
     <div class="sidebar-admin-info">
-        <div class="sidebar-avatar">
+        <div class="sidebar-avatar" id="sidebar-avatar-icon">
             <i class="fas fa-user-shield"></i>
         </div>
         <div class="sidebar-admin-text">
-            <span class="sidebar-admin-name">Administrator</span>
-            <span class="sidebar-admin-role">Super Admin</span>
+            <span class="sidebar-admin-name" id="sidebar-admin-name">Administrator</span>
+            <span class="sidebar-admin-role" id="sidebar-admin-role">Admin</span>
         </div>
     </div>
 
@@ -67,6 +67,12 @@
             <span class="nav-text">Users</span>
         </a>
 
+        <!-- Superadmin-only: Manage Admins -->
+        <a href="admins-manage.html" class="sidebar-nav-link" id="nav-admins" data-superadmin-only style="display:none;">
+            <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
+            <span class="nav-text">Manage Admins</span>
+            <span class="nav-badge nav-badge-superadmin"><i class="fas fa-crown" style="font-size:9px;"></i></span>
+        </a>
 
 
 

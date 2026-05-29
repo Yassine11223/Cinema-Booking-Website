@@ -3,6 +3,15 @@
 -- PostgreSQL
 -- ============================================
 
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS booking_seats CASCADE;
+DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS shows CASCADE;
+DROP TABLE IF EXISTS seats CASCADE;
+DROP TABLE IF EXISTS theaters CASCADE;
+DROP TABLE IF EXISTS movies CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- 1. Users
 CREATE TABLE IF NOT EXISTS users (
     id            SERIAL PRIMARY KEY,
@@ -10,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     email         VARCHAR(255) UNIQUE NOT NULL,
     password      VARCHAR(255) NOT NULL,
     phone         VARCHAR(20),
-    role          VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin')),
+    role          VARCHAR(20) DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'superadmin')),
     last_login    TIMESTAMP,
     login_count   INTEGER DEFAULT 0,
     created_at    TIMESTAMP DEFAULT NOW(),
@@ -95,12 +104,12 @@ CREATE TABLE IF NOT EXISTS payments (
 -- ============================================
 -- Indexes for performance
 -- ============================================
-CREATE INDEX idx_movies_status ON movies(status);
-CREATE INDEX idx_shows_movie ON shows(movie_id);
-CREATE INDEX idx_shows_theater ON shows(theater_id);
-CREATE INDEX idx_shows_time ON shows(show_time);
-CREATE INDEX idx_bookings_user ON bookings(user_id);
-CREATE INDEX idx_bookings_show ON bookings(show_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_seats_theater ON seats(theater_id);
-CREATE INDEX idx_payments_booking ON payments(booking_id);
+CREATE INDEX IF NOT EXISTS idx_movies_status ON movies(status);
+CREATE INDEX IF NOT EXISTS idx_shows_movie ON shows(movie_id);
+CREATE INDEX IF NOT EXISTS idx_shows_theater ON shows(theater_id);
+CREATE INDEX IF NOT EXISTS idx_shows_time ON shows(show_time);
+CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_show ON bookings(show_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_seats_theater ON seats(theater_id);
+CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments(booking_id);

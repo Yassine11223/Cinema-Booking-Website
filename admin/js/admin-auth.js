@@ -1,7 +1,8 @@
 /**
- * admin-auth.js — Admin Login logic
+ * admin-auth.js — Admin/SuperAdmin Login logic
  * Connects to POST /api/users/login/admin (role-restricted)
  * Falls back to offline local storage with role enforcement
+ * Supports both admin and superadmin roles
  */
 
 const API_BASE = 'http://localhost:5000/api';
@@ -63,13 +64,13 @@ function hideGlobalError() {
 }
 
 // ============================================
-// SEED DEMO ADMIN USER (offline)
+// SEED DEMO ADMIN & SUPERADMIN USERS (offline)
 // ============================================
-function seedDemoAdmin() {
+function seedDemoAdmins() {
     try {
         const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
-        const idx = localUsers.findIndex(u => u.email === 'admin@scene.com');
 
+        // Demo admin
         const adminData = {
             id: 1005,
             name: 'Admin User',
@@ -82,22 +83,45 @@ function seedDemoAdmin() {
             login_count: 1
         };
 
-        if (idx !== -1) {
-            // Ensure existing entry always has correct password & role
-            localUsers[idx].password = adminData.password;
-            localUsers[idx].role = adminData.role;
+        // Demo superadmin
+        const superAdminData = {
+            id: 1006,
+            name: 'Super Admin',
+            email: 'superadmin@scene.com',
+            phone: '+20 100 000 0001',
+            role: 'superadmin',
+            password: 'superadmin112',
+            created_at: '2026-01-01T00:00:00Z',
+            last_login: new Date().toISOString(),
+            login_count: 1
+        };
+
+        // Upsert admin
+        const adminIdx = localUsers.findIndex(u => u.email === adminData.email);
+        if (adminIdx !== -1) {
+            localUsers[adminIdx].password = adminData.password;
+            localUsers[adminIdx].role = adminData.role;
         } else {
             localUsers.push(adminData);
+        }
+
+        // Upsert superadmin
+        const superIdx = localUsers.findIndex(u => u.email === superAdminData.email);
+        if (superIdx !== -1) {
+            localUsers[superIdx].password = superAdminData.password;
+            localUsers[superIdx].role = superAdminData.role;
+        } else {
+            localUsers.push(superAdminData);
         }
 
         localStorage.setItem('scene_users_local', JSON.stringify(localUsers));
     } catch (e) { }
 }
 
-seedDemoAdmin();
+seedDemoAdmins();
 
 // ============================================
-// AUTH GUARD — Redirect if already logged in as admin
+// AUTH GUARD — Redirect if already logged in as admin/superadmin
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('admin_token');
@@ -106,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token && userData) {
         try {
             const user = JSON.parse(userData);
-            if (user && user.role === 'admin') {
-                // Already authenticated as admin — go to dashboard
+            if (user && (user.role === 'admin' || user.role === 'superadmin')) {
+                // Already authenticated as admin/superadmin — go to dashboard
                 window.location.href = 'index.html';
                 return;
             }
@@ -168,7 +192,7 @@ function initAdminLoginForm() {
         loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AUTHENTICATING…';
 
         try {
-            // Call admin-only login endpoint
+            // Call admin-only login endpoint (accepts admin + superadmin)
             const res = await fetch(`${API_BASE}/users/login/admin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -186,7 +210,7 @@ function initAdminLoginForm() {
                 // Track in local storage
                 trackLocalAdmin(data.user);
 
-                // Redirect to admin dashboard
+                // Redirect to admin dashboard (same for both admin and superadmin)
                 window.location.href = 'index.html';
             } else {
                 // Show server error (includes role mismatch message)
@@ -203,8 +227,8 @@ function initAdminLoginForm() {
             const user = localUsers.find(u => String(u.email) === String(email));
 
             if (user && user.password === password) {
-                // Enforce admin role
-                if (user.role !== 'admin') {
+                // Enforce admin or superadmin role
+                if (user.role !== 'admin' && user.role !== 'superadmin') {
                     showGlobalError('Access denied. This portal is for administrators only.');
                     setFieldStatus('admin-email', false, '');
                 } else {
