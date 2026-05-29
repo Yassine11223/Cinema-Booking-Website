@@ -20,6 +20,7 @@
         TOAST_MS: 4000,
         STORAGE_KEY: 'cinema_bk_v3',
         CURRENCY: 'EGP',
+        API_BASE: 'http://localhost:5000/api',
     };
 
     // ============================================
@@ -190,6 +191,141 @@
         return out;
     }
 
+    // ============================================
+    // API HELPERS — fetch real data from backend
+    // ============================================
+    const THEATER_EXP_MAP = {
+        'imax': 'IMAX', 'imax theatre': 'IMAX', '3d': 'IMAX',
+        'dolby': 'Dolby', 'dolby atmos': 'Dolby',
+        'standard': 'Standard', 'hall 1': 'Standard', 'hall 2': 'Standard', 'hall 3': 'Standard',
+        'vip': 'Deluxe', 'deluxe': 'Deluxe', 'deluxe suite': 'Deluxe',
+    };
+
+    /**
+     * Fetch showtimes from backend API.
+     * Returns the same { IMAX: [...], Dolby: [...] } shape the renderer expects.
+     * Returns null if backend is offline or has no data.
+     */
+    async function fetchShowtimesFromAPI(dateKey) {
+        try {
+            // Get movieId from URL or sessionStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            let movieId = urlParams.get('movieId') || urlParams.get('showId');
+            // Also check selectedMovie from movies.js
+            if (!movieId) {
+                try {
+                    const sm = JSON.parse(sessionStorage.getItem('selectedMovie'));
+                    if (sm && sm.backendMovieId) movieId = sm.backendMovieId;
+                } catch(_) {}
+            }
+
+            const url = movieId
+                ? `${CFG.API_BASE}/shows?movieId=${movieId}&date=${dateKey}`
+                : `${CFG.API_BASE}/shows?date=${dateKey}`;
+            const res = await fetch(url);
+            if (!res.ok) return null;
+            const shows = await res.json();
+            if (!shows || shows.length === 0) return null;
+
+            // Group by experience type
+            const grouped = { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
+            shows.forEach(show => {
+                const theatName = (show.theater_name || '').toLowerCase();
+                const exp = THEATER_EXP_MAP[theatName] || 'Standard';
+                const dt = new Date(show.show_time);
+                const hrs = dt.getHours();
+                const mins = dt.getMinutes();
+                const timeStr = `${String(hrs % 12 || 12).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+                grouped[exp].push({
+                    id: show.id,              // real backend ID (numeric)
+                    time: timeStr,
+                    hall: show.theater_name || 'Hall',
+                    sold: false,
+                    backendId: show.id,       // keep reference
+                });
+            });
+            console.log('✅ Showtimes loaded from backend API');
+            return grouped;
+        } catch (err) {
+            console.warn('⚠️ Backend showtimes unavailable:', err.message);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch seat availability from backend API.
+     * Returns { booked: [...], held: [...] } in the format the seat map expects.
+     * Returns null if backend is offline.
+     */
+    async function fetchSeatStatesFromAPI(showId, expType) {
+        try {
+            // showId must be a numeric backend ID
+            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null; // mock ID like 'imx1-..'
+            const res = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`);
+            if (!res.ok) return null;
+            const availableSeats = await res.json();
+            if (!availableSeats) return null;
+
+            // Backend returns AVAILABLE seats. We need to compute BOOKED seats.
+            const allSeatIds = getAllSeatIds(expType);
+            const availableSet = new Set(availableSeats.map(s => `${s.row_label}${s.seat_number}`));
+            const booked = allSeatIds.filter(id => !availableSet.has(id));
+
+            console.log(`✅ Seat states from API: ${booked.length} booked, ${availableSeats.length} available`);
+            return { booked, held: [] };
+        } catch (err) {
+            console.warn('⚠️ Backend seat states unavailable:', err.message);
+            return null;
+        }
+    }
+
+    /**
+     * Create a booking via backend API.
+     * Returns the created booking object, or null on failure.
+     */
+    async function createBookingOnBackend(showId, seatLabels) {
+        try {
+            // showId must be numeric backend ID
+            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
+            const token = localStorage.getItem('authToken');
+            if (!token) return null;
+
+            // We need seat IDs (database IDs), not labels.
+            // First get all seats for this show to map labels -> IDs
+            const seatsRes = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`);
+            if (!seatsRes.ok) return null;
+            const allSeats = await seatsRes.json();
+            const seatIdMap = {};
+            allSeats.forEach(s => { seatIdMap[`${s.row_label}${s.seat_number}`] = s.id; });
+
+            const seat_ids = seatLabels.map(label => seatIdMap[label]).filter(Boolean);
+            if (seat_ids.length === 0) return null;
+
+            const res = await fetch(`${CFG.API_BASE}/bookings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ show_id: showId, seat_ids }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                console.warn('⚠️ Booking API error:', err.message || res.status);
+                return null;
+            }
+            const booking = await res.json();
+            console.log('✅ Booking created in backend:', booking.id);
+            return booking;
+        } catch (err) {
+            console.warn('⚠️ Backend booking creation failed:', err.message);
+            return null;
+        }
+    }
+
+    // ============================================
+    // MOCK FALLBACKS — used when backend is offline
+    // ============================================
     function genShowtimes(dateKey) {
         const h = hash(dateKey);
         return {
@@ -222,6 +358,7 @@
 
     /**
      * Deterministically generate booked + held seats for a showtime.
+     * FALLBACK: used when backend is offline.
      */
     function genSeatStates(showtimeId, expType) {
         const all = getAllSeatIds(expType);
@@ -628,24 +765,32 @@
     // ============================================
     // EVENT HANDLERS
     // ============================================
-    function onDateClick(key) {
+    async function onDateClick(key) {
         if (key === S.dateKey) return;
         S.dateKey = key;
         S.stId = null; S.stType = null; S.seatStates = null;
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
-        S.showtimes = genShowtimes(key);
+
+        // Try backend API first, fall back to mock
+        const apiShowtimes = await fetchShowtimesFromAPI(key);
+        S.showtimes = apiShowtimes || genShowtimes(key);
+
         save();
         renderDates();
         renderShowtimes();
     }
 
-    function onShowtimeClick(id, exp) {
+    async function onShowtimeClick(id, exp) {
         if (id === S.stId) return;
         S.stId = id; S.stType = exp;
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
-        S.seatStates = genSeatStates(id, exp);
+
+        // Try backend API for real seat availability, fall back to mock
+        const apiSeats = await fetchSeatStatesFromAPI(id, exp);
+        S.seatStates = apiSeats || genSeatStates(id, exp);
+
         save();
 
         // Transition to seat map view
@@ -685,7 +830,7 @@
         el.classList.toggle('seat--selected', isSel);
     }
 
-    function onCheckout() {
+    async function onCheckout() {
         if (!S.stId) { toast('Select a showtime first.', 'warning'); return; }
         if (S.selected.length === 0) { toast('Select at least one seat.', 'warning'); return; }
         S.confirmed = true;
@@ -693,6 +838,14 @@
         save();
         renderBottomBar();
         renderTimer();
+
+        // Try to create a real booking in the backend database
+        let backendBookingId = null;
+        const backendBooking = await createBookingOnBackend(S.stId, S.selected);
+        if (backendBooking) {
+            backendBookingId = backendBooking.id;
+            toast('Booking saved to database!', 'success');
+        }
 
         // Save booking summary for payment page (user info comes from localStorage)
         const st = S.showtime;
@@ -706,6 +859,8 @@
             pricePerSeat: S.price,
             total: S.total,
             currency: CFG.CURRENCY,
+            backendBookingId: backendBookingId,  // real DB booking ID for payment
+            backendShowId: S.stId,               // real DB show ID
         }));
 
         showSuccessModal();
@@ -757,14 +912,16 @@
     // ============================================
     // INIT
     // ============================================
-    function init() {
+    async function init() {
         cacheDom();
         bind();
 
         const restored = load();
         if (!restored) {
             S.dateKey = S.dates[0].key;
-            S.showtimes = genShowtimes(S.dateKey);
+            // Try backend API first for initial showtimes
+            const apiShowtimes = await fetchShowtimesFromAPI(S.dateKey);
+            S.showtimes = apiShowtimes || genShowtimes(S.dateKey);
             S.view = 'selection';
         }
 
@@ -773,6 +930,9 @@
         renderShowtimes();
 
         if (S.view === 'seatmap' && S.stId && S.stType) {
+            // Try refreshing seat states from API on page reload
+            const apiSeats = await fetchSeatStatesFromAPI(S.stId, S.stType);
+            if (apiSeats) S.seatStates = apiSeats;
             renderLegend();
             renderSeatMap();
             renderTimer();

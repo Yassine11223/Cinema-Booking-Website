@@ -737,10 +737,35 @@
        FUTURE: Replace localStorage with backend database.
        ========================================================= */
     function saveBooking() {
+        // ── 1. Confirm backend booking (status: pending → confirmed) ──
+        const backendBookingId = booking.backendBookingId;
+        if (backendBookingId) {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                })
+                .then(res => {
+                    if (res.ok) {
+                        console.log('✅ Backend booking confirmed:', backendBookingId);
+                    } else {
+                        console.warn('⚠️ Backend booking confirm failed:', res.status);
+                    }
+                })
+                .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
+            }
+        }
+
+        // ── 2. Save to localStorage as cache/offline backup ──
         try {
             const bookings = JSON.parse(localStorage.getItem('scene_bookings') || '[]');
             bookings.push({
                 bookingNumber,
+                backendBookingId: backendBookingId || null,
                 movie: booking.movie?.title,
                 date: booking.date,
                 showtime: booking.showtime?.time,

@@ -64,21 +64,23 @@
 
     async function fetchRealData() {
         try {
-            const token = localStorage.getItem('admin_token') || '';
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
             const headers = { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
 
             // Fetch backend data + TMDB now playing in parallel
             const TMDB_API_KEY = '8b17a4f6956553f204d913b742122c1e';
             const tmdbUrl = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_API_KEY}&language=en-US&page=1`;
 
-            const [mRes, uRes, tmdbRes] = await Promise.all([
+            const [mRes, uRes, bRes, tmdbRes] = await Promise.all([
                 fetch('http://localhost:5000/api/movies', { headers }).catch(() => null),
                 fetch('http://localhost:5000/api/users', { headers }).catch(() => null),
+                fetch('http://localhost:5000/api/bookings', { headers }).catch(() => null),
                 fetch(tmdbUrl).catch(() => null)
             ]);
 
             let movies = [];
             let users = [];
+            let realBookings = [];
             let tmdbMovies = [];
 
             if (mRes && mRes.ok) movies = await mRes.json();
@@ -87,6 +89,12 @@
             if (uRes && uRes.ok) users = await uRes.json();
             else users = JSON.parse(localStorage.getItem('scene_users_local')) || JSON.parse(localStorage.getItem('scene_admin_users')) || [];
 
+            // Fetch real bookings from backend
+            if (bRes && bRes.ok) {
+                realBookings = await bRes.json();
+                console.log('✅ Dashboard: loaded', realBookings.length, 'real bookings from backend');
+            }
+
             // Parse TMDB now playing movies
             if (tmdbRes && tmdbRes.ok) {
                 const tmdbData = await tmdbRes.json();
@@ -94,44 +102,99 @@
             }
 
             dashboardData.usersCnt = users.length > 0 ? users.length : 3942;
-            dashboardData.showsCnt = movies.length > 0 ? movies.filter(m => m.status === 'Now Showing').length * 4 : 24;
+            dashboardData.showsCnt = movies.length > 0 ? movies.filter(m => m.status === 'Now Showing' || m.status === 'now_showing').length * 4 : 24;
             
-            // Use TMDB now playing movies for Top Movies & Recent Bookings
-            if (tmdbMovies.length > 0) {
-                // Top Movies — use the top 5 TMDB now playing, ranked by popularity
-                const sorted = [...tmdbMovies].sort((a, b) => b.popularity - a.popularity).slice(0, 5);
-                dashboardData.topMovies = sorted.map((m, i) => ({
+            // ── USE REAL BOOKINGS DATA if available ──
+            if (realBookings.length > 0) {
+                // Compute real revenue
+                const paidBookings = realBookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
+                dashboardData.revenue = paidBookings.reduce((sum, b) => sum + parseFloat(b.total_price || 0), 0);
+                dashboardData.bookings = realBookings.length;
+
+                // Top Movies — group bookings by movie, rank by count
+                const movieBookingCounts = {};
+                realBookings.forEach(b => {
+                    const title = b.movie_title || 'Unknown';
+                    if (!movieBookingCounts[title]) movieBookingCounts[title] = 0;
+                    movieBookingCounts[title]++;
+                });
+                const sortedMovies = Object.entries(movieBookingCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+                const maxBookings = sortedMovies.length > 0 ? sortedMovies[0][1] : 1;
+                dashboardData.topMovies = sortedMovies.map(([title, count], i) => ({
                     rank: i + 1,
-                    title: m.title,
-                    bookings: Math.floor(350 - (i * 45) + Math.random() * 30),
-                    pct: Math.max(100 - (i * 16), 20)
+                    title: title,
+                    bookings: count,
+                    pct: Math.round((count / maxBookings) * 100),
                 }));
 
-                // Recent Bookings — generate realistic entries from TMDB now playing
-                const customers = [
-                    'Yassine K.', 'Sarah M.', 'Omar F.', 'Lina B.',
-                    'Hamza R.', 'Nour A.', 'Khaled S.'
-                ];
-                const statuses = ['confirmed', 'confirmed', 'confirmed', 'pending', 'confirmed', 'cancelled', 'pending'];
-                const bookingMovies = tmdbMovies.slice(0, 7);
-                dashboardData.recentBookings = customers.map((c, i) => ({
-                    id: `#BK-00${842 - i}`,
-                    customer: c,
-                    movie: bookingMovies[i % bookingMovies.length].title,
-                    seats: Math.floor(Math.random() * 4) + 1,
-                    amount: `${((Math.floor(Math.random() * 4) + 1) * 250 + Math.floor(Math.random() * 100))} EGP`,
-                    status: statuses[i]
-                }));
-            } else if (movies.length > 0) {
-                // Fallback: use backend movies if TMDB is unavailable
-                const shows = movies.filter(m => m.status === 'Now Showing').slice(0, 5);
-                if (shows.length > 0) {
-                    dashboardData.topMovies = shows.map((m, i) => ({
+                // Recent Bookings — use actual recent bookings from database
+                const statusMap = { confirmed: 'confirmed', pending: 'pending', cancelled: 'cancelled', completed: 'confirmed' };
+                dashboardData.recentBookings = realBookings
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                    .slice(0, 7)
+                    .map(b => ({
+                        id: `#BK-${String(b.id).padStart(5, '0')}`,
+                        customer: b.user_name || 'Unknown',
+                        movie: b.movie_title || 'Unknown',
+                        seats: b.seats ? b.seats.length : 1,
+                        amount: `${parseFloat(b.total_price || 0).toLocaleString()} EGP`,
+                        status: statusMap[b.status] || 'pending',
+                    }));
+
+                // Monthly revenue from real data (group by month)
+                const monthMap = {};
+                const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                paidBookings.forEach(b => {
+                    const d = new Date(b.created_at);
+                    const key = monthNames[d.getMonth()];
+                    if (!monthMap[key]) monthMap[key] = 0;
+                    monthMap[key] += parseFloat(b.total_price || 0);
+                });
+                if (Object.keys(monthMap).length > 0) {
+                    const currentMonth = monthNames[new Date().getMonth()];
+                    dashboardData.monthlyRev = Object.entries(monthMap).map(([month, amount]) => ({
+                        month, amount: Math.round(amount), current: month === currentMonth,
+                    }));
+                }
+
+                console.log('✅ Dashboard stats computed from real bookings');
+            } else {
+                // Fallback: Use TMDB movies for top movies & recent bookings
+                if (tmdbMovies.length > 0) {
+                    const sorted = [...tmdbMovies].sort((a, b) => b.popularity - a.popularity).slice(0, 5);
+                    dashboardData.topMovies = sorted.map((m, i) => ({
                         rank: i + 1,
                         title: m.title,
-                        bookings: Math.floor(Math.random() * 200) + 100,
-                        pct: 100 - (i * 15)
+                        bookings: Math.floor(350 - (i * 45) + Math.random() * 30),
+                        pct: Math.max(100 - (i * 16), 20)
                     }));
+
+                    const customers = [
+                        'Yassine K.', 'Sarah M.', 'Omar F.', 'Lina B.',
+                        'Hamza R.', 'Nour A.', 'Khaled S.'
+                    ];
+                    const statuses = ['confirmed', 'confirmed', 'confirmed', 'pending', 'confirmed', 'cancelled', 'pending'];
+                    const bookingMovies = tmdbMovies.slice(0, 7);
+                    dashboardData.recentBookings = customers.map((c, i) => ({
+                        id: `#BK-00${842 - i}`,
+                        customer: c,
+                        movie: bookingMovies[i % bookingMovies.length].title,
+                        seats: Math.floor(Math.random() * 4) + 1,
+                        amount: `${((Math.floor(Math.random() * 4) + 1) * 250 + Math.floor(Math.random() * 100))} EGP`,
+                        status: statuses[i]
+                    }));
+                } else if (movies.length > 0) {
+                    const shows = movies.filter(m => m.status === 'Now Showing' || m.status === 'now_showing').slice(0, 5);
+                    if (shows.length > 0) {
+                        dashboardData.topMovies = shows.map((m, i) => ({
+                            rank: i + 1,
+                            title: m.title,
+                            bookings: Math.floor(Math.random() * 200) + 100,
+                            pct: 100 - (i * 15)
+                        }));
+                    }
                 }
             }
         } catch (_) {

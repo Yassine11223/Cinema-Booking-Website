@@ -43,7 +43,7 @@
 .sidebar-logo-icon {
     width: 38px;
     height: 38px;
-    background: var(--primary);
+    background: var(--admin-accent);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
@@ -65,7 +65,7 @@
     display: block;
     font-size: 10px;
     letter-spacing: 3px;
-    color: var(--primary);
+    color: var(--admin-accent);
     font-family: var(--font-display);
     margin-top: 2px;
 }
@@ -83,7 +83,7 @@
 .sidebar-avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    background: linear-gradient(135deg, var(--admin-accent-dark), var(--admin-accent));
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -109,7 +109,7 @@
 
 .sidebar-admin-role {
     font-size: 11px;
-    color: var(--primary);
+    color: var(--admin-accent);
     letter-spacing: 0.5px;
 }
 
@@ -145,18 +145,18 @@
 
 .sidebar-nav-link:hover {
     color: var(--text-primary);
-    background: rgba(183, 28, 28, 0.06);
-    border-left-color: var(--primary-dark);
+    background: rgba(245, 166, 35, 0.06);
+    border-left-color: var(--admin-accent-dark);
 }
 
 .sidebar-nav-link.active {
     color: var(--text-primary);
-    background: rgba(183, 28, 28, 0.12);
-    border-left-color: var(--primary);
+    background: var(--admin-accent-soft);
+    border-left-color: var(--admin-accent);
 }
 
 .sidebar-nav-link.active .nav-icon {
-    color: var(--primary);
+    color: var(--admin-accent);
 }
 
 .nav-icon {
@@ -169,7 +169,7 @@
 }
 
 .sidebar-nav-link:hover .nav-icon {
-    color: var(--primary-light);
+    color: var(--admin-accent-light);
 }
 
 .nav-text {
@@ -184,14 +184,14 @@
     font-weight: 600;
     padding: 2px 7px;
     border-radius: var(--radius-full);
-    background: var(--primary-dark);
-    color: #fff;
+    background: var(--admin-accent-dark);
+    color: #000;
     letter-spacing: 0.5px;
 }
 
 .nav-badge-new {
-    background: #1a6b1a;
-    color: #6fcf6f;
+    background: rgba(245, 166, 35, 0.15);
+    color: var(--admin-accent);
     animation: pulse-live 2s infinite;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .admin-title-icon {
-    color: var(--primary);
+    color: var(--admin-accent);
     font-size: 22px;
 }
 
@@ -334,7 +334,7 @@
 }
 
 .admin-date-badge i {
-    color: var(--primary);
+    color: var(--admin-accent);
 }
 
 .admin-refresh-btn {
@@ -353,8 +353,8 @@
 }
 
 .admin-refresh-btn:hover {
-    color: var(--primary-light);
-    border-color: var(--primary-dark);
+    color: var(--admin-accent-light);
+    border-color: var(--admin-accent-dark);
 }
 
 .admin-refresh-btn.spinning i {
@@ -392,7 +392,7 @@
     right: 7px;
     width: 7px;
     height: 7px;
-    background: var(--primary);
+    background: var(--admin-accent);
     border-radius: 50%;
     border: 1.5px solid var(--dark-bg);
 }
@@ -443,7 +443,7 @@
 
 .notif-panel-clear {
     font-size: 11px;
-    color: var(--primary-light);
+    color: var(--admin-accent-light);
     cursor: pointer;
     transition: color 0.2s ease;
     background: none;
@@ -481,7 +481,7 @@
 }
 
 .notif-item.unread {
-    background: rgba(183, 28, 28, 0.06);
+    background: rgba(245, 166, 35, 0.06);
 }
 
 .notif-icon {
@@ -496,18 +496,18 @@
 }
 
 .notif-icon.notif-booking {
-    background: rgba(183, 28, 28, 0.15);
-    color: #ef5350;
+    background: var(--admin-accent-soft);
+    color: var(--admin-accent);
 }
 
 .notif-icon.notif-user {
-    background: rgba(20, 100, 180, 0.15);
-    color: #42a5f5;
+    background: rgba(197, 160, 89, 0.12);
+    color: var(--gold);
 }
 
 .notif-icon.notif-system {
-    background: rgba(100, 60, 180, 0.15);
-    color: #9575cd;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
 }
 
 .notif-icon.notif-alert {
@@ -588,10 +588,10 @@
     box-shadow: var(--shadow-lg);
 }
 
-.stat-card-revenue::before { background: linear-gradient(135deg, rgba(183,28,28,0.07), transparent); }
-.stat-card-bookings::before { background: linear-gradient(135deg, rgba(100,60,180,0.07), transparent); }
-.stat-card-users::before    { background: linear-gradient(135deg, rgba(20,100,180,0.07), transparent); }
-.stat-card-shows::before    { background: linear-gradient(135deg, rgba(20,150,100,0.07), transparent); }
+.stat-card-revenue::before { background: linear-gradient(135deg, rgba(245,166,35,0.07), transparent); }
+.stat-card-bookings::before { background: linear-gradient(135deg, rgba(245,166,35,0.05), transparent); }
+.stat-card-users::before    { background: linear-gradient(135deg, rgba(197,160,89,0.06), transparent); }
+.stat-card-shows::before    { background: linear-gradient(135deg, rgba(197,160,89,0.05), transparent); }
 
 .stat-card:hover::before { opacity: 1; }
 
@@ -606,10 +606,10 @@
     margin-bottom: 12px;
 }
 
-.stat-card-revenue .stat-card-icon { background: rgba(183,28,28,0.15); color: #ef5350; }
-.stat-card-bookings .stat-card-icon { background: rgba(100,60,180,0.15); color: #9575cd; }
-.stat-card-users .stat-card-icon    { background: rgba(20,100,180,0.15); color: #42a5f5; }
-.stat-card-shows .stat-card-icon    { background: rgba(20,150,100,0.15); color: #4db6ac; }
+.stat-card-revenue .stat-card-icon { background: var(--admin-accent-soft); color: var(--admin-accent); }
+.stat-card-bookings .stat-card-icon { background: rgba(197,160,89,0.12); color: var(--gold); }
+.stat-card-users .stat-card-icon    { background: rgba(197,160,89,0.10); color: var(--gold); }
+.stat-card-shows .stat-card-icon    { background: rgba(245,166,35,0.10); color: var(--admin-accent); }
 
 .stat-card-body {
     display: flex;
@@ -719,7 +719,7 @@
     border-radius: 50%;
 }
 
-.legend-dot-primary { background: var(--primary); }
+.legend-dot-primary { background: var(--admin-accent); }
 
 /* Bar Chart */
 .bar-chart-wrapper {
@@ -752,7 +752,7 @@
     position: relative;
     cursor: pointer;
     transition: filter 0.2s ease;
-    background: linear-gradient(to top, var(--primary-dark), var(--primary-light));
+    background: linear-gradient(to top, var(--admin-accent-dark), var(--admin-accent-light));
     min-height: 4px;
 }
 
@@ -761,8 +761,8 @@
 }
 
 .bar-fill.bar-current {
-    background: linear-gradient(to top, #8b0000, #ff5252);
-    box-shadow: 0 0 14px rgba(255, 82, 82, 0.4);
+    background: linear-gradient(to top, var(--admin-accent-dark), var(--admin-accent-light));
+    box-shadow: 0 0 14px var(--admin-accent-glow);
 }
 
 .bar-chart-labels {
@@ -802,11 +802,11 @@
 
 .donut-fill {
     fill: none;
-    stroke: var(--primary);
+    stroke: var(--admin-accent);
     stroke-width: 10;
     stroke-linecap: round;
     transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    filter: drop-shadow(0 0 8px rgba(183, 28, 28, 0.6));
+    filter: drop-shadow(0 0 8px rgba(245, 166, 35, 0.5));
 }
 
 .donut-center-text {
@@ -861,7 +861,7 @@
     flex-shrink: 0;
 }
 
-.donut-legend-dot-filled { background: var(--primary); }
+.donut-legend-dot-filled { background: var(--admin-accent); }
 .donut-legend-dot-empty  { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
 
 /* ============================================
@@ -892,7 +892,7 @@
 
 .table-view-all-link {
     font-size: 12px;
-    color: var(--primary-light);
+    color: var(--admin-accent-light);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -1062,7 +1062,7 @@
 
 .top-movie-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary-light));
+    background: linear-gradient(90deg, var(--admin-accent-dark), var(--admin-accent-light));
     border-radius: 2px;
     transition: width 1s ease;
 }
@@ -1099,13 +1099,13 @@
 
 .quick-action-btn i {
     font-size: 20px;
-    color: var(--primary);
+    color: var(--admin-accent);
     transition: transform 0.25s ease;
 }
 
 .quick-action-btn:hover {
-    background: rgba(183, 28, 28, 0.06);
-    border-color: var(--primary-dark);
+    background: rgba(245, 166, 35, 0.06);
+    border-color: var(--admin-accent-dark);
     color: var(--text-primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
