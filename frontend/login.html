@@ -438,6 +438,34 @@
                 </button>
             </form>
 
+            <!-- OTP Form (Hidden by default) -->
+            <form id="otpForm" novalidate style="display: none;">
+                <div class="card-header" style="margin-bottom: 20px; padding: 0;">
+                    <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h1 class="card-title" style="font-size: 22px;">2-STEP VERIFICATION</h1>
+                    <p class="card-subtitle">We sent a 6-digit code to <strong id="otpEmailDisplay" style="color: #fff;"></strong></p>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="otpCode">Verification Code</label>
+                    <div class="field-wrap">
+                        <input
+                            type="text" id="otpCode" class="form-input"
+                            placeholder="Enter 6-digit code" required autocomplete="one-time-code" maxlength="6" pattern="\d{6}" style="letter-spacing: 4px; font-weight: bold; text-align: center; font-size: 18px; padding-left: 14px;">
+                        <i class="fas fa-key field-icon" style="display: none;"></i>
+                    </div>
+                    <div class="error-msg" id="otpCodeError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="verifyOtpBtn" style="margin-top: 10px;">
+                    <i class="fas fa-check-circle"></i> VERIFY & SIGN IN
+                </button>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="#" id="backToLogin" class="forgot-link" style="color: var(--text-secondary); font-size: 12.5px;">Back to Sign In</a>
+                </div>
+            </form>
+
             <!-- Divider -->
             <div class="divider">
                 <div class="divider-line"></div>

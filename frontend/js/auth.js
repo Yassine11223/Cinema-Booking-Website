@@ -250,6 +250,22 @@ function initLoginForm(form) {
             const data = await res.json();
 
             if (res.ok) {
+                if (data.otpRequired) {
+                    // Show OTP Form
+                    const otpForm = document.getElementById('otpForm');
+                    const loginHeader = document.querySelector('.card-header');
+                    
+                    form.style.display = 'none';
+                    if (loginHeader) loginHeader.style.display = 'none';
+                    
+                    otpForm.style.display = 'block';
+                    document.getElementById('otpEmailDisplay').textContent = data.email;
+                    
+                    // Bind events for OTP
+                    initOtpForm(otpForm, data.email);
+                    return;
+                }
+
                 // Store auth data
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('scene_user', JSON.stringify(data.user));
@@ -474,6 +490,99 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('scene_register_success');
     }
 });
+
+function initOtpForm(otpForm, email) {
+    const otpCodeEl = otpForm.querySelector('#otpCode');
+    const verifyBtn = otpForm.querySelector('#verifyOtpBtn');
+    const backBtn = otpForm.querySelector('#backToLogin');
+
+    // Back to login handler
+    backBtn.onclick = (e) => {
+        e.preventDefault();
+        otpForm.style.display = 'none';
+        
+        const loginForm = document.getElementById('loginForm');
+        const loginHeader = document.querySelector('.card-header');
+        
+        loginForm.style.display = 'block';
+        if (loginHeader) loginHeader.style.display = 'block';
+    };
+
+    // OTP validation on blur
+    otpCodeEl.onblur = () => {
+        const val = otpCodeEl.value.trim();
+        if (!val || val.length !== 6 || !/^\d+$/.test(val)) {
+            setFieldStatus('otpCode', false, 'Please enter a 6-digit number');
+        } else {
+            clearFieldStatus('otpCode');
+        }
+    };
+    otpCodeEl.onfocus = () => clearFieldStatus('otpCode');
+
+    // Submit handler for OTP
+    otpForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const otpCode = otpCodeEl.value.trim();
+        if (!otpCode || otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
+            setFieldStatus('otpCode', false, 'Please enter a 6-digit number');
+            return;
+        }
+
+        verifyBtn.disabled = true;
+        verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFYING…';
+
+        try {
+            const res = await fetch(`${API_BASE}/users/verify-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otpCode }),
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('scene_user', JSON.stringify(data.user));
+                localStorage.setItem('userData', JSON.stringify(data.user));
+
+                if (data.user?.role === 'admin') {
+                    localStorage.setItem('admin_token', data.token);
+                }
+
+                trackLocalUser(data.user, false);
+                const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
+                let redirect = urlRedirect || 'index.html';
+                if (data.user?.role === 'admin') redirect = '../admin/index.html';
+                window.location.href = redirect;
+            } else {
+                setFieldStatus('otpCode', false, data.message || 'Verification failed. Incorrect code.');
+            }
+        } catch (err) {
+            console.error('OTP verify offline fallback...', err.message);
+            // Offline fallback for demo: accept any code starting with 9 or matching 123456
+            if (otpCode === '123456' || otpCode.startsWith('9')) {
+                const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+                const user = localUsers.find(u => String(u.email) === String(email));
+                if (user) {
+                    trackLocalUser(user, false);
+                    localStorage.setItem('authToken', 'offline_token_' + Date.now());
+                    localStorage.setItem('scene_user', JSON.stringify(user));
+                    localStorage.setItem('userData', JSON.stringify(user));
+                    if (user.role === 'admin') localStorage.setItem('admin_token', 'offline_admin_token');
+
+                    const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
+                    let redirect = urlRedirect || 'index.html';
+                    if (user.role === 'admin') redirect = '../admin/index.html';
+                    window.location.href = redirect;
+                    return;
+                }
+            }
+            setFieldStatus('otpCode', false, 'Verification failed (or backend is offline).');
+        } finally {
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> VERIFY & SIGN IN';
+        }
+    };
+}
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {

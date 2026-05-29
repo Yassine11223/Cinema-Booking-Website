@@ -76,6 +76,19 @@ const User = {
 
     async comparePassword(plainPassword, hashedPassword) {
         return bcrypt.compare(plainPassword, hashedPassword);
+    },
+
+    async setOTP(id, otpCode, expiresAt) {
+        const result = await query(
+            `UPDATE users
+             SET otp_code = $1,
+                 otp_expires_at = $2,
+                 updated_at = NOW()
+             WHERE id = $3
+             RETURNING id, email, otp_code, otp_expires_at`,
+            [otpCode, expiresAt, id]
+        );
+        return result.rows[0];
     }
 };
 
