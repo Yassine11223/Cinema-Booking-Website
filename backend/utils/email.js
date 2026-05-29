@@ -1,26 +1,40 @@
 /**
  * Email Utility
- * Email sending functionality (placeholder - configure with your provider)
+ * Sends emails via SMTP (Gmail)
  */
 
-const sendEmail = async ({ to, subject, html }) => {
-    // TODO: Configure with nodemailer or a service like SendGrid
-    console.log(`📧 Email would be sent to: ${to}`);
-    console.log(`   Subject: ${subject}`);
+const nodemailer = require('nodemailer');
 
-    // Example nodemailer setup (uncomment when ready):
-    // const nodemailer = require('nodemailer');
-    // const transporter = nodemailer.createTransport({
-    //     host: process.env.MAIL_HOST,
-    //     port: process.env.MAIL_PORT,
-    //     auth: {
-    //         user: process.env.MAIL_USER,
-    //         pass: process.env.MAIL_PASS,
-    //     },
-    // });
-    // await transporter.sendMail({ from: process.env.MAIL_USER, to, subject, html });
+// Configure the SMTP transporter using Gmail and App Password
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'cinemavisionx@gmail.com',
+        pass: 'lhfxdricewtyotda' // 16-letter App Password (lhfx dric ewty otda)
+    }
+});
+
+/**
+ * Generic email sender
+ */
+const sendEmail = async ({ to, subject, html }) => {
+    try {
+        await transporter.sendMail({
+            from: '"Vision X Cinemas" <cinemavisionx@gmail.com>',
+            to,
+            subject,
+            html,
+        });
+        console.log(`📧 Email sent successfully to: ${to}`);
+    } catch (error) {
+        console.error(`❌ Failed to send email to ${to}:`, error.message);
+        // Do not crash the process; log the error
+    }
 };
 
+/**
+ * Send Booking Confirmation
+ */
 const sendBookingConfirmation = async (user, booking) => {
     await sendEmail({
         to: user.email,
@@ -29,4 +43,31 @@ const sendBookingConfirmation = async (user, booking) => {
     });
 };
 
-module.exports = { sendEmail, sendBookingConfirmation };
+/**
+ * Send OTP Verification Email
+ */
+const sendOTPEmail = async (email, name, otpCode) => {
+    await sendEmail({
+        to: email,
+        subject: 'Vision X Cinemas | 2-Step Verification Code',
+        html: `
+            <div style="font-family: Arial, sans-serif; background-color: #0a0a0a; color: #ffffff; padding: 40px; border-radius: 8px; max-width: 600px; margin: auto;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <span style="color: #e50914; font-size: 26px; font-weight: bold; letter-spacing: 2px;">VISION X</span>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: bold; letter-spacing: 2px;">CINEMAS</span>
+                </div>
+                <h2 style="color: #ffffff; border-bottom: 1px solid #333; padding-bottom: 10px;">Verification Code</h2>
+                <p>Hello ${name || 'Customer'},</p>
+                <p>To complete your sign-in, please enter the following 6-digit verification code on the login page. This code is valid for 10 minutes.</p>
+                <div style="background-color: #141414; border: 1px solid #e50914; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
+                    <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #ff4b4b;">${otpCode}</span>
+                </div>
+                <p style="color: #888; font-size: 12px; margin-top: 40px; border-top: 1px solid #333; padding-top: 15px;">
+                    If you did not request this sign-in attempt, please ignore this email.
+                </p>
+            </div>
+        `
+    });
+};
+
+module.exports = { sendEmail, sendBookingConfirmation, sendOTPEmail };

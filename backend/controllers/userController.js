@@ -6,6 +6,8 @@
 
 const User = require('../models/User');
 const { generateToken } = require('../middleware/auth');
+const { generateOTP } = require('../utils/otp');
+const { sendOTPEmail } = require('../utils/email');
 
 const userController = {
     // POST /api/users/register
@@ -42,13 +44,13 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            // ✅ Track the login
-            await User.recordLogin(user.id);
+            // Generate and send OTP
+            const otpCode = generateOTP();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+            await User.setOTP(user.id, otpCode, expiresAt);
+            await sendOTPEmail(user.email, user.name, otpCode);
 
-            const token = generateToken(user);
-            const { password: _, ...userWithoutPassword } = user;
-
-            res.json({ user: userWithoutPassword, token });
+            res.json({ otpRequired: true, email: user.email, message: 'Verification code sent to your email.' });
         } catch (error) {
             next(error);
         }
@@ -74,11 +76,13 @@ const userController = {
                 return res.status(403).json({ message: 'Please use the admin login portal to sign in.' });
             }
 
-            await User.recordLogin(user.id);
-            const token = generateToken(user);
-            const { password: _, ...userWithoutPassword } = user;
+            // Generate and send OTP
+            const otpCode = generateOTP();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+            await User.setOTP(user.id, otpCode, expiresAt);
+            await sendOTPEmail(user.email, user.name, otpCode);
 
-            res.json({ user: userWithoutPassword, token });
+            res.json({ otpRequired: true, email: user.email, message: 'Verification code sent to your email.' });
         } catch (error) {
             next(error);
         }
@@ -104,9 +108,48 @@ const userController = {
                 return res.status(403).json({ message: 'Access denied. This portal is for administrators only.' });
             }
 
+            // Generate and send OTP
+            const otpCode = generateOTP();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+            await User.setOTP(user.id, otpCode, expiresAt);
+            await sendOTPEmail(user.email, user.name, otpCode);
+
+            res.json({ otpRequired: true, email: user.email, message: 'Verification code sent to your email.' });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // POST /api/users/verify-otp
+    async verifyOTP(req, res, next) {
+        try {
+            const { email, otpCode } = req.body;
+            if (!email || !otpCode) {
+                return res.status(400).json({ message: 'Email and verification code are required.' });
+            }
+
+            const user = await User.findByEmail(email);
+            if (!user) {
+                return res.status(401).json({ message: 'Invalid email or verification code.' });
+            }
+
+            if (!user.otp_code || user.otp_code !== otpCode) {
+                return res.status(401).json({ message: 'Invalid email or verification code.' });
+            }
+
+            if (new Date() > new Date(user.otp_expires_at)) {
+                return res.status(401).json({ message: 'Verification code has expired. Please sign in again.' });
+            }
+
+            // Clear OTP fields
+            const { query } = require('../config/database');
+            await query('UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE id = $1', [user.id]);
+
+            // Track login
             await User.recordLogin(user.id);
+
             const token = generateToken(user);
-            const { password: _, ...userWithoutPassword } = user;
+            const { password: _, otp_code: __, otp_expires_at: ___, ...userWithoutPassword } = user;
 
             res.json({ user: userWithoutPassword, token });
         } catch (error) {

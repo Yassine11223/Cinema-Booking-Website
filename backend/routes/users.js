@@ -14,6 +14,7 @@ router.post('/register', validateRegistration, userController.register);
 router.post('/login',    validateLogin,        userController.login);
 router.post('/login/customer', validateLogin,  userController.loginCustomer);
 router.post('/login/admin',    validateLogin,  userController.loginAdmin);
+router.post('/verify-otp',                     userController.verifyOTP);
 router.get('/profile',   authenticate,         userController.getProfile);
 router.put('/profile',   authenticate,         userController.updateProfile);
 

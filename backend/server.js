@@ -56,10 +56,27 @@ app.get('/api/health', (req, res) => {
 // --- Error Handler (must be last) ---
 app.use(errorHandler);
 
+// --- Ensure OTP Columns ---
+const ensureOtpColumns = async () => {
+    try {
+        const { query } = require('./config/database');
+        await query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS otp_code VARCHAR(6),
+            ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP;
+        `);
+        console.log('✅ Database schema verified: otp_code and otp_expires_at columns exist.');
+    } catch (err) {
+        console.error('❌ Failed to ensure OTP columns in database:', err.message);
+    }
+};
+
 // --- Start Server ---
-app.listen(PORT, () => {
-    console.log(`\n🎬 Cinema Booking API running on http://localhost:${PORT}`);
-    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+ensureOtpColumns().then(() => {
+    app.listen(PORT, () => {
+        console.log(`\n🎬 Cinema Booking API running on http://localhost:${PORT}`);
+        console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    });
 });
 
 module.exports = app;
