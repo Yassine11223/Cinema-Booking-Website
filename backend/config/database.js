@@ -23,8 +23,8 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-    console.error('❌ Unexpected database error:', err);
-    process.exit(-1);
+    console.error('❌ Unexpected database pool error:', err.message);
+    // Do NOT crash the server — non-DB routes (tickets, chatbot) should keep working
 });
 
 /**
