@@ -79,6 +79,19 @@ const bookingController = {
             next(error);
         }
     },
+
+    // PUT /api/bookings/:id/confirm
+    async confirm(req, res, next) {
+        try {
+            const booking = await Booking.updateStatus(req.params.id, 'confirmed');
+            if (!booking) {
+                return res.status(404).json({ message: 'Booking not found' });
+            }
+            res.json({ message: 'Booking confirmed', booking });
+        } catch (error) {
+            next(error);
+        }
+    },
 };
 
 module.exports = bookingController;

@@ -7,6 +7,9 @@
 (function () {
     'use strict';
 
+    const API_BASE = 'http://localhost:5000/api';
+    const API_TIMEOUT = 4000;
+
     /* =======================================
        SAMPLE BOOKING DATA
        ======================================= */
@@ -30,7 +33,7 @@
         'Vodafone Cash': 'fa-mobile-screen-button'
     };
 
-    const bookings = [
+    let bookings = [
         {
             id: 'BK-1024',
             customerName: 'Ahmed Ali',
@@ -291,6 +294,76 @@
     const ITEMS_PER_PAGE = 8;
     let currentPage = 1;
     let filteredBookings = [...bookings];
+
+    /**
+     * Fetch real bookings from backend API.
+     * Maps backend response to the shape the existing rendering code expects.
+     * Returns array of booking objects, or null on failure.
+     */
+    async function fetchBookingsFromBackend() {
+        try {
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            if (!token) return null;
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+            const res = await fetch(`${API_BASE}/bookings`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (!data || data.length === 0) return null;
+
+            // Map backend shape to admin UI shape
+            const THEATER_MAP = {
+                'imax theatre': 'imax', 'imax': 'imax',
+                'dolby atmos': 'dolby', 'dolby': 'dolby',
+                'hall 1': 'standard', 'hall 2': 'standard', 'hall 3': 'standard', 'standard': 'standard',
+                'deluxe suite': 'deluxe', 'deluxe': 'deluxe',
+            };
+
+            return data.map(b => {
+                const theaterKey = (b.theater_name || '').toLowerCase();
+                const theaterType = THEATER_MAP[theaterKey] || 'standard';
+                const price = PRICING[theaterType] || 180;
+                const seatCount = b.seats ? b.seats.length : 1;
+                // Format seats from backend { row_label, seat_number } to 'C5' format
+                const seatLabels = b.seats
+                    ? b.seats.map(s => `${s.row_label}${s.seat_number}`)
+                    : [];
+
+                return {
+                    id: `BK-${b.id}`,
+                    backendId: b.id,
+                    customerName: b.user_name || 'Unknown',
+                    email: b.user_email || '',
+                    phone: '',
+                    movie: b.movie_title || 'Unknown Movie',
+                    theater: b.theater_name || 'Unknown',
+                    theaterType: theaterType,
+                    branch: '',
+                    showtime: b.show_time || '',
+                    seats: seatLabels,
+                    tickets: seatLabels.length || seatCount,
+                    totalAmount: parseFloat(b.total_price) || 0,
+                    pricePerTicket: price,
+                    paymentStatus: b.status === 'confirmed' ? 'paid' : b.status === 'cancelled' ? 'refunded' : 'pending',
+                    bookingStatus: b.status || 'pending',
+                    paymentMethod: '',
+                    transactionId: '',
+                    createdAt: b.created_at || new Date().toISOString(),
+                    notes: '',
+                };
+            });
+        } catch (err) {
+            console.warn('⚠️ Backend bookings unavailable:', err.message);
+            return null;
+        }
+    }
 
     /* =======================================
        DOM REFERENCES
@@ -1061,7 +1134,17 @@
     /* =======================================
        EVENT LISTENERS
        ======================================= */
-    function init() {
+    async function init() {
+        // Try loading real bookings from backend
+        const backendBookings = await fetchBookingsFromBackend();
+        if (backendBookings && backendBookings.length > 0) {
+            bookings = backendBookings;
+            filteredBookings = [...bookings];
+            console.log('✅ Admin bookings loaded from backend:', bookings.length);
+        } else {
+            console.log('⚠️ Using mock bookings data (backend offline or empty)');
+        }
+
         // Compute initial stats
         updateStats();
 

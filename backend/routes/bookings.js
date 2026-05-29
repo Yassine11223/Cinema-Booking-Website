@@ -13,5 +13,6 @@ router.get('/:id', authenticate, bookingController.getById);
 router.get('/', authenticate, adminOnly, bookingController.getAll);
 router.post('/', authenticate, validateBooking, bookingController.create);
 router.put('/:id/cancel', authenticate, bookingController.cancel);
+router.put('/:id/confirm', authenticate, bookingController.confirm);
 
 module.exports = router;

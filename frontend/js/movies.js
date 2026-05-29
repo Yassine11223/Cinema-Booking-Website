@@ -831,19 +831,82 @@ function renderDateSelector() {
 
 /**
  * Select a date and render time slots
+ * NOW: Tries backend API first, falls back to mock
  */
-function selectDate(dateStr) {
+async function selectDate(dateStr) {
     // Clear any previous selection
     selectedShow = null;
     updateBookingSummary();
 
-    // Generate show times for this date
+    // Try fetching real showtimes from backend
+    try {
+        const movieId = new URLSearchParams(window.location.search).get('id');
+        if (movieId) {
+            const res = await fetch(`http://localhost:5000/api/shows?movieId=${movieId}&date=${dateStr}`);
+            if (res.ok) {
+                const backendShows = await res.json();
+                if (backendShows && backendShows.length > 0) {
+                    const formatted = formatBackendShows(backendShows);
+                    renderShowTimes(formatted);
+                    console.log('✅ Showtimes loaded from backend:', backendShows.length);
+                    return;
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ Backend showtimes unavailable, using mock:', err.message);
+    }
+
+    // Fallback to mock data
     const shows = generateShowsForDate(dateStr);
     renderShowTimes(shows);
 }
 
 /**
+ * Format backend show objects into the shape our renderer expects
+ * Backend returns: { id, movie_id, theater_id, show_time, price, theater_name, ... }
+ * Renderer expects: { id, date, time, format }
+ */
+function formatBackendShows(backendShows) {
+    const THEATER_FORMAT_MAP = {
+        'imax': 'IMAX',
+        'imax theatre': 'IMAX',
+        '3d': 'IMAX',
+        'dolby': 'Dolby Cinema',
+        'dolby atmos': 'Dolby Cinema',
+        'standard': 'Standard',
+        'hall 1': 'Standard',
+        'hall 2': 'Standard',
+        'hall 3': 'Standard',
+        'vip': 'Deluxe',
+        'deluxe': 'Deluxe',
+        'deluxe suite': 'Deluxe',
+    };
+
+    return backendShows.map(show => {
+        const showDate = new Date(show.show_time);
+        const hours = showDate.getHours();
+        const minutes = showDate.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const h12 = hours % 12 || 12;
+        const timeStr = `${h12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+
+        const theaterName = (show.theater_name || '').toLowerCase();
+        const screenType = (show.screen_type || '').toLowerCase();
+        const format = THEATER_FORMAT_MAP[theaterName] || THEATER_FORMAT_MAP[screenType] || 'Standard';
+
+        return {
+            id: show.id,
+            date: showDate.toISOString().split('T')[0],
+            time: timeStr,
+            format: format,
+        };
+    });
+}
+
+/**
  * Generate mock showtimes for a given date — multiple times PER format
+ * FALLBACK: used when backend is offline or has no data for this movie/date
  */
 function generateShowsForDate(dateStr) {
     const formatSchedule = {
@@ -1051,7 +1114,7 @@ function handleBookNow() {
     }
 
     // Check if user is logged in
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (!token) {
         window.location.href = 'login.html?redirect=booking.html';
     } else {
