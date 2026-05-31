@@ -2,12 +2,14 @@
  * Server Entry Point - Cinema Booking System
  * Express + PostgreSQL
  */
-
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 
+const session = require('express-session');
+const passport = require('./backend/config/passport');
+const authRoutes = require('./routes/auth');
 const { pool } = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -34,6 +36,17 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Session
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false } // set to true only in production with HTTPS
+}));
+
+// Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -47,6 +60,7 @@ app.use('/api/shows', showRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/auth', authRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

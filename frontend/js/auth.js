@@ -4,7 +4,7 @@
  */
 
 const API_BASE = 'http://localhost:5000/api';
-
+const BACKEND_BASE = 'http://localhost:5000';
 // ============================================
 // REGEX PATTERNS
 // ============================================
@@ -111,6 +111,42 @@ function hideGlobalError() {
     const box = document.getElementById('global-error');
     if (box) box.style.display = 'none';
 }
+function handleGoogleLoginResult() {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('google') === 'failed') {
+        showGlobalError('Google login failed. Please try again.');
+        return;
+    }
+
+    if (params.get('google') === 'admin_blocked') {
+        showGlobalError('Admin accounts cannot login using Google here. Please use the admin login portal.');
+        return;
+    }
+
+    if (params.get('google') === 'success') {
+        const token = params.get('token');
+        const userString = params.get('user');
+
+        if (!token || !userString) {
+            showGlobalError('Google login response is missing data.');
+            return;
+        }
+
+        try {
+            const user = JSON.parse(decodeURIComponent(userString));
+
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('thehall_user', JSON.stringify(user));
+            localStorage.setItem('userData', JSON.stringify(user));
+
+            window.history.replaceState({}, document.title, 'login.html');
+            window.location.href = 'index.html';
+        } catch (error) {
+            showGlobalError('Could not finish Google login.');
+        }
+    }
+}
 
 // ============================================
 // LOCAL STORAGE TRACKING (For Offline Admin)
@@ -175,6 +211,7 @@ seedDemoUsers();
 // LOGIN FORM
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+    handleGoogleLoginResult();
     // If already logged in and on the login page, redirect to home
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
@@ -196,12 +233,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initLoginForm(form) {
-    const emailEl = form.querySelector('#email');
-    const passEl = form.querySelector('#password');
-    const loginBtn = form.querySelector('#loginBtn');
-    const toggler = form.querySelector('#togglePassword');
-
-    // Show/hide password
+   const emailEl = form.querySelector('#email');
+const passEl = form.querySelector('#password');
+const loginBtn = form.querySelector('#loginBtn');
+const toggler = form.querySelector('#togglePassword');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+ googleLoginBtn?.addEventListener('click', () => {
+    window.location.href = `${BACKEND_BASE}/api/users/google`;
+});   // Show/hide password
     toggler?.addEventListener('click', () => {
         const isText = passEl.type === 'text';
         passEl.type = isText ? 'password' : 'text';
