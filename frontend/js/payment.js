@@ -446,6 +446,11 @@
                     <span class="dl" style="font-weight:700;color:var(--text-primary);">Total Paid</span>
                     <span class="dv" style="font-size:20px;color:var(--primary-light);font-weight:700;">${grandTotal.toLocaleString()} ${currency}</span>
                 </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="${generateGoogleCalendarUrl(booking)}" target="_blank" class="pay-btn pay-btn-outline" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; padding: 12px 24px; text-decoration: none;">
+                        <i class="far fa-calendar-alt"></i> Add to Google Calendar
+                    </a>
+                </div>
             </div>`;
 
         // Render QR ticket cards (if backend generated them)
@@ -804,7 +809,39 @@
     }
 
     function generateFawryRef() {
-        return Math.floor(100000000000 + Math.random() * 900000000000).toString();
+        let ref = '';
+        for (let i = 0; i < 10; i++) {
+            ref += Math.floor(Math.random() * 10);
+        }
+        return ref;
+    }
+
+    function generateGoogleCalendarUrl(booking) {
+        let startDate = new Date();
+        const currentYear = new Date().getFullYear();
+        const dateStr = booking.date || '';
+        const timeStr = booking.showtime?.time || '';
+        
+        // Attempt parsing "Wednesday, May 27" and "19:00"
+        const cleanDateStr = dateStr.includes(',') ? dateStr.split(',')[1].trim() : dateStr;
+        const parsedDate = new Date(`${cleanDateStr} ${currentYear} ${timeStr}`);
+        if (!isNaN(parsedDate.getTime())) {
+            startDate = parsedDate;
+        }
+
+        const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000); // Default to 2 hours duration
+
+        const formatToUTC = (d) => {
+            return d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+        };
+
+        const dates = `${formatToUTC(startDate)}/${formatToUTC(endDate)}`;
+        const eventTitle = booking.movie?.title ? `Cinema: ${booking.movie.title}` : 'Cinema Booking';
+        const location = 'Misr International University (MIU), KM 28 Cairo – Ismailia Road, Cairo Governorate, Egypt';
+        const seats = booking.seats ? booking.seats.join(', ') : 'Unassigned';
+        const details = `Booking Reference: ${bookingNumber}\nMovie: ${booking.movie?.title || 'Unknown'}\nSeats: ${seats}\nExperience: ${booking.experience || 'Standard'}`;
+
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${encodeURIComponent(dates)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
     }
 
 })();
