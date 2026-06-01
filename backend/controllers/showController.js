@@ -4,19 +4,38 @@
 
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
+const Movie = require('../models/Movie');
 
 const showController = {
     // GET /api/shows
     async getAll(req, res, next) {
         try {
-            const { movieId, date } = req.query;
+            let { movieId, date } = req.query;
+
+            // If frontend sends TMDB numeric ID, convert it to MongoDB movie _id
+            if (movieId && !/^[0-9a-fA-F]{24}$/.test(movieId)) {
+                const movie = await Movie.findOne({
+                    $or: [
+                        { tmdb_id: movieId },
+                        { tmdb_id: Number(movieId) }
+                    ]
+                });
+
+                if (!movie) {
+                    return res.status(404).json({
+                        message: 'Movie not found for this TMDB ID'
+                    });
+                }
+
+                movieId = movie._id.toString();
+            }
+
             const shows = await Show.findAll({ movieId, date });
             res.json(shows);
         } catch (error) {
             next(error);
         }
     },
-
     // GET /api/shows/:id
     async getById(req, res, next) {
         try {
