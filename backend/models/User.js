@@ -1,95 +1,126 @@
 /**
- * User Model - SQL Queries
+ * User Model - Mongoose Schema
  * Includes login tracking: last_login, login_count
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const User = {
-    async findAll() {
-        const result = await query(
-            `SELECT id, name, email, phone, role, created_at, last_login, login_count
-             FROM users
-             ORDER BY created_at DESC`
-        );
-        return result.rows;
+const userSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 100,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
+            lowercase: true,
+            maxlength: 255,
+        },
+        password: {
+            type: String,
+            default: null,
+        },
+        phone: {
+            type: String,
+            default: null,
+            maxlength: 20,
+        },
+        role: {
+            type: String,
+            enum: ['customer', 'admin', 'superadmin'],
+            default: 'customer',
+        },
+        google_id: {
+            type: String,
+            default: null,
+        },
+        auth_provider: {
+            type: String,
+            default: 'local',
+            maxlength: 50,
+        },
+        profile_photo: {
+            type: String,
+            default: null,
+        },
+        otp_code: {
+            type: String,
+            default: null,
+            maxlength: 6,
+        },
+        otp_expires_at: {
+            type: Date,
+            default: null,
+        },
+        last_login: {
+            type: Date,
+            default: null,
+        },
+        login_count: {
+            type: Number,
+            default: 0,
+        },
     },
-
-    async findById(id) {
-        const result = await query(
-            `SELECT id, name, email, phone, role, created_at, last_login, login_count
-             FROM users WHERE id = $1`,
-            [id]
-        );
-        return result.rows[0];
-    },
-
-    async findByEmail(email) {
-        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
-        return result.rows[0];
-    },
-
-    async create({ name, email, password, phone, role = 'customer' }) {
-        const hashedPassword = await bcrypt.hash(password, 12);
-        const result = await query(
-            `INSERT INTO users (name, email, password, phone, role, login_count)
-             VALUES ($1, $2, $3, $4, $5, 0)
-             RETURNING id, name, email, phone, role, created_at, last_login, login_count`,
-            [name, email, hashedPassword, phone, role]
-        );
-        return result.rows[0];
-    },
-
-    async update(id, fields) {
-        const keys = Object.keys(fields);
-        const values = Object.values(fields);
-        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
-        const result = await query(
-            `UPDATE users SET ${setClause}, updated_at = NOW()
-             WHERE id = $${keys.length + 1}
-             RETURNING id, name, email, phone, role, last_login, login_count`,
-            [...values, id]
-        );
-        return result.rows[0];
-    },
-
-    async delete(id) {
-        await query('DELETE FROM users WHERE id = $1', [id]);
-    },
-
-    /**
-     * Called on every successful login to bump counter and record timestamp
-     */
-    async recordLogin(id) {
-        const result = await query(
-            `UPDATE users
-             SET last_login   = NOW(),
-                 login_count  = COALESCE(login_count, 0) + 1,
-                 updated_at   = NOW()
-             WHERE id = $1
-             RETURNING id, last_login, login_count`,
-            [id]
-        );
-        return result.rows[0];
-    },
-
-    async comparePassword(plainPassword, hashedPassword) {
-        return bcrypt.compare(plainPassword, hashedPassword);
-    },
-
-    async setOTP(id, otpCode, expiresAt) {
-        const result = await query(
-            `UPDATE users
-             SET otp_code = $1,
-                 otp_expires_at = $2,
-                 updated_at = NOW()
-             WHERE id = $3
-             RETURNING id, email, otp_code, otp_expires_at`,
-            [otpCode, expiresAt, id]
-        );
-        return result.rows[0];
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
+);
+
+// Virtual 'id' that mirrors '_id' for compatibility
+userSchema.virtual('id').get(function () {
+    return this._id.toHexString();
+});
+
+// Hash password before saving (only if modified)
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password') || !this.password) return next();
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+});
+
+// ---- Static Methods (replicate the old model API) ----
+
+userSchema.statics.findAll = async function () {
+    return this.find()
+        .select('-password -otp_code -otp_expires_at -google_id')
+        .sort({ created_at: -1 });
 };
+
+userSchema.statics.findByEmail = async function (email) {
+    return this.findOne({ email });
+};
+
+userSchema.statics.recordLogin = async function (id) {
+    return this.findByIdAndUpdate(
+        id,
+        {
+            last_login: new Date(),
+            $inc: { login_count: 1 },
+        },
+        { new: true }
+    ).select('id last_login login_count');
+};
+
+userSchema.statics.setOTP = async function (id, otpCode, expiresAt) {
+    return this.findByIdAndUpdate(
+        id,
+        { otp_code: otpCode, otp_expires_at: expiresAt },
+        { new: true }
+    ).select('id email otp_code otp_expires_at');
+};
+
+userSchema.statics.comparePassword = async function (plainPassword, hashedPassword) {
+    return bcrypt.compare(plainPassword, hashedPassword);
+};
+
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

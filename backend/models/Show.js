@@ -1,73 +1,89 @@
 /**
- * Show Model - SQL Queries
+ * Show Model - Mongoose Schema
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Show = {
-    async findAll(filters = {}) {
-        let sql = `
-            SELECT s.*, m.title AS movie_title, m.poster_url, t.name AS theater_name
-            FROM shows s
-            JOIN movies m ON s.movie_id = m.id
-            JOIN theaters t ON s.theater_id = t.id
-        `;
-        const params = [];
-        const conditions = [];
-
-        if (filters.movieId) {
-            params.push(filters.movieId);
-            conditions.push(`s.movie_id = $${params.length}`);
-        }
-
-        if (filters.date) {
-            params.push(filters.date);
-            conditions.push(`DATE(s.show_time) = $${params.length}`);
-        }
-
-        if (conditions.length > 0) {
-            sql += ' WHERE ' + conditions.join(' AND ');
-        }
-
-        sql += ' ORDER BY s.show_time ASC';
-        const result = await query(sql, params);
-        return result.rows;
+const showSchema = new mongoose.Schema(
+    {
+        movie_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Movie',
+            required: true,
+        },
+        theater_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Theater',
+            required: true,
+        },
+        show_time: {
+            type: Date,
+            required: true,
+        },
+        price: {
+            type: Number,
+            required: true,
+        },
     },
-
-    async findById(id) {
-        const result = await query(
-            `SELECT s.*, m.title AS movie_title, m.duration, t.name AS theater_name, t.capacity
-             FROM shows s
-             JOIN movies m ON s.movie_id = m.id
-             JOIN theaters t ON s.theater_id = t.id
-             WHERE s.id = $1`,
-            [id]
-        );
-        return result.rows[0];
-    },
-
-    async create({ movie_id, theater_id, show_time, price }) {
-        const result = await query(
-            'INSERT INTO shows (movie_id, theater_id, show_time, price) VALUES ($1, $2, $3, $4) RETURNING *',
-            [movie_id, theater_id, show_time, price]
-        );
-        return result.rows[0];
-    },
-
-    async update(id, fields) {
-        const keys = Object.keys(fields);
-        const values = Object.values(fields);
-        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
-        const result = await query(
-            `UPDATE shows SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
-            [...values, id]
-        );
-        return result.rows[0];
-    },
-
-    async delete(id) {
-        await query('DELETE FROM shows WHERE id = $1', [id]);
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: false },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
+);
+
+showSchema.virtual('id').get(function () {
+    return this._id.toHexString();
+});
+
+// Indexes
+showSchema.index({ movie_id: 1 });
+showSchema.index({ theater_id: 1 });
+showSchema.index({ show_time: 1 });
+
+// ---- Static Methods ----
+
+showSchema.statics.findAll = async function (filters = {}) {
+    const query = {};
+
+    if (filters.movieId) query.movie_id = filters.movieId;
+    if (filters.date) {
+        const d = new Date(filters.date);
+        const nextDay = new Date(d);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query.show_time = { $gte: d, $lt: nextDay };
+    }
+
+    return this.find(query)
+        .populate('movie_id', 'title poster_url')
+        .populate('theater_id', 'name')
+        .sort({ show_time: 1 })
+        .then((shows) =>
+            shows.map((s) => {
+                const obj = s.toObject();
+                obj.movie_title = obj.movie_id?.title || null;
+                obj.poster_url = obj.movie_id?.poster_url || null;
+                obj.theater_name = obj.theater_id?.name || null;
+                return obj;
+            })
+        );
 };
+
+showSchema.statics.findByIdPopulated = async function (id) {
+    const show = await this.findById(id)
+        .populate('movie_id', 'title duration')
+        .populate('theater_id', 'name capacity');
+
+    if (!show) return null;
+
+    const obj = show.toObject();
+    obj.movie_title = obj.movie_id?.title || null;
+    obj.duration = obj.movie_id?.duration || null;
+    obj.theater_name = obj.theater_id?.name || null;
+    obj.capacity = obj.theater_id?.capacity || null;
+    return obj;
+};
+
+const Show = mongoose.model('Show', showSchema);
 
 module.exports = Show;

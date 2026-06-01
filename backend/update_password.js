@@ -1,20 +1,33 @@
-const bcrypt = require('bcryptjs');
-const hash = bcrypt.hashSync('Admin123!', 10);
-const { Pool } = require('pg');
-const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  database: 'cinema_db',
-  user: 'postgres',
-  password: 'Hall2580'
-});
+/**
+ * Update Password Utility - MongoDB version
+ */
 
-pool.query('UPDATE users SET password = $1 WHERE email = $2', [hash, 'admin@thehallcinemas.com'])
-  .then(() => {
-    console.log('Password updated successfully');
-    pool.end();
-  })
-  .catch(err => {
-    console.error(err);
-    pool.end();
-  });
+require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const { connectDB, mongoose } = require('./config/database');
+const User = require('./models/User');
+
+async function updatePassword() {
+    try {
+        await connectDB();
+
+        const hash = bcrypt.hashSync('Admin123!', 10);
+        const result = await User.findOneAndUpdate(
+            { email: 'admin@thehallcinemas.com' },
+            { password: hash },
+            { new: true }
+        );
+
+        if (result) {
+            console.log('Password updated successfully');
+        } else {
+            console.log('User not found');
+        }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        await mongoose.connection.close();
+    }
+}
+
+updatePassword();

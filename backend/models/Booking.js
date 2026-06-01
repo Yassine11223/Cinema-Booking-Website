@@ -1,111 +1,160 @@
 /**
- * Booking Model - SQL Queries
+ * Booking Model - Mongoose Schema
  */
 
-const { query, getClient } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Booking = {
-    async findAll() {
-        const result = await query(
-            `SELECT b.*, u.name AS user_name, u.email AS user_email,
-                    m.title AS movie_title, s.show_time, t.name AS theater_name
-             FROM bookings b
-             JOIN users u ON b.user_id = u.id
-             JOIN shows s ON b.show_id = s.id
-             JOIN movies m ON s.movie_id = m.id
-             JOIN theaters t ON s.theater_id = t.id
-             ORDER BY b.created_at DESC`
-        );
-        return result.rows;
+const bookingSchema = new mongoose.Schema(
+    {
+        user_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        show_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Show',
+            required: true,
+        },
+        seats: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Seat',
+            },
+        ],
+        total_price: {
+            type: Number,
+            required: true,
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+            default: 'pending',
+        },
     },
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
 
-    async findById(id) {
-        const result = await query(
-            `SELECT b.*, u.name AS user_name, u.email AS user_email,
-                    m.title AS movie_title, s.show_time, t.name AS theater_name
-             FROM bookings b
-             JOIN users u ON b.user_id = u.id
-             JOIN shows s ON b.show_id = s.id
-             JOIN movies m ON s.movie_id = m.id
-             JOIN theaters t ON s.theater_id = t.id
-             WHERE b.id = $1`,
-            [id]
-        );
-        return result.rows[0];
-    },
+bookingSchema.virtual('id').get(function () {
+    return this._id.toHexString();
+});
 
-    async findByUser(userId) {
-        const result = await query(
-            `SELECT b.*, m.title AS movie_title, m.poster_url,
-                    s.show_time, t.name AS theater_name
-             FROM bookings b
-             JOIN shows s ON b.show_id = s.id
-             JOIN movies m ON s.movie_id = m.id
-             JOIN theaters t ON s.theater_id = t.id
-             WHERE b.user_id = $1
-             ORDER BY b.created_at DESC`,
-            [userId]
-        );
-        return result.rows;
-    },
+// Indexes
+bookingSchema.index({ user_id: 1 });
+bookingSchema.index({ show_id: 1 });
+bookingSchema.index({ status: 1 });
 
-    /**
-     * Create a booking with seats (uses a transaction)
-     */
-    async create({ user_id, show_id, seat_ids, total_price }) {
-        const client = await getClient();
-        try {
-            await client.query('BEGIN');
+// ---- Static Methods ----
 
-            // Create the booking
-            const bookingResult = await client.query(
-                `INSERT INTO bookings (user_id, show_id, total_price, status)
-                 VALUES ($1, $2, $3, 'pending') RETURNING *`,
-                [user_id, show_id, total_price]
-            );
-            const booking = bookingResult.rows[0];
+bookingSchema.statics.findAll = async function () {
+    const bookings = await this.find()
+        .populate('user_id', 'name email')
+        .populate({
+            path: 'show_id',
+            populate: [
+                { path: 'movie_id', select: 'title' },
+                { path: 'theater_id', select: 'name' },
+            ],
+        })
+        .sort({ created_at: -1 });
 
-            // Insert booking seats
-            for (const seatId of seat_ids) {
-                await client.query(
-                    'INSERT INTO booking_seats (booking_id, seat_id) VALUES ($1, $2)',
-                    [booking.id, seatId]
-                );
-            }
+    return bookings.map((b) => {
+        const obj = b.toObject();
+        obj.user_name = obj.user_id?.name || null;
+        obj.user_email = obj.user_id?.email || null;
+        obj.movie_title = obj.show_id?.movie_id?.title || null;
+        obj.show_time = obj.show_id?.show_time || null;
+        obj.theater_name = obj.show_id?.theater_id?.name || null;
+        return obj;
+    });
+};
 
-            await client.query('COMMIT');
-            return booking;
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
-    },
+bookingSchema.statics.findByIdPopulated = async function (id) {
+    const booking = await this.findById(id)
+        .populate('user_id', 'name email')
+        .populate({
+            path: 'show_id',
+            populate: [
+                { path: 'movie_id', select: 'title' },
+                { path: 'theater_id', select: 'name' },
+            ],
+        });
 
-    async updateStatus(id, status) {
-        const result = await query(
-            'UPDATE bookings SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
-            [status, id]
-        );
-        return result.rows[0];
-    },
+    if (!booking) return null;
 
-    async getBookingSeats(bookingId) {
-        const result = await query(
-            `SELECT s.row_label, s.seat_number, s.seat_type
-             FROM booking_seats bs
-             JOIN seats s ON bs.seat_id = s.id
-             WHERE bs.booking_id = $1
-             ORDER BY s.row_label, s.seat_number`,
-            [bookingId]
-        );
-        return result.rows;
-    },
+    const obj = booking.toObject();
+    obj.user_name = obj.user_id?.name || null;
+    obj.user_email = obj.user_id?.email || null;
+    obj.movie_title = obj.show_id?.movie_id?.title || null;
+    obj.show_time = obj.show_id?.show_time || null;
+    obj.theater_name = obj.show_id?.theater_id?.name || null;
+    return obj;
+};
 
-    async delete(id) {
-        await query('DELETE FROM bookings WHERE id = $1', [id]);
+bookingSchema.statics.findByUser = async function (userId) {
+    const bookings = await this.find({ user_id: userId })
+        .populate({
+            path: 'show_id',
+            populate: [
+                { path: 'movie_id', select: 'title poster_url' },
+                { path: 'theater_id', select: 'name' },
+            ],
+        })
+        .sort({ created_at: -1 });
+
+    return bookings.map((b) => {
+        const obj = b.toObject();
+        obj.movie_title = obj.show_id?.movie_id?.title || null;
+        obj.poster_url = obj.show_id?.movie_id?.poster_url || null;
+        obj.show_time = obj.show_id?.show_time || null;
+        obj.theater_name = obj.show_id?.theater_id?.name || null;
+        return obj;
+    });
+};
+
+bookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const booking = new this({
+            user_id,
+            show_id,
+            seats: seat_ids,
+            total_price,
+            status: 'pending',
+        });
+
+        await booking.save({ session });
+        await session.commitTransaction();
+        return booking;
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
     }
 };
+
+bookingSchema.statics.updateStatus = async function (id, status) {
+    return this.findByIdAndUpdate(id, { status }, { new: true });
+};
+
+bookingSchema.statics.getBookingSeats = async function (bookingId) {
+    const booking = await this.findById(bookingId).populate('seats');
+    if (!booking) return [];
+
+    return booking.seats.map((s) => ({
+        row_label: s.row_label,
+        seat_number: s.seat_number,
+        seat_type: s.seat_type,
+    }));
+};
+
+const Booking = mongoose.model('Booking', bookingSchema);
 
 module.exports = Booking;

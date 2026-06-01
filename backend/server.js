@@ -1,6 +1,6 @@
 /**
  * Server Entry Point - Cinema Booking System
- * Express + PostgreSQL
+ * Express + MongoDB (Mongoose)
  */
 
 const express = require('express');
@@ -8,7 +8,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const { pool } = require('./config/database');
+const { connectDB } = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 const passport = require('./config/passport');
 
@@ -43,6 +43,10 @@ app.use(passport.initialize());
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
+// Serve frontend files directly from the backend (handling both possible project structures)
+app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/shared', express.static(path.join(__dirname, '../shared')));
+
 // --- API Routes ---
 app.use('/api/movies', movieRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -61,33 +65,8 @@ app.get('/api/health', (req, res) => {
 // --- Error Handler (must be last) ---
 app.use(errorHandler);
 
-// --- Ensure Required User Columns ---
-const ensureUserColumns = async () => {
-    try {
-        const { query } = require('./config/database');
-
-        await query(`
-            ALTER TABLE users 
-            ADD COLUMN IF NOT EXISTS otp_code VARCHAR(6),
-            ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP,
-            ADD COLUMN IF NOT EXISTS google_id VARCHAR(255),
-            ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(50) DEFAULT 'local',
-            ADD COLUMN IF NOT EXISTS profile_photo TEXT;
-        `);
-
-        await query(`
-            ALTER TABLE users 
-            ALTER COLUMN password DROP NOT NULL;
-        `);
-
-        console.log('✅ Database schema verified: OTP and Google login columns exist.');
-    } catch (err) {
-        console.error('❌ Failed to ensure user columns in database:', err.message);
-    }
-};
-
 // --- Start Server ---
-ensureUserColumns().then(() => {
+connectDB().then(() => {
     app.listen(PORT, () => {
         console.log(`\n🎬 Cinema Booking API running on http://localhost:${PORT}`);
         console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}\n`);

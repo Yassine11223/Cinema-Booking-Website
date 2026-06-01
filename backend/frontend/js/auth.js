@@ -183,9 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
 
     if (token && user && isLoginPage && !urlParams.has('registered')) {
-        const redirect = urlParams.get('redirect') || 'index.html';
-        window.location.href = redirect;
-        return;
+        // HACK: Temporarily disabling auto-redirect so the user doesn't get trapped by stale local storage tokens.
+        // const redirect = urlParams.get('redirect') || 'index.html';
+        // window.location.href = redirect;
+        // return;
+        console.log("Auto-redirect disabled. User has stale token.");
     }
 
     const loginForm = document.getElementById('loginForm');

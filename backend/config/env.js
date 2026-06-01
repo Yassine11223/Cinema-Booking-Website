@@ -9,13 +9,7 @@ module.exports = {
     nodeEnv: process.env.NODE_ENV || 'development',
     jwtSecret: process.env.JWT_SECRET || 'fallback_secret_change_me',
     jwtExpiresIn: '7d',
-    db: {
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 5432,
-        name: process.env.DB_NAME || 'cinema_db',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || '',
-    },
+    mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/cinema_db',
     mail: {
         host: process.env.MAIL_HOST,
         port: process.env.MAIL_PORT,

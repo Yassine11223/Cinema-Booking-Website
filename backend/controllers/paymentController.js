@@ -44,12 +44,14 @@ const paymentController = {
                 return res.status(400).json({ message: 'Cannot pay for a cancelled booking' });
             }
 
-            const payment = await Payment.create({
+            const payment = new Payment({
                 booking_id,
                 amount: booking.total_price,
                 payment_method,
                 transaction_id,
+                status: 'completed',
             });
+            await payment.save();
 
             // Update booking status to confirmed
             await Booking.updateStatus(booking_id, 'confirmed');

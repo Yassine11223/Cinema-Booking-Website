@@ -20,7 +20,7 @@ const showController = {
     // GET /api/shows/:id
     async getById(req, res, next) {
         try {
-            const show = await Show.findById(req.params.id);
+            const show = await Show.findByIdPopulated(req.params.id);
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }
@@ -43,7 +43,8 @@ const showController = {
     // POST /api/shows (admin)
     async create(req, res, next) {
         try {
-            const show = await Show.create(req.body);
+            const show = new Show(req.body);
+            await show.save();
             res.status(201).json(show);
         } catch (error) {
             next(error);
@@ -53,7 +54,11 @@ const showController = {
     // PUT /api/shows/:id (admin)
     async update(req, res, next) {
         try {
-            const show = await Show.update(req.params.id, req.body);
+            const show = await Show.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true }
+            );
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }
@@ -66,7 +71,7 @@ const showController = {
     // DELETE /api/shows/:id (admin)
     async delete(req, res, next) {
         try {
-            await Show.delete(req.params.id);
+            await Show.findByIdAndDelete(req.params.id);
             res.json({ message: 'Show deleted successfully' });
         } catch (error) {
             next(error);

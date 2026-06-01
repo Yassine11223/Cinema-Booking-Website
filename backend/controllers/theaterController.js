@@ -42,7 +42,8 @@ const theaterController = {
     // POST /api/theaters (admin)
     async create(req, res, next) {
         try {
-            const theater = await Theater.create(req.body);
+            const theater = new Theater(req.body);
+            await theater.save();
             res.status(201).json(theater);
         } catch (error) {
             next(error);
@@ -52,7 +53,11 @@ const theaterController = {
     // PUT /api/theaters/:id (admin)
     async update(req, res, next) {
         try {
-            const theater = await Theater.update(req.params.id, req.body);
+            const theater = await Theater.findByIdAndUpdate(
+                req.params.id,
+                req.body,
+                { new: true }
+            );
             if (!theater) {
                 return res.status(404).json({ message: 'Theater not found' });
             }
@@ -65,7 +70,7 @@ const theaterController = {
     // DELETE /api/theaters/:id (admin)
     async delete(req, res, next) {
         try {
-            await Theater.delete(req.params.id);
+            await Theater.findByIdAndDelete(req.params.id);
             res.json({ message: 'Theater deleted successfully' });
         } catch (error) {
             next(error);

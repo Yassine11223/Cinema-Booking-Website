@@ -13,15 +13,15 @@ const { sendOTPEmail } = require('../utils/email');
 function removeSensitiveUserFields(user) {
     if (!user) return null;
 
-    const {
-        password,
-        otp_code,
-        otp_expires_at,
-        google_id,
-        ...safeUser
-    } = user;
+    const obj = typeof user.toObject === 'function' ? user.toObject() : { ...user };
 
-    return safeUser;
+    delete obj.password;
+    delete obj.otp_code;
+    delete obj.otp_expires_at;
+    delete obj.google_id;
+    delete obj.__v;
+
+    return obj;
 }
 
 const userController = {
@@ -35,7 +35,9 @@ const userController = {
                 return res.status(409).json({ message: 'Email already registered' });
             }
 
-            const user = await User.create({ name, email, password, phone });
+            const user = new User({ name, email, password, phone });
+            await user.save();
+
             const token = generateToken(user);
 
             res.status(201).json({
@@ -65,7 +67,7 @@ const userController = {
             const otpCode = generateOTP();
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-            await User.setOTP(user.id, otpCode, expiresAt);
+            await User.setOTP(user._id, otpCode, expiresAt);
             await sendOTPEmail(user.email, user.name, otpCode);
 
             res.json({
@@ -102,7 +104,7 @@ const userController = {
             const otpCode = generateOTP();
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-            await User.setOTP(user.id, otpCode, expiresAt);
+            await User.setOTP(user._id, otpCode, expiresAt);
             await sendOTPEmail(user.email, user.name, otpCode);
 
             res.json({
@@ -139,7 +141,7 @@ const userController = {
             const otpCode = generateOTP();
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-            await User.setOTP(user.id, otpCode, expiresAt);
+            await User.setOTP(user._id, otpCode, expiresAt);
             await sendOTPEmail(user.email, user.name, otpCode);
 
             res.json({
@@ -182,16 +184,15 @@ const userController = {
                 });
             }
 
-            const { query } = require('../config/database');
+            // Clear OTP
+            await User.findByIdAndUpdate(user._id, {
+                otp_code: null,
+                otp_expires_at: null,
+            });
 
-            await query(
-                'UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE id = $1',
-                [user.id]
-            );
+            await User.recordLogin(user._id);
 
-            await User.recordLogin(user.id);
-
-            const freshUser = await User.findById(user.id);
+            const freshUser = await User.findById(user._id);
             const token = generateToken(freshUser || user);
 
             res.json({
@@ -217,13 +218,13 @@ const userController = {
                 return res.redirect(`${frontendUrl}/login.html?google=admin_blocked`);
             }
 
-            await User.recordLogin(user.id);
+            await User.recordLogin(user._id);
 
-            const freshUser = await User.findById(user.id);
+            const freshUser = await User.findById(user._id);
             const finalUser = freshUser || user;
             const token = generateToken(finalUser);
             const safeUser = {
-    id: finalUser.id,
+    id: finalUser._id,
     name: finalUser.name,
     email: finalUser.email,
     phone: finalUser.phone,
@@ -274,7 +275,11 @@ const userController = {
     async updateProfile(req, res, next) {
         try {
             const { name, phone } = req.body;
-            const user = await User.update(req.user.id, { name, phone });
+            const user = await User.findByIdAndUpdate(
+                req.user.id,
+                { name, phone },
+                { new: true }
+            );
 
             res.json(removeSensitiveUserFields(user));
         } catch (error) {
@@ -292,7 +297,7 @@ const userController = {
                 return res.status(404).json({ message: 'User not found' });
             }
 
-            await User.delete(id);
+            await User.findByIdAndDelete(id);
 
             res.json({ message: 'User deleted successfully' });
         } catch (error) {
@@ -316,7 +321,11 @@ const userController = {
                 });
             }
 
-            const user = await User.update(id, { role });
+            const user = await User.findByIdAndUpdate(
+                id,
+                { role },
+                { new: true }
+            );
 
             res.json(removeSensitiveUserFields(user));
         } catch (error) {
@@ -342,13 +351,14 @@ const userController = {
                 });
             }
 
-            const user = await User.create({
+            const user = new User({
                 name,
                 email,
                 password,
                 phone,
                 role: 'admin',
             });
+            await user.save();
 
             res.status(201).json({
                 user: removeSensitiveUserFields(user),

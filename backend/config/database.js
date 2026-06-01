@@ -1,57 +1,34 @@
 /**
- * Database Configuration - PostgreSQL Connection
- * Uses the 'pg' package to connect to PostgreSQL
+ * Database Configuration - MongoDB Connection
+ * Uses Mongoose ODM to connect to MongoDB
  */
 
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'cinema_db',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || '',
-    max: 20,                    // Max number of connections in the pool
-    idleTimeoutMillis: 30000,   // Close idle connections after 30s
-    connectionTimeoutMillis: 2000,
-});
-
-// Test connection on startup
-pool.on('connect', () => {
-    console.log('✅ Connected to PostgreSQL database');
-});
-
-pool.on('error', (err) => {
-    console.error('❌ Unexpected database pool error:', err.message);
-    // Do NOT crash the server — non-DB routes (tickets, chatbot) should keep working
-});
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/cinema_db';
 
 /**
- * Execute a SQL query
- * @param {string} text - SQL query string
- * @param {Array} params - Query parameters
- * @returns {Promise} Query result
+ * Connect to MongoDB
+ * @returns {Promise} Mongoose connection
  */
-const query = async (text, params) => {
-    const start = Date.now();
-    const result = await pool.query(text, params);
-    const duration = Date.now() - start;
-
-    // Log slow queries (over 500ms)
-    if (duration > 500) {
-        console.warn(`⚠️ Slow query (${duration}ms):`, text);
+const connectDB = async () => {
+    try {
+        const conn = await mongoose.connect(MONGO_URI);
+        console.log(`✅ Connected to MongoDB: ${conn.connection.host}/${conn.connection.name}`);
+        return conn;
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error.message);
+        process.exit(1);
     }
-
-    return result;
 };
 
-/**
- * Get a client from the pool for transactions
- * @returns {Promise} Database client
- */
-const getClient = async () => {
-    return await pool.connect();
-};
+mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+});
 
-module.exports = { pool, query, getClient };
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️  MongoDB disconnected');
+});
+
+module.exports = { connectDB, mongoose };

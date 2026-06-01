@@ -32,7 +32,8 @@ const movieController = {
     // POST /api/movies (admin)
     async create(req, res, next) {
         try {
-            const movie = await Movie.create(req.body);
+            const movie = new Movie(req.body);
+            await movie.save();
             res.status(201).json(movie);
         } catch (error) {
             next(error);
@@ -42,7 +43,11 @@ const movieController = {
     // PUT /api/movies/:id (admin)
     async update(req, res, next) {
         try {
-            const movie = await Movie.update(req.params.id, req.body);
+            const movie = await Movie.findByIdAndUpdate(
+                req.params.id,
+                { ...req.body, updated_at: new Date() },
+                { new: true }
+            );
             if (!movie) {
                 return res.status(404).json({ message: 'Movie not found' });
             }
@@ -55,7 +60,7 @@ const movieController = {
     // DELETE /api/movies/:id (admin)
     async delete(req, res, next) {
         try {
-            await Movie.delete(req.params.id);
+            await Movie.findByIdAndDelete(req.params.id);
             res.json({ message: 'Movie deleted successfully' });
         } catch (error) {
             next(error);
