@@ -4,6 +4,7 @@
 
 const Booking = require('../models/Booking');
 const Show = require('../models/Show');
+const { sendTicketEmail } = require('../utils/emailService');
 
 const bookingController = {
     // GET /api/bookings (admin)
@@ -87,6 +88,19 @@ const bookingController = {
             if (!booking) {
                 return res.status(404).json({ message: 'Booking not found' });
             }
+
+            // Send ticket confirmation email
+            try {
+                const populatedBooking = await Booking.findByIdPopulated(req.params.id);
+                if (populatedBooking) {
+                    const seats = await Booking.getBookingSeats(req.params.id);
+                    populatedBooking.seats = seats;
+                    await sendTicketEmail(populatedBooking, populatedBooking.user_id);
+                }
+            } catch (emailError) {
+                console.error('[BookingController] Failed to send email during confirmation:', emailError);
+            }
+
             res.json({ message: 'Booking confirmed', booking });
         } catch (error) {
             next(error);
