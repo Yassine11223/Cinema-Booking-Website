@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your personal movie watchlist — save films you want to see at Vision X Cinemas.">
+    <title>My Watchlist | Vision X Cinemas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/watchlist.css">
+    <link rel="stylesheet" href="../shared/css/preloader.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="../shared/js/preloader.js"></script>
+    <!-- Auth guard -->
+    <script>
+        (function () {
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('scene_user');
+            if (!token || !userData) {
+                window.location.replace('login.html?redirect=watchlist.html');
+            }
+        })();
+    </script>
+</head>
+
+<body>
+
+    <!-- ========================================
+         NAVBAR
+         ======================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <ul class="nav-links left">
+                <li><a href="index.html" class="nav-link">HOME</a></li>
+                <li class="dropdown">
+                    <a href="movies.html" class="nav-link dropdown-trigger">
+                        MOVIES <span class="dropdown-arrow"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="movies.html#now-showing">NOW SHOWING</a></li>
+                        <li><a href="movies.html#coming-soon">COMING SOON</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <span class="nav-link dropdown-trigger">
+                        EXPERIENCES <span class="dropdown-arrow"></span>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="pages/experience-imax.html">IMAX CINEMA</a></li>
+                        <li><a href="pages/experience-dolby.html">DOLBY CINEMA</a></li>
+                        <li><a href="pages/experience-standard.html">STANDARD & DELUXE</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="food-drinks.html" class="nav-link">FOOD & DRINKS</a>
+                </li>
+            </ul>
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-red">VISION X</span><span class="logo-white">CINEMAS</span>
+                </a>
+            </div>
+            <ul class="nav-links right">
+                <li>
+                    <a href="login.html" class="login-btn" id="auth-nav-link">
+                        <i class="fa-regular fa-user"></i> LOGIN
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+
+    <!-- ========================================
+         WATCHLIST SECTION
+         ======================================== -->
+    <section class="watchlist-wrapper">
+        <div class="watchlist-container">
+
+            <!-- Header -->
+            <div class="watchlist-header">
+                <div class="watchlist-header-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h1>My Watchlist</h1>
+                <div class="watchlist-header-count" id="watchlist-count">0 movies</div>
+            </div>
+
+            <!-- Movie Grid -->
+            <div class="watchlist-grid" id="watchlist-grid">
+                <!-- Cards injected by watchlist.js -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="watchlist-empty" id="watchlist-empty" style="display: none;">
+                <div class="watchlist-empty-icon">
+                    <i class="far fa-heart"></i>
+                </div>
+                <h2>Your Watchlist is Empty</h2>
+                <p>Start adding movies you want to see! Tap the heart icon on any movie to save it here.</p>
+                <a href="movies.html" class="watchlist-empty-btn">
+                    <i class="fas fa-film"></i> BROWSE MOVIES
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4 class="footer-title">GET IN TOUCH</h4>
+                    <div class="footer-links">
+                        <a href="pages/contact.html">Contact Us</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-title">ABOUT VISION X CINEMAS</h4>
+                    <div class="footer-links">
+                        <a href="pages/about.html">About Us</a>
+                        <a href="pages/experience-imax.html">IMAX Cinema</a>
+                        <a href="pages/experience-dolby.html">Dolby Cinema</a>
+                        <a href="pages/experience-standard.html">Standard & Deluxe</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-title">LEGAL</h4>
+                    <div class="footer-links">
+                        <a href="pages/faq.html">FAQs</a>
+                        <a href="pages/terms.html">Terms & Conditions</a>
+                        <a href="pages/privacy.html">Privacy Policy</a>
+                        <a href="pages/support.html">Support</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-title">FOLLOW US</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                        <a href="#" class="social-link" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Vision X Cinemas. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/watchlist.js"></script>
+
+</body>
+
+</html>
