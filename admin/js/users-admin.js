@@ -1,8 +1,6 @@
 /**
  * users-admin.js
- * User management — KPI cards show dummy stats,
- * Registered Accounts table shows real users from localStorage.
- * Falls back to localStorage when backend is offline.
+ * User management backed by the API.
  */
 
 (function () {
@@ -12,7 +10,6 @@
        CONFIG
        ========================================================= */
     const API_BASE    = 'http://localhost:5000/api';
-    const STORAGE_KEY = 'scene_admin_users';
     const API_TIMEOUT = 3000;
 
     /* =========================================================
@@ -140,29 +137,11 @@
 
             if (!res.ok) throw new Error('API error ' + res.status);
             allUsers = await res.json();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
             console.log(`[Users] Loaded ${allUsers.length} users from API`);
         } catch (err) {
-            console.log('[Users] Backend offline, using local data. Reason:', err.message);
-            try {
-                const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-                const cachedUsers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-                
-                const emailSet = new Set();
-                allUsers = [];
-                localUsers.forEach(u => {
-                    if (!emailSet.has(u.email)) {
-                        emailSet.add(u.email);
-                        allUsers.push(u);
-                    }
-                });
-                cachedUsers.forEach(u => {
-                    if (!emailSet.has(u.email)) {
-                        emailSet.add(u.email);
-                        allUsers.push(u);
-                    }
-                });
-            } catch (_) { allUsers = []; }
+            console.warn('[Users] Backend unavailable. User data was not loaded:', err.message);
+            allUsers = [];
+            toast('Users could not be loaded from the backend. Start the API server and refresh.', 'error');
         }
         showLoading(false);
         applyFilters();
@@ -207,10 +186,16 @@
        ========================================================= */
     function updateKpis() {
         const realCount = allUsers.length;
-        animateCount($('kpi-total'),   1247 + realCount);
-        animateCount($('kpi-active'),  834 + Math.min(realCount, 5));
-        animateCount($('kpi-new'),     156 + realCount);
-        animateCount($('kpi-admins'),  3 + allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin').length);
+        const activeThisWeek = allUsers.filter(u => u.last_login && (Date.now() - new Date(u.last_login).getTime()) <= 7 * 86400000).length;
+        const newThisMonth = allUsers.filter(u => u.created_at && isSameMonth(new Date(u.created_at), new Date())).length;
+        animateCount($('kpi-total'), realCount);
+        animateCount($('kpi-active'), activeThisWeek);
+        animateCount($('kpi-new'), newThisMonth);
+        animateCount($('kpi-admins'), allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin').length);
+    }
+
+    function isSameMonth(a, b) {
+        return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
     }
 
     function animateCount(el, target) {
@@ -342,9 +327,6 @@
             buckets.push({ date: d, label: d.toLocaleDateString('en-US', { weekday:'short' }), count: 0 });
         }
 
-        const simData = [42, 38, 55, 67, 49, 72, 61, 45, 58, 76, 84, 63, 71, 52];
-        buckets.forEach((b, i) => { b.count = simData[i] || 40; });
-
         allUsers.forEach(user => {
             if (!user.last_login) return;
             const loginDate = new Date(user.last_login);
@@ -450,16 +432,15 @@
 
         try {
             const token = localStorage.getItem('adminToken') || '';
-            await fetch(`${API_BASE}/users/${deleteTargetId}`, { method: 'DELETE', headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
-        } catch (_) {}
+            const res = await fetch(`${API_BASE}/users/${deleteTargetId}`, { method: 'DELETE', headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
+            if (!res.ok) throw new Error('API error ' + res.status);
+        } catch (err) {
+            toast('Delete failed: ' + err.message, 'error');
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-times"></i> Delete'; }
+            return;
+        }
 
         allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
-        try {
-            let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-            localUsers = localUsers.filter(u => String(u.id) !== String(deleteTargetId));
-            localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
-        } catch(_) {}
 
         closeDelModal();
         applyFilters();

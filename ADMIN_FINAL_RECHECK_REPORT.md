@@ -191,3 +191,7 @@ Pre-existing dirty files observed before this audit included `package.json`, `pa
 **PARTIALLY VERIFIED**
 
 The major fake/admin/public booking/auth flaws were fixed at code level and syntax-verified. Full verification still requires a working test runner plus live backend/database/browser execution.
+
+## 18. Follow-up Remaining Issues Report
+
+The remaining-items follow-up has been completed in `ADMIN_REMAINING_ISSUES_FIX_REPORT.md`.
