@@ -6,6 +6,15 @@ const Booking = require('../models/Booking');
 const Show = require('../models/Show');
 const { sendTicketEmail } = require('../utils/emailService');
 
+async function sendBookingConfirmationEmail(bookingId) {
+    const populatedBooking = await Booking.findByIdPopulated(bookingId);
+    if (!populatedBooking) return;
+
+    const seats = await Booking.getBookingSeats(bookingId);
+    populatedBooking.seats = seats;
+    await sendTicketEmail(populatedBooking, populatedBooking.user_id);
+}
+
 const bookingController = {
     // GET /api/bookings (admin)
     async getAll(req, res, next) {
@@ -91,12 +100,7 @@ const bookingController = {
 
             // Send ticket confirmation email
             try {
-                const populatedBooking = await Booking.findByIdPopulated(req.params.id);
-                if (populatedBooking) {
-                    const seats = await Booking.getBookingSeats(req.params.id);
-                    populatedBooking.seats = seats;
-                    await sendTicketEmail(populatedBooking, populatedBooking.user_id);
-                }
+                await sendBookingConfirmationEmail(req.params.id);
             } catch (emailError) {
                 console.error('[BookingController] Failed to send email during confirmation:', emailError);
             }
@@ -107,5 +111,7 @@ const bookingController = {
         }
     },
 };
+
+bookingController.sendBookingConfirmationEmail = sendBookingConfirmationEmail;
 
 module.exports = bookingController;

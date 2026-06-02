@@ -21,6 +21,7 @@ const showRoutes = require('./routes/shows');
 const theaterRoutes = require('./routes/theaters');
 const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -56,6 +57,7 @@ app.use('/api/shows', showRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -68,8 +70,8 @@ app.use(errorHandler);
 // --- Start Server ---
 connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`\n🎬 Cinema Booking API running on http://localhost:${PORT}`);
-        console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+        console.log(`\nCinema Booking API running on http://localhost:${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
     });
 });
 

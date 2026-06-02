@@ -12,12 +12,13 @@ module.exports = {
     mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/cinema_db',
     mail: {
         host: process.env.MAIL_HOST,
-        port: process.env.MAIL_PORT,
+        port: Number(process.env.MAIL_PORT) || 587,
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS,
+        from: process.env.MAIL_FROM,
     },
     stripe: {
         secretKey: process.env.STRIPE_SECRET_KEY,
     },
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5000',
 };

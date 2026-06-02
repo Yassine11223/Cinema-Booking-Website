@@ -4,6 +4,7 @@
 
 const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
+const { sendBookingConfirmationEmail } = require('./bookingController');
 
 const paymentController = {
     // GET /api/payments (admin)
@@ -55,6 +56,12 @@ const paymentController = {
 
             // Update booking status to confirmed
             await Booking.updateStatus(booking_id, 'confirmed');
+
+            try {
+                await sendBookingConfirmationEmail(booking_id);
+            } catch (emailError) {
+                console.error('[PaymentController] Failed to send booking confirmation email:', emailError);
+            }
 
             res.status(201).json(payment);
         } catch (error) {

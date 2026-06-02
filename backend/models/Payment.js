@@ -43,8 +43,6 @@ paymentSchema.virtual('id').get(function () {
     return this._id.toHexString();
 });
 
-// Index
-paymentSchema.index({ booking_id: 1 });
 
 // ---- Static Methods ----
 
