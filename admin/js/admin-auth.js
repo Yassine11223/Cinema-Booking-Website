@@ -1,7 +1,7 @@
 /**
  * admin-auth.js — Admin/SuperAdmin Login logic
  * Connects to POST /api/users/login/admin (role-restricted)
- * Falls back to offline local storage with role enforcement
+ * Uses backend admin authentication only
  * Supports both admin and superadmin roles
  */
 
@@ -64,68 +64,11 @@ function hideGlobalError() {
 }
 
 // ============================================
-// SEED DEMO ADMIN & SUPERADMIN USERS (offline)
-// ============================================
-function seedDemoAdmins() {
-    try {
-        const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-
-        // Demo admin
-        const adminData = {
-            id: 1005,
-            name: 'Admin User',
-            email: 'admin@thehallcinemas.com',
-            phone: '+20 100 000 0000',
-            role: 'admin',
-            password: 'admin112',
-            created_at: '2026-01-01T00:00:00Z',
-            last_login: new Date().toISOString(),
-            login_count: 1
-        };
-
-        // Demo superadmin
-        const superAdminData = {
-            id: 1006,
-            name: 'Super Admin',
-            email: 'superadmin@thehallcinemas.com',
-            phone: '+20 100 000 0001',
-            role: 'superadmin',
-            password: 'superadmin112',
-            created_at: '2026-01-01T00:00:00Z',
-            last_login: new Date().toISOString(),
-            login_count: 1
-        };
-
-        // Upsert admin
-        const adminIdx = localUsers.findIndex(u => u.email === adminData.email);
-        if (adminIdx !== -1) {
-            localUsers[adminIdx].password = adminData.password;
-            localUsers[adminIdx].role = adminData.role;
-        } else {
-            localUsers.push(adminData);
-        }
-
-        // Upsert superadmin
-        const superIdx = localUsers.findIndex(u => u.email === superAdminData.email);
-        if (superIdx !== -1) {
-            localUsers[superIdx].password = superAdminData.password;
-            localUsers[superIdx].role = superAdminData.role;
-        } else {
-            localUsers.push(superAdminData);
-        }
-
-        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
-    } catch (e) { }
-}
-
-seedDemoAdmins();
-
-// ============================================
 // AUTH GUARD — Redirect if already logged in as admin/superadmin
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('admin_token');
-    const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+    const token = localStorage.getItem('adminToken');
+    const userData = localStorage.getItem('adminUser');
 
     if (token && userData) {
         try {
@@ -202,13 +145,10 @@ function initAdminLoginForm() {
 
             if (res.ok) {
                 // Store auth data
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('admin_token', data.token);
-                localStorage.setItem('thehall_user', JSON.stringify(data.user));
-                localStorage.setItem('userData', JSON.stringify(data.user));
-
-                // Track in local storage
-                trackLocalAdmin(data.user);
+                localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminUser', JSON.stringify(data.user));
+                localStorage.setItem('isAdminLoggedIn', 'true');
+                localStorage.removeItem('admin_token');
 
                 // Redirect to admin dashboard (same for both admin and superadmin)
                 window.location.href = 'index.html';
@@ -221,28 +161,9 @@ function initAdminLoginForm() {
                 }
             }
         } catch (err) {
-            // Offline fallback — check local storage
-            console.log('Backend offline, trying local storage...', err.message);
-            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-            const user = localUsers.find(u => String(u.email) === String(email));
-
-            if (user && user.password === password) {
-                // Enforce admin or superadmin role
-                if (user.role !== 'admin' && user.role !== 'superadmin') {
-                    showGlobalError('Access denied. This portal is for administrators only.');
-                    setFieldStatus('admin-email', false, '');
-                } else {
-                    trackLocalAdmin(user);
-                    localStorage.setItem('authToken', 'offline_token_admin_' + Date.now());
-                    localStorage.setItem('admin_token', 'offline_admin_token');
-                    localStorage.setItem('thehall_user', JSON.stringify(user));
-                    localStorage.setItem('userData', JSON.stringify(user));
-                    window.location.href = 'index.html';
-                }
-            } else {
-                showGlobalError('Invalid email or password (or backend is offline).');
-                setFieldStatus('admin-email', false, '');
-            }
+            console.error('Admin login failed:', err.message);
+            showGlobalError('Admin login failed. Please make sure the backend is running and the account has an admin role.');
+            setFieldStatus('admin-email', false, '');
         } finally {
             loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ACCESS DASHBOARD';
@@ -250,24 +171,3 @@ function initAdminLoginForm() {
     });
 }
 
-// ============================================
-// LOCAL STORAGE TRACKING
-// ============================================
-function trackLocalAdmin(user) {
-    try {
-        let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-        let idx = localUsers.findIndex(u => String(u.email) === String(user.email));
-        if (idx !== -1) {
-            localUsers[idx].last_login = new Date().toISOString();
-            localUsers[idx].login_count = (localUsers[idx].login_count || 1) + 1;
-        } else {
-            localUsers.push({
-                ...user,
-                last_login: new Date().toISOString(),
-                login_count: 1,
-                created_at: user.created_at || new Date().toISOString()
-            });
-        }
-        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
-    } catch (e) { }
-}

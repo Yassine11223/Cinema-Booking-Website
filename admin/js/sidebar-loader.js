@@ -12,8 +12,8 @@
     // AUTH GUARD — Redirect to login if not admin/superadmin
     // ============================================
     (function enforceAdminAuth() {
-        const token = localStorage.getItem('admin_token');
-        const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+        const token = localStorage.getItem('adminToken');
+        const userData = localStorage.getItem('adminUser');
 
         let isAdmin = false;
         if (token && userData) {
@@ -87,7 +87,7 @@
     function applySuperadminVisibility() {
         let isSuperadmin = false;
         try {
-            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+            const userData = localStorage.getItem('adminUser');
             if (userData) {
                 const user = JSON.parse(userData);
                 isSuperadmin = user && user.role === 'superadmin';
@@ -111,7 +111,7 @@
      */
     function updateSidebarUserInfo() {
         try {
-            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+            const userData = localStorage.getItem('adminUser');
             if (!userData) return;
             const user = JSON.parse(userData);
             if (!user) return;
@@ -192,10 +192,10 @@
             e.preventDefault();
 
             // Clear all auth data set during login
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            localStorage.removeItem('isAdminLoggedIn');
             localStorage.removeItem('admin_token');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('thehall_user');
-            localStorage.removeItem('userData');
 
             // Redirect to admin login page
             window.location.href = 'login.html';

@@ -125,7 +125,7 @@
     async function loadUsers() {
         showLoading(true);
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -449,7 +449,7 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }
 
         try {
-            const token = localStorage.getItem('admin_token') || '';
+            const token = localStorage.getItem('adminToken') || '';
             await fetch(`${API_BASE}/users/${deleteTargetId}`, { method: 'DELETE', headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
         } catch (_) {}
 

@@ -64,7 +64,7 @@
 
     async function fetchRealData() {
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const headers = { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
 
             // Fetch backend data + TMDB now playing in parallel

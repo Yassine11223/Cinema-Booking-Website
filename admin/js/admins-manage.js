@@ -109,7 +109,7 @@
     async function loadAdmins() {
         showLoading(true);
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -209,7 +209,7 @@
         // Get current user to prevent self-deletion
         let currentUserId = null;
         try {
-            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+            const userData = localStorage.getItem('adminUser');
             if (userData) currentUserId = JSON.parse(userData).id;
         } catch (_) {}
 
@@ -348,7 +348,7 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CREATING…'; }
 
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const res = await fetch(`${API_BASE}/users/admin/create`, {
                 method: 'POST',
                 headers: {
@@ -432,7 +432,7 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }
 
         try {
-            const token = localStorage.getItem('admin_token') || '';
+            const token = localStorage.getItem('adminToken') || '';
             await fetch(`${API_BASE}/users/${deleteTargetId}`, {
                 method: 'DELETE',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}

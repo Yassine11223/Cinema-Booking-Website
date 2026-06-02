@@ -157,7 +157,7 @@
         showLoading(true);
 
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -603,7 +603,7 @@
 
         // Strategy 1: Try backend proxy (has TMDB key configured on server)
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -781,7 +781,7 @@
             // Try fetching full details from backend
             if (backendOnline) {
                 try {
-                    const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+                    const token = localStorage.getItem('adminToken') || '';
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
                     const r = await fetch(`${API_BASE}/movies/tmdb/${movie.tmdb_id}`, {
@@ -862,7 +862,7 @@
        API HELPERS (with timeout)
        ========================================================= */
     async function apiPost(path, body) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
@@ -880,7 +880,7 @@
     }
 
     async function apiPut(path, body) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
@@ -898,7 +898,7 @@
     }
 
     async function apiDelete(path) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
