@@ -1,14 +1,14 @@
 /**
  * movies-admin.js
  * Full movie management: CRUD + TMDB import
- * Works with backend API; falls back to localStorage when offline.
+ * Works with backend API as the source of truth.
  * ──────────────────────────────────────────────────────
  *  Fixes applied:
  *  - Fast timeout on API fetch (3 s) so page never hangs
  *  - All DOM refs grabbed inside init() so they're guaranteed to exist
  *  - noPosterHtml handled via JS img.onerror instead of inline attribute
- *  - TMDB search works without backend (direct API call fallback)
- *  - Manual add works without backend (localStorage-only)
+ *  - TMDB search can query TMDB directly, but catalogue writes require backend
+ *  - Manual add/update/delete require a successful backend write
  */
 
 (function () {
@@ -18,10 +18,9 @@
        CONFIG
        ========================================================= */
     const API_BASE    = 'http://localhost:5000/api';
-    const STORAGE_KEY = 'thehall_movies_catalog';
     const API_TIMEOUT = 3000;  // 3 seconds — fail fast when backend is down
 
-    // Free TMDB read-only API key (v3 public demo – rate limited)
+    // Free TMDB read-only API key (rate limited)
     // Users should set their own TMDB_API_KEY in backend .env for production
     const TMDB_FALLBACK_KEY = '8b17a4f6956553f204d913b742122c1e';
 
@@ -101,6 +100,8 @@
         // Poster preview
         const posterInput = $('m-poster-url');
         if (posterInput) posterInput.addEventListener('input', debounce(updatePosterPreview, 600));
+        const posterFile = $('m-poster-file');
+        if (posterFile) posterFile.addEventListener('change', updatePosterPreviewFromFile);
         safeClick('poster-clear-btn', clearPosterPreview);
 
         // TMDB modal
@@ -157,7 +158,7 @@
         showLoading(true);
 
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -170,28 +171,17 @@
             if (!res.ok) throw new Error('API error ' + res.status);
             allMovies = await res.json();
             backendOnline = true;
-            saveLocal(allMovies);
             console.log(`[Movies] Loaded ${allMovies.length} movies from API`);
         } catch (err) {
             backendOnline = false;
-            console.log('[Movies] Backend offline. Fetching live TMDB Now Playing...', err.message);
+            allMovies = [];
+            console.warn('[Movies] Backend unavailable. Admin movie data was not loaded:', err.message);
+            toast('Movies could not be loaded from the backend. Start the API server and refresh.', 'error');
+            showLoading(false);
+            applyFilters();
+            updateStats();
+            return;
 
-            // Always fetch fresh "Now Playing" + "Upcoming" from TMDB when backend is offline
-            // This ensures admin always sees the same current movies as the user-facing site
-            const [freshNowPlaying, freshUpcoming] = await Promise.all([
-                fetchTmdbNowPlaying(),
-                fetchTmdbUpcoming()
-            ]);
-            const freshMovies = [...freshNowPlaying, ...freshUpcoming];
-            if (freshMovies.length > 0) {
-                allMovies = freshMovies;
-                saveLocal(allMovies);
-                console.log(`[Movies] Loaded ${freshNowPlaying.length} now playing + ${freshUpcoming.length} upcoming from TMDB`);
-            } else {
-                // TMDB also failed — use cached as last resort
-                allMovies = loadLocal();
-                console.log(`[Movies] TMDB failed too, using ${allMovies.length} cached movies`);
-            }
         }
 
         showLoading(false);
@@ -440,6 +430,18 @@
         const row = $('poster-preview-row');
         if (img) img.src = '';
         if (row) row.style.display = 'none';
+        const fileInput = $('m-poster-file');
+        if (fileInput) fileInput.value = '';
+    }
+
+    function updatePosterPreviewFromFile() {
+        const fileInput = $('m-poster-file');
+        const row = $('poster-preview-row');
+        const img = $('poster-preview-img');
+        if (!fileInput || !row || !img || !fileInput.files || fileInput.files.length === 0) return;
+
+        img.src = URL.createObjectURL(fileInput.files[0]);
+        row.style.display = 'flex';
     }
 
     /* =========================================================
@@ -476,6 +478,15 @@
         }
 
         try {
+            if (!backendOnline) throw new Error('Backend API is unavailable.');
+
+            const uploadedPosterUrl = await uploadSelectedPoster();
+            if (uploadedPosterUrl) {
+                payload.poster_url = uploadedPosterUrl;
+                const posterUrlInput = $('m-poster-url');
+                if (posterUrlInput) posterUrlInput.value = uploadedPosterUrl;
+            }
+
             let saved = null;
 
             // Try backend first
@@ -487,7 +498,7 @@
                         saved = await apiPost('/movies', payload);
                     }
                 } catch (apiErr) {
-                    console.warn('[Movies] API save failed, using localStorage:', apiErr.message);
+                    throw apiErr;
                 }
             }
 
@@ -500,16 +511,9 @@
                     allMovies.unshift(saved);
                 }
             } else {
-                // Offline fallback — save locally
-                if (editingId) {
-                    const idx = allMovies.findIndex(x => String(x.id) === String(editingId));
-                    if (idx !== -1) allMovies[idx] = { ...allMovies[idx], ...payload };
-                } else {
-                    allMovies.unshift({ id: Date.now(), ...payload, created_at: new Date().toISOString() });
-                }
+                throw new Error('Backend save did not return a movie record.');
             }
 
-            saveLocal(allMovies);
             closeManualModal();
             applyFilters();
             updateStats();
@@ -522,6 +526,15 @@
                 btn.innerHTML = `<i class="fas fa-save"></i> <span id="btn-save-label">${editingId ? 'Update' : 'Save'} Movie</span>`;
             }
         }
+    }
+
+    async function uploadSelectedPoster() {
+        const fileInput = $('m-poster-file');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) return null;
+
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+        return apiUpload('/movies/upload/poster', formData);
     }
 
     /* =========================================================
@@ -551,13 +564,18 @@
         }
 
         try {
-            if (backendOnline) {
-                await apiDelete(`/movies/${deleteTargetId}`);
+            if (!backendOnline) throw new Error('Backend API is unavailable.');
+            await apiDelete(`/movies/${deleteTargetId}`);
+        } catch (err) {
+            toast('Delete failed: ' + err.message, 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
             }
-        } catch (_) { /* offline — still remove locally */ }
+            return;
+        }
 
         allMovies = allMovies.filter(m => String(m.id) !== String(deleteTargetId));
-        saveLocal(allMovies);
         closeDeleteModal();
         applyFilters();
         updateStats();
@@ -603,7 +621,7 @@
 
         // Strategy 1: Try backend proxy (has TMDB key configured on server)
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            const token = localStorage.getItem('adminToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -781,7 +799,7 @@
             // Try fetching full details from backend
             if (backendOnline) {
                 try {
-                    const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+                    const token = localStorage.getItem('adminToken') || '';
                     const controller = new AbortController();
                     const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
                     const r = await fetch(`${API_BASE}/movies/tmdb/${movie.tmdb_id}`, {
@@ -829,17 +847,9 @@
                 status:       'now_showing',
             };
 
-            // Try saving to backend
-            let saved = null;
-            if (backendOnline) {
-                try {
-                    saved = await apiPost('/movies', payload);
-                } catch (_) {}
-            }
-
-            const newMovie = saved || { id: Date.now(), ...payload, created_at: new Date().toISOString() };
-            allMovies.unshift(newMovie);
-            saveLocal(allMovies);
+            if (!backendOnline) throw new Error('Backend API is unavailable.');
+            const saved = await apiPost('/movies', payload);
+            allMovies.unshift(saved);
             applyFilters();
             updateStats();
 
@@ -862,7 +872,7 @@
        API HELPERS (with timeout)
        ========================================================= */
     async function apiPost(path, body) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
@@ -880,7 +890,7 @@
     }
 
     async function apiPut(path, body) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
@@ -898,7 +908,7 @@
     }
 
     async function apiDelete(path) {
-        const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('adminToken') || '';
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
         const res = await fetch(API_BASE + path, {
@@ -911,11 +921,21 @@
         return res.json();
     }
 
-    /* =========================================================
-       LOCAL STORAGE
-       ========================================================= */
-    function saveLocal(movies) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(movies)); } catch (_) {} }
-    function loadLocal()       { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch (_) { return []; } }
+    async function apiUpload(path, formData) {
+        const token = localStorage.getItem('adminToken') || '';
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+        const res = await fetch(API_BASE + path, {
+            method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: formData,
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        return data.url || null;
+    }
 
     /* =========================================================
        UI HELPERS
@@ -969,7 +989,7 @@
     }
 
     /* =========================================================
-       TMDB LIVE FETCH (replaces old static DEMO_MOVIES)
+       TMDB LIVE FETCH HELPERS
        Fetches current "Now Playing" movies from TMDB API,
        matching the same data shown on the user-facing homepage.
        ========================================================= */

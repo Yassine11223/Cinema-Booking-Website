@@ -5,6 +5,10 @@
 const Booking = require('../models/Booking');
 const Show = require('../models/Show');
 
+function canManageBooking(req, booking) {
+    return booking.user_id === req.user.id || req.user.role === 'admin' || req.user.role === 'superadmin';
+}
+
 const bookingController = {
     // GET /api/bookings (admin)
     async getAll(req, res, next) {
@@ -22,6 +26,9 @@ const bookingController = {
             const booking = await Booking.findById(req.params.id);
             if (!booking) {
                 return res.status(404).json({ message: 'Booking not found' });
+            }
+            if (!canManageBooking(req, booking)) {
+                return res.status(403).json({ message: 'Access denied for this booking' });
             }
 
             const seats = await Booking.getBookingSeats(booking.id);
@@ -70,10 +77,14 @@ const bookingController = {
     // PUT /api/bookings/:id/cancel
     async cancel(req, res, next) {
         try {
-            const booking = await Booking.updateStatus(req.params.id, 'cancelled');
-            if (!booking) {
+            const existing = await Booking.findById(req.params.id);
+            if (!existing) {
                 return res.status(404).json({ message: 'Booking not found' });
             }
+            if (!canManageBooking(req, existing)) {
+                return res.status(403).json({ message: 'Access denied for this booking' });
+            }
+            const booking = await Booking.updateStatus(req.params.id, 'cancelled');
             res.json({ message: 'Booking cancelled', booking });
         } catch (error) {
             next(error);
@@ -83,10 +94,14 @@ const bookingController = {
     // PUT /api/bookings/:id/confirm
     async confirm(req, res, next) {
         try {
-            const booking = await Booking.updateStatus(req.params.id, 'confirmed');
-            if (!booking) {
+            const existing = await Booking.findById(req.params.id);
+            if (!existing) {
                 return res.status(404).json({ message: 'Booking not found' });
             }
+            if (!canManageBooking(req, existing)) {
+                return res.status(403).json({ message: 'Access denied for this booking' });
+            }
+            const booking = await Booking.updateStatus(req.params.id, 'confirmed');
             res.json({ message: 'Booking confirmed', booking });
         } catch (error) {
             next(error);

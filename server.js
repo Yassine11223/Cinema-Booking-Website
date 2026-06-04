@@ -48,8 +48,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+// Serve uploaded files from the project-local upload directory.
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // --- API Routes ---
 app.use('/api/movies', movieRoutes);

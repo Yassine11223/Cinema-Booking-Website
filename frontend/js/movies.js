@@ -1,7 +1,7 @@
 /**
  * Movies.js - Movie listing page with Now Showing & Coming Soon sections
  * Frontend: Cinema Booking System
- * Uses TMDB API for real data with mock fallback
+ * Uses backend API as the source of truth for public movie data
  */
 
 console.log('✅ movies.js loaded');
@@ -26,148 +26,12 @@ const MOVIES_GENRE_MAP = {
 };
 
 // ============================================
-// MOCK DATA (Fallback when TMDB unavailable)
-// ============================================
-
-const MOCK_NOW_SHOWING = [
-    {
-        id: 1,
-        title: "Dune: Part Two",
-        overview: "Paul Atreides travels to the dangerous planet Arrakis to ensure the future of his family and people. A visionary journey unfolds as secrets of the universe are revealed.",
-        genre_ids: [878, 12],
-        vote_average: 8.5,
-        release_date: "2024-02-28",
-        poster_path: null
-    },
-    {
-        id: 2,
-        title: "The Brutalist",
-        overview: "A Hungarian-Jewish industrialist survives World War II and builds a new life in America. A sweeping epic of ambition, survival, and the American dream.",
-        genre_ids: [18],
-        vote_average: 8.3,
-        release_date: "2023-12-01",
-        poster_path: null
-    },
-    {
-        id: 3,
-        title: "Oppenheimer",
-        overview: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.",
-        genre_ids: [18, 36],
-        vote_average: 8.4,
-        release_date: "2023-07-21",
-        poster_path: null
-    },
-    {
-        id: 4,
-        title: "Killers of the Flower Moon",
-        overview: "When oil is discovered beneath their land, the Osage people are murdered one by one. An FBI investigation uncovers a conspiracy of greed and betrayal.",
-        genre_ids: [18, 80],
-        vote_average: 8.2,
-        release_date: "2023-10-20",
-        poster_path: null
-    },
-    {
-        id: 5,
-        title: "Inception",
-        overview: "A skilled thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO.",
-        genre_ids: [878, 28],
-        vote_average: 8.8,
-        release_date: "2010-07-16",
-        poster_path: null
-    },
-    {
-        id: 6,
-        title: "The Dark Knight",
-        overview: "When a menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests.",
-        genre_ids: [28, 80],
-        vote_average: 9.0,
-        release_date: "2008-07-18",
-        poster_path: null
-    },
-    {
-        id: 7,
-        title: "Interstellar",
-        overview: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival. An epic sci-fi adventure across dimensions and time.",
-        genre_ids: [878, 12],
-        vote_average: 8.6,
-        release_date: "2014-11-07",
-        poster_path: null
-    },
-    {
-        id: 8,
-        title: "Pulp Fiction",
-        overview: "The lives of two mob hitmen, a boxer, a gangster's wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
-        genre_ids: [18, 80],
-        vote_average: 8.9,
-        release_date: "1994-10-14",
-        poster_path: null
-    }
-];
-
-const MOCK_COMING_SOON = [
-    {
-        id: 101,
-        title: "Avatar: Fire & Ash",
-        overview: "Jake Sully and Neytiri must confront a new threat to Pandora's future as a forgotten enemy from the past resurfaces with devastating power.",
-        genre_ids: [878, 12],
-        vote_average: 0,
-        release_date: "2025-12-19",
-        poster_path: null
-    },
-    {
-        id: 102,
-        title: "The Fantastic Four: First Steps",
-        overview: "Marvel's first family gets a fresh start in the MCU. Four astronauts gain extraordinary powers after cosmic radiation exposure during a space mission.",
-        genre_ids: [28, 878],
-        vote_average: 0,
-        release_date: "2025-07-25",
-        poster_path: null
-    },
-    {
-        id: 103,
-        title: "Mission: Impossible – The Final Reckoning",
-        overview: "Ethan Hunt faces his most dangerous mission yet in the thrilling conclusion to the Dead Reckoning saga. The fate of the world hangs in the balance.",
-        genre_ids: [28, 53],
-        vote_average: 0,
-        release_date: "2025-05-23",
-        poster_path: null
-    },
-    {
-        id: 104,
-        title: "Jurassic World Rebirth",
-        overview: "Five years after the events of Dominion, the world has adapted to dinosaurs living among humans. A new crisis emerges that threatens both species.",
-        genre_ids: [878, 12],
-        vote_average: 0,
-        release_date: "2025-07-02",
-        poster_path: null
-    },
-    {
-        id: 105,
-        title: "Superman",
-        overview: "James Gunn's reimagining of the Man of Steel. Clark Kent embraces his Kryptonian heritage while protecting Metropolis from an otherworldly threat.",
-        genre_ids: [28, 878],
-        vote_average: 0,
-        release_date: "2025-07-11",
-        poster_path: null
-    },
-    {
-        id: 106,
-        title: "Thunderbolts*",
-        overview: "A ragtag group of antiheroes are recruited by the government for dangerous missions. They must learn to work together or face the consequences.",
-        genre_ids: [28, 878],
-        vote_average: 0,
-        release_date: "2025-05-02",
-        poster_path: null
-    }
-];
-
-// ============================================
 // STATE
 // ============================================
 
 let nowShowingMovies = [];
 let comingSoonMovies = [];
-let useTMDB = true;
+let useTMDB = false;
 
 // ============================================
 // INITIALIZATION
@@ -201,14 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initMoviesPage() {
     console.log('🎯 initMoviesPage called');
 
-    try {
-        // Try loading from TMDB API
-        await loadTMDBMovies();
-    } catch (error) {
-        console.warn('⚠️ TMDB failed, using mock data:', error.message);
-        useTMDB = false;
-        loadMockMovies();
-    }
+    await loadBackendMovies();
 
     // Setup genre filter (applies to Now Showing only)
     const genreFilter = document.getElementById('genre-filter');
@@ -224,56 +81,58 @@ async function initMoviesPage() {
 }
 
 /**
- * Load movies from TMDB API
+ * Load movies from backend API
  */
-async function loadTMDBMovies() {
-    console.log('🌐 Loading movies from TMDB...');
+async function loadBackendMovies() {
+    console.log('Loading movies from backend API...');
 
-    const [nowPlayingData, upcomingData] = await Promise.all([
-        tmdbMoviesFetch('/movie/now_playing', { page: 1 }),
-        tmdbMoviesFetch('/movie/upcoming', { page: 1 })
-    ]);
+    try {
+        const response = await fetch('http://localhost:5000/api/movies');
+        if (!response.ok) throw new Error(`Movies API error: ${response.status}`);
+        const movies = await response.json();
 
-    nowShowingMovies = (nowPlayingData.results || []).slice(0, 12);
-    comingSoonMovies = (upcomingData.results || []).slice(0, 12);
+        nowShowingMovies = movies
+            .filter(movie => movie.status === 'now_showing')
+            .map(mapBackendMovie);
+        comingSoonMovies = movies
+            .filter(movie => movie.status === 'coming_soon')
+            .map(mapBackendMovie);
 
-    // Filter out coming soon movies that are already in now showing
-    const nowShowingIds = new Set(nowShowingMovies.map(m => m.id));
-    comingSoonMovies = comingSoonMovies.filter(m => !nowShowingIds.has(m.id));
-
-    console.log('✅ TMDB loaded:', nowShowingMovies.length, 'now showing,', comingSoonMovies.length, 'coming soon');
-
-    renderNowShowing(nowShowingMovies);
-    renderComingSoon(comingSoonMovies);
-}
-
-/**
- * Fallback: Load mock data
- */
-function loadMockMovies() {
-    console.log('📚 Loading mock movies...');
-
-    nowShowingMovies = MOCK_NOW_SHOWING;
-    comingSoonMovies = MOCK_COMING_SOON;
-
-    renderNowShowing(nowShowingMovies);
-    renderComingSoon(comingSoonMovies);
-}
-
-/**
- * TMDB fetch helper (self-contained for movies page)
- */
-async function tmdbMoviesFetch(endpoint, params = {}) {
-    const url = new URL(`${MOVIES_TMDB.BASE_URL}${endpoint}`);
-    url.searchParams.set('api_key', MOVIES_TMDB.API_KEY);
-    url.searchParams.set('language', 'en-US');
-    Object.entries(params).forEach(([key, val]) => url.searchParams.set(key, val));
-
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-        throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+        renderNowShowing(nowShowingMovies);
+        renderComingSoon(comingSoonMovies);
+    } catch (error) {
+        console.error('Backend movies unavailable:', error.message);
+        showMovieError('movies-error', 'Movies are unavailable. Please try again later.');
+        renderNowShowing([]);
+        renderComingSoon([]);
     }
-    return response.json();
+}
+
+function mapBackendMovie(movie) {
+    return {
+        id: movie.id,
+        backendMovieId: movie.id,
+        title: movie.title,
+        overview: movie.description || '',
+        description: movie.description || '',
+        genre: movie.genre || 'Movie',
+        genres: movie.genre ? [{ name: movie.genre }] : [],
+        genre_ids: [],
+        vote_average: movie.rating || 'NR',
+        certification: movie.rating || 'NR',
+        runtime: movie.duration,
+        release_date: movie.release_date,
+        poster_url: movie.poster_url,
+        poster_path: null,
+        trailer_url: movie.trailer_url,
+        status: movie.status,
+    };
+}
+
+async function loadBackendMovieDetails(movieId) {
+    const response = await fetch(`http://localhost:5000/api/movies/${movieId}`);
+    if (!response.ok) throw new Error(`Movie API error: ${response.status}`);
+    return mapBackendMovie(await response.json());
 }
 
 /**
@@ -347,7 +206,7 @@ function renderComingSoon(movies) {
  */
 function createMovieCardElement(movie, section) {
     const poster = getMoviePoster(movie);
-    const genreStr = buildMovieGenreString(movie.genre_ids);
+    const genreStr = movie.genre || buildMovieGenreString(movie.genre_ids);
     const ratingBadge = mapMovieCertification(movie.vote_average);
     const releaseDate = movie.release_date
         ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
@@ -424,7 +283,7 @@ function filterNowShowingByGenre(genre) {
     } else {
         const genreLower = genre.toLowerCase();
         const filtered = nowShowingMovies.filter(m => {
-            const genreStr = buildMovieGenreString(m.genre_ids).toLowerCase();
+            const genreStr = (m.genre || buildMovieGenreString(m.genre_ids)).toLowerCase();
             return genreStr.includes(genreLower);
         });
         renderNowShowing(filtered);
@@ -533,22 +392,12 @@ async function initMovieDetail() {
     }
 
     try {
-        // Try TMDB first
-        const movie = await tmdbGetMovieDetails(movieId);
+        const movie = await loadBackendMovieDetails(movieId);
         currentMovieData = movie;
         renderMovieDetailPage(movie);
     } catch (error) {
-        console.warn('⚠️ TMDB detail failed, using mock:', error.message);
-        // Fallback to mock data
-        const allMockMovies = [...MOCK_NOW_SHOWING, ...MOCK_COMING_SOON];
-        const movie = allMockMovies.find(m => m.id == movieId);
-
-        if (movie) {
-            currentMovieData = movie;
-            renderMovieDetailPageMock(movie);
-        } else {
-            showMovieError('error-message', 'Movie not found.');
-        }
+        console.error('Movie detail API failed:', error.message);
+        showMovieError('error-message', 'Movie not found.');
     }
 
     // Scroll to booking if book action
@@ -795,7 +644,7 @@ function renderDateSelector() {
 
 /**
  * Select a date and render time slots
- * NOW: Tries backend API first, falls back to mock
+ * Uses backend API only for date showtimes
  */
 async function selectDate(dateStr) {
     // Clear any previous selection
@@ -818,12 +667,10 @@ async function selectDate(dateStr) {
             }
         }
     } catch (err) {
-        console.warn('⚠️ Backend showtimes unavailable, using mock:', err.message);
+        console.error('Backend showtimes unavailable:', err.message);
+        renderShowTimes([]);
     }
-
-    // Fallback to mock data
-    const shows = generateShowsForDate(dateStr);
-    renderShowTimes(shows);
+    renderShowTimes([]);
 }
 
 /**
@@ -866,104 +713,6 @@ function formatBackendShows(backendShows) {
             format: format,
         };
     });
-}
-
-/**
- * Generate mock showtimes for a given date — multiple times PER format
- * FALLBACK: used when backend is offline or has no data for this movie/date
- */
-function generateShowsForDate(dateStr) {
-    const formatSchedule = {
-        'IMAX': [
-            { time: '12:30 PM' },
-            { time: '05:30 PM' },
-            { time: '09:30 PM' }
-        ],
-        'Dolby Cinema': [
-            { time: '03:00 PM' },
-            { time: '07:00 PM' }
-        ],
-        'Standard': [
-            { time: '10:00 AM' },
-            { time: '01:00 PM' },
-            { time: '04:30 PM' },
-            { time: '08:00 PM' },
-            { time: '11:00 PM' }
-        ],
-        'Deluxe': [
-            { time: '02:00 PM' },
-            { time: '06:30 PM' },
-            { time: '10:30 PM' }
-        ]
-    };
-
-    const shows = [];
-    let showId = 1;
-
-    SHOW_FORMATS.forEach(format => {
-        const slots = formatSchedule[format] || [];
-        slots.forEach(slot => {
-            shows.push({
-                id: showId++,
-                date: dateStr,
-                time: slot.time,
-                format: format
-            });
-        });
-    });
-
-    return shows;
-}
-
-/**
- * Render showtimes grouped by format
- */
-function renderShowTimes(shows) {
-    const grid = document.getElementById('show-times-grid');
-    if (!grid) return;
-
-    if (!shows || shows.length === 0) {
-        grid.innerHTML = '<div class="no-shows-message">No shows available for this date</div>';
-        return;
-    }
-
-    // Store all shows for selection lookup
-    grid._showsData = shows;
-
-    // Group shows by format
-    const grouped = {};
-    SHOW_FORMATS.forEach(format => { grouped[format] = []; });
-    shows.forEach(show => {
-        if (!grouped[show.format]) grouped[show.format] = [];
-        grouped[show.format].push(show);
-    });
-
-    // Build HTML for each format group
-    let html = '';
-    SHOW_FORMATS.forEach(format => {
-        const formatShows = grouped[format];
-        if (!formatShows || formatShows.length === 0) return;
-
-        const formatClass = getFormatClass(format);
-
-        html += `
-            <div class="format-group">
-                <div class="format-group-header">
-                    <span class="format-group-badge ${formatClass}">${escapeHtml(format)}</span>
-                    <div class="format-group-divider"></div>
-                </div>
-                <div class="time-slots">
-                    ${formatShows.map(show => `
-                        <button class="time-slot-btn" data-show-id="${show.id}" onclick="selectShow(${show.id}, this)">
-                            ${show.time}
-                        </button>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    });
-
-    grid.innerHTML = html;
 }
 
 /**
@@ -1037,110 +786,6 @@ function updateBookingSummary() {
     `;
 }
 
-/**
- * Handle Book Now button click
- */
-function handleBookNow() {
-    if (!selectedShow) return;
-
-    // Store selected show in session
-    sessionStorage.setItem('selectedShow', JSON.stringify(selectedShow));
-    if (currentMovieData) {
-        // Build genre string from TMDB genres array or genre_ids
-        let genre = 'Movie';
-        if (currentMovieData.genres && currentMovieData.genres.length > 0) {
-            genre = currentMovieData.genres.slice(0, 2).map(g => g.name).join(' • ');
-        } else if (currentMovieData.genre_ids && currentMovieData.genre_ids.length > 0) {
-            genre = buildMovieGenreString(currentMovieData.genre_ids);
-        }
-
-        // Build duration string
-        let duration = 'N/A';
-        if (currentMovieData.runtime) {
-            const h = Math.floor(currentMovieData.runtime / 60);
-            const m = currentMovieData.runtime % 60;
-            duration = h > 0 ? `${h}h ${m}m` : `${m}m`;
-        }
-
-        // Build rating
-        let rating = 'NR';
-        if (currentMovieData.vote_average && currentMovieData.vote_average > 0) {
-            rating = parseFloat(currentMovieData.vote_average).toFixed(1);
-        }
-
-        sessionStorage.setItem('selectedMovie', JSON.stringify({
-            id: currentMovieData.id,
-            title: currentMovieData.title,
-            genre: genre,
-            duration: duration,
-            rating: rating
-        }));
-    }
-
-    // Check if user is logged in
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-    if (!token) {
-        window.location.href = 'login.html?redirect=booking.html';
-    } else {
-        window.location.href = `booking.html?showId=${selectedShow.id}`;
-    }
-}
-
-// ============================================
-// RENDER MOVIE DETAIL (MOCK FALLBACK)
-// ============================================
-
-function renderMovieDetailPageMock(movie) {
-    const movieHero = document.getElementById('movie-hero');
-    if (!movieHero) return;
-
-    const poster = 'https://placehold.co/300x450/1a1a1a/b71c1c?text=' + encodeURIComponent(movie.title);
-    const rating = movie.vote_average ? parseFloat(movie.vote_average).toFixed(1) : 'N/A';
-    const genreStr = buildMovieGenreString(movie.genre_ids);
-    const releaseDate = movie.release_date
-        ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-        : 'N/A';
-
-    const genreTags = movie.genre_ids
-        ? movie.genre_ids.map(id => `<span class="genre-tag">${escapeHtml(MOVIES_GENRE_MAP[id] || 'Drama')}</span>`).join('')
-        : '';
-
-    movieHero.innerHTML = `
-        <div class="hero-content">
-            <div class="hero-poster">
-                <img src="${poster}" alt="${escapeHtml(movie.title)}">
-            </div>
-            <div class="hero-info">
-                <h1>${escapeHtml(movie.title)}</h1>
-                ${genreTags ? `<div class="genre-tags">${genreTags}</div>` : ''}
-                <div class="rating-badge">
-                    <i class="fas fa-star"></i> ${rating}/10
-                </div>
-                <div class="movie-meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Release Date</span>
-                        <span class="meta-value">${releaseDate}</span>
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="goToBookingFromDetail()">
-                        <i class="fas fa-ticket-alt"></i> BOOK NOW
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Synopsis
-    renderSynopsis({ overview: movie.overview });
-
-    // Booking (no trailer for mock)
-    renderBookingSection(movie);
-
-    // Update page title
-    document.title = `${movie.title} | THE HALL CINEMASs`;
-}
-
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
@@ -1159,6 +804,9 @@ function formatDuration(minutes) {
  * Get poster URL for a movie
  */
 function getMoviePoster(movie) {
+    if (movie.poster_url) {
+        return movie.poster_url;
+    }
     if (movie.poster_path) {
         return `${MOVIES_TMDB.IMAGE_BASE}${MOVIES_TMDB.POSTER_SIZE}${movie.poster_path}`;
     }
@@ -1178,6 +826,7 @@ function buildMovieGenreString(genreIds) {
  * Map vote average to certification badge
  */
 function mapMovieCertification(voteAverage) {
+    if (typeof voteAverage === 'string') return voteAverage;
     if (!voteAverage || voteAverage === 0) return 'NR';
     if (voteAverage >= 8) return '⭐ ' + voteAverage.toFixed(1);
     if (voteAverage >= 7) return '⭐ ' + voteAverage.toFixed(1);
@@ -1210,14 +859,19 @@ function showMovieError(elementId, message) {
 
 function goToBookingFromDetail() {
     if (!currentMovieData) return;
-    const genreStr = currentMovieData.genres ? currentMovieData.genres.map(g => g.name).join(', ') : buildMovieGenreString(currentMovieData.genre_ids);
+    const genreStr = currentMovieData.genre || (currentMovieData.genres ? currentMovieData.genres.map(g => g.name).join(', ') : buildMovieGenreString(currentMovieData.genre_ids));
     sessionStorage.setItem('selectedMovie', JSON.stringify({
         id: currentMovieData.id,
+        backendMovieId: currentMovieData.backendMovieId || currentMovieData.id,
         title: currentMovieData.title,
         genre: genreStr,
-        rating: currentMovieData.vote_average ? parseFloat(currentMovieData.vote_average).toFixed(1) : 'NR',
+        rating: currentMovieData.certification || currentMovieData.rating || (typeof currentMovieData.vote_average === 'number' ? currentMovieData.vote_average.toFixed(1) : 'NR'),
         duration: currentMovieData.runtime ? formatDuration(currentMovieData.runtime) : 'N/A'
     }));
     window.location.href = 'booking.html?movieId=' + currentMovieData.id;
 }
+
+
+
+
 

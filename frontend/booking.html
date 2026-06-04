@@ -12,8 +12,8 @@
     <!-- Auth guard: redirect to login if not signed in -->
     <script>
         (function () {
-            var token = localStorage.getItem('authToken');
-            var userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+            var token = localStorage.getItem('userToken');
+            var userData = localStorage.getItem('userData');
             if (!token || !userData) {
                 var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
                 window.location.replace('login.html?redirect=' + returnUrl);

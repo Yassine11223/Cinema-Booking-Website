@@ -11,7 +11,7 @@ const api = {
      */
     async request(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('userToken');
 
         const config = {
             headers: {
