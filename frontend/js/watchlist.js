@@ -28,7 +28,7 @@
 
     function getCurrentUserKey() {
         try {
-            const userData = localStorage.getItem('userData');
+            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
             if (!userData) return null;
             const user = JSON.parse(userData);
             return 'vx_watchlist_' + (user.email || user.id || 'guest');
@@ -38,8 +38,8 @@
     }
 
     function isLoggedIn() {
-        const token = localStorage.getItem('userToken');
-        const user = localStorage.getItem('userData');
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
         return !!(token && user);
     }
 

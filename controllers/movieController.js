@@ -32,7 +32,7 @@ const movieController = {
     // POST /api/movies (admin)
     async create(req, res, next) {
         try {
-            const movie = await Movie.create(filterMovieFields(req.body));
+            const movie = await Movie.create(req.body);
             res.status(201).json(movie);
         } catch (error) {
             next(error);
@@ -42,11 +42,7 @@ const movieController = {
     // PUT /api/movies/:id (admin)
     async update(req, res, next) {
         try {
-            const fields = filterMovieFields(req.body);
-            if (Object.keys(fields).length === 0) {
-                return res.status(400).json({ message: 'No valid movie fields provided' });
-            }
-            const movie = await Movie.update(req.params.id, fields);
+            const movie = await Movie.update(req.params.id, req.body);
             if (!movie) {
                 return res.status(404).json({ message: 'Movie not found' });
             }
@@ -66,24 +62,5 @@ const movieController = {
         }
     },
 };
-
-function filterMovieFields(body) {
-    const allowed = [
-        'title',
-        'description',
-        'genre',
-        'duration',
-        'rating',
-        'release_date',
-        'poster_url',
-        'trailer_url',
-        'status',
-    ];
-    const fields = {};
-    allowed.forEach(key => {
-        if (body[key] !== undefined) fields[key] = body[key];
-    });
-    return fields;
-}
 
 module.exports = movieController;

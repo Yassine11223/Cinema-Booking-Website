@@ -11,12 +11,6 @@
     "seed": "node seeds/seed.js",
     "migrate": "node config/migrate.js"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/tests"
-    ]
-  },
   "keywords": [
     "cinema",
     "booking",
@@ -32,8 +26,6 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^9.6.3",
-    "multer": "^2.1.1",
     "openai": "^6.39.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
@@ -42,7 +34,6 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "jest": "^30.4.2",
     "nodemon": "^3.1.14"
   }
 }

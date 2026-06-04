@@ -15,8 +15,8 @@
     <!-- Auth guard -->
     <script>
         (function () {
-            var token = localStorage.getItem('userToken');
-            var userData = localStorage.getItem('userData');
+            var token = localStorage.getItem('authToken');
+            var userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
             if (!token || !userData) {
                 window.location.replace('login.html?redirect=payment.html');
             }

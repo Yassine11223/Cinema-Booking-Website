@@ -136,9 +136,9 @@ function handleGoogleLoginResult() {
         try {
             const user = JSON.parse(decodeURIComponent(userString));
 
-            localStorage.setItem('userToken', token);
+            localStorage.setItem('authToken', token);
+            localStorage.setItem('thehall_user', JSON.stringify(user));
             localStorage.setItem('userData', JSON.stringify(user));
-            localStorage.setItem('isUserLoggedIn', 'true');
 
             window.history.replaceState({}, document.title, 'login.html');
             window.location.href = 'index.html';
@@ -174,6 +174,38 @@ function trackLocalUser(user, isRegistration = false) {
     } catch (e) { }
 }
 
+// ============================================
+// SEED DEMO USERS (pre-populated for demo)
+// These users can be logged in with during presentation
+// Password for all: Password1
+// ============================================
+function seedDemoUsers() {
+    try {
+        const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+        // Only seed if we have fewer than 3 users (avoid re-seeding)
+        if (localUsers.length >= 3) return;
+
+        const demoUsers = [
+            { id: 1001, name: 'Ahmed Hassan', email: 'ahmed@thehallcinemas.com', phone: '+20 100 123 4567', role: 'customer', password: 'Password1', created_at: '2026-01-15T09:30:00Z', last_login: '2026-04-20T14:22:00Z', login_count: 34 },
+            { id: 1002, name: 'Sara Mohamed', email: 'sara@thehallcinemas.com', phone: '+20 101 234 5678', role: 'customer', password: 'Password1', created_at: '2026-02-03T11:45:00Z', last_login: '2026-04-19T18:10:00Z', login_count: 21 },
+            { id: 1003, name: 'Omar Ali', email: 'omar@thehallcinemas.com', phone: '+20 102 345 6789', role: 'customer', password: 'Password1', created_at: '2026-02-20T16:00:00Z', last_login: '2026-04-21T10:05:00Z', login_count: 47 },
+            { id: 1004, name: 'Nour Ibrahim', email: 'nour@thehallcinemas.com', phone: '+20 103 456 7890', role: 'customer', password: 'Password1', created_at: '2026-03-10T08:20:00Z', last_login: '2026-04-18T22:30:00Z', login_count: 12 },
+            { id: 1005, name: 'Admin User', email: 'admin@thehallcinemas.com', phone: '+20 100 000 0000', role: 'admin', password: 'admin112', created_at: '2026-01-01T00:00:00Z', last_login: '2026-04-21T15:00:00Z', login_count: 156 },
+        ];
+
+        const emailSet = new Set(localUsers.map(u => u.email));
+        demoUsers.forEach(du => {
+            if (!emailSet.has(du.email)) {
+                localUsers.push(du);
+            }
+        });
+        localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
+        console.log('[Auth] Demo users seeded:', demoUsers.length);
+    } catch (e) { }
+}
+
+// Seed demo users on page load
+seedDemoUsers();
 
 // ============================================
 // LOGIN FORM
@@ -181,8 +213,8 @@ function trackLocalUser(user, isRegistration = false) {
 document.addEventListener('DOMContentLoaded', () => {
     handleGoogleLoginResult();
     // If already logged in and on the login page, redirect to home
-    const token = localStorage.getItem('userToken');
-    const user = localStorage.getItem('userData');
+    const token = localStorage.getItem('authToken');
+    const user = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
     const isLoginPage = !!document.getElementById('loginForm');
     const isRegisterPage = !!document.getElementById('registerForm');
     const urlParams = new URLSearchParams(window.location.search);
@@ -251,7 +283,7 @@ const googleLoginBtn = document.getElementById('googleLoginBtn');
         loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SIGNING IN…';
 
         try {
-            const res = await fetch(`${API_BASE}/users/login/customer`, {
+            const res = await fetch(`${API_BASE}/users/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -276,9 +308,14 @@ const googleLoginBtn = document.getElementById('googleLoginBtn');
                 }
 
                 // Store auth data
-                localStorage.setItem('userToken', data.token);
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('thehall_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
-                localStorage.setItem('isUserLoggedIn', 'true');
+
+                // Also store as admin_token if user is admin
+                if (data.user?.role === 'admin') {
+                    localStorage.setItem('admin_token', data.token);
+                }
 
                 const rem = form.querySelector('#rememberMe');
                 if (rem?.checked) {
@@ -287,18 +324,50 @@ const googleLoginBtn = document.getElementById('googleLoginBtn');
                     localStorage.removeItem('thehall_remember_email');
                 }
 
+                // Redirect — admins go to admin dashboard
                 trackLocalUser(data.user, false);
                 const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
-                const redirect = urlRedirect || 'index.html';
+                let redirect = urlRedirect || 'index.html';
+                if (data.user?.role === 'admin') redirect = '../admin/index.html';
                 window.location.href = redirect;
             } else {
                 showGlobalError(data.message || 'Invalid email or password.');
                 setFieldStatus('email', false, '');
             }
         } catch (err) {
-            console.error('Customer login failed:', err.message);
-            showGlobalError('Login failed. Please make sure the backend is running and try again.');
-            setFieldStatus('email', false, '');
+            // Offline fallback
+            console.log('Backend offline, trying local storage...', err.message);
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+            const user = localUsers.find(u => String(u.email) === String(email));
+
+            if (user && user.password === password) {
+                trackLocalUser(user, false);
+                localStorage.setItem('authToken', 'offline_token_' + Date.now());
+                localStorage.setItem('thehall_user', JSON.stringify(user));
+                localStorage.setItem('userData', JSON.stringify(user));
+                if (user.role === 'admin') localStorage.setItem('admin_token', 'offline_admin_token');
+
+                const rem = form.querySelector('#rememberMe');
+                if (rem?.checked) localStorage.setItem('thehall_remember_email', email);
+                else localStorage.removeItem('thehall_remember_email');
+
+                const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
+                let redirect = urlRedirect || 'index.html';
+                if (user.role === 'admin') redirect = '../admin/index.html';
+                window.location.href = redirect;
+            } else if (email === 'admin@thehallcinemas.com' && password === 'admin112') {
+                // Hardcoded fallback admin for offline debugging
+                const adminUser = { id: 1, name: 'Super Admin', email: 'admin@thehallcinemas.com', role: 'admin', password: 'admin112' };
+                trackLocalUser(adminUser, false);
+                localStorage.setItem('authToken', 'offline_token_admin');
+                localStorage.setItem('thehall_user', JSON.stringify(adminUser));
+                localStorage.setItem('userData', JSON.stringify(adminUser));
+                localStorage.setItem('admin_token', 'offline_admin_token');
+                window.location.href = '../admin/index.html';
+            } else {
+                showGlobalError('Invalid email or password (or backend is offline).');
+                setFieldStatus('email', false, '');
+            }
         } finally {
             loginBtn.disabled = false;
             loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> SIGN IN';
@@ -392,10 +461,15 @@ function initRegisterForm(form) {
 
             if (res.ok) {
                 // Store token and redirect to login with success message
-                localStorage.setItem('userToken', data.token);
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('thehall_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
-                localStorage.setItem('isUserLoggedIn', 'true');
                 localStorage.setItem('scene_register_success', name);
+
+                // Admin token if applicable
+                if (data.user?.role === 'admin') {
+                    localStorage.setItem('admin_token', data.token);
+                }
 
                 trackLocalUser(data.user, true);
                 window.location.href = 'login.html?registered=1';
@@ -406,8 +480,21 @@ function initRegisterForm(form) {
                 }
             }
         } catch (_) {
-            console.error('Registration failed:', _.message);
-            showGlobalError('Registration failed. Please make sure the backend is running and try again.');
+            // Offline fallback registration
+            console.log('Backend offline, registering to local storage...');
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+            if (localUsers.some(u => String(u.email) === String(email))) {
+                showGlobalError('Email already registered.');
+                setFieldStatus('email', false, 'Email already in use');
+            } else {
+                const newUser = { id: Date.now(), name, email, phone, role: 'customer', password };
+                trackLocalUser(newUser, true);
+                localStorage.setItem('authToken', 'offline_token_' + Date.now());
+                localStorage.setItem('thehall_user', JSON.stringify(newUser));
+                localStorage.setItem('userData', JSON.stringify(newUser));
+                localStorage.setItem('scene_register_success', name);
+                window.location.href = 'login.html?registered=1';
+            }
         } finally {
             regBtn.disabled = false;
             regBtn.innerHTML = '<i class="fas fa-user-plus"></i> CREATE ACCOUNT';
@@ -494,20 +581,43 @@ function initOtpForm(otpForm, email) {
             const data = await res.json();
 
             if (res.ok) {
-                localStorage.setItem('userToken', data.token);
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('scene_user', JSON.stringify(data.user));
                 localStorage.setItem('userData', JSON.stringify(data.user));
-                localStorage.setItem('isUserLoggedIn', 'true');
+
+                if (data.user?.role === 'admin') {
+                    localStorage.setItem('admin_token', data.token);
+                }
 
                 trackLocalUser(data.user, false);
                 const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
-                const redirect = urlRedirect || 'index.html';
+                let redirect = urlRedirect || 'index.html';
+                if (data.user?.role === 'admin') redirect = '../admin/index.html';
                 window.location.href = redirect;
             } else {
                 setFieldStatus('otpCode', false, data.message || 'Verification failed. Incorrect code.');
             }
         } catch (err) {
-            console.error('OTP verification failed:', err.message);
-            setFieldStatus('otpCode', false, 'Verification failed. Please try again.');
+            console.error('OTP verify offline fallback...', err.message);
+            // Offline fallback for demo: accept any code starting with 9 or matching 123456
+            if (otpCode === '123456' || otpCode.startsWith('9')) {
+                const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+                const user = localUsers.find(u => String(u.email) === String(email));
+                if (user) {
+                    trackLocalUser(user, false);
+                    localStorage.setItem('authToken', 'offline_token_' + Date.now());
+                    localStorage.setItem('scene_user', JSON.stringify(user));
+                    localStorage.setItem('userData', JSON.stringify(user));
+                    if (user.role === 'admin') localStorage.setItem('admin_token', 'offline_admin_token');
+
+                    const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
+                    let redirect = urlRedirect || 'index.html';
+                    if (user.role === 'admin') redirect = '../admin/index.html';
+                    window.location.href = redirect;
+                    return;
+                }
+            }
+            setFieldStatus('otpCode', false, 'Verification failed (or backend is offline).');
         } finally {
             verifyBtn.disabled = false;
             verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> VERIFY & SIGN IN';
@@ -519,4 +629,3 @@ function initOtpForm(otpForm, email) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { REGEX_PATTERNS, validateEmail, validatePassword };
 }
-

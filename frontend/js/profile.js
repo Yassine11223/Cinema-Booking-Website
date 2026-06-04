@@ -1,6 +1,7 @@
 /**
  * Profile.js - User profile page logic
  * Fetches user data, handles profile editing, and logout
+ * Supports demo mode when backend is unavailable
  */
 
 const PROFILE_API_BASE = 'http://localhost:5000';
@@ -13,13 +14,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ============================================
+   CHECK IF DEMO MODE (token starts with demo_token_)
+   ============================================ */
+function isDemoMode() {
+    const token = localStorage.getItem('authToken');
+    return token && (token.startsWith('demo_token_') || token.startsWith('offline_token_'));
+}
+
+/* ============================================
    AUTH CHECK — redirect if not logged in
    ============================================ */
 function checkAuth() {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('authToken');
     if (!token) {
         window.location.href = 'login.html?redirect=profile.html';
         return;
+    }
+    // Ensure userData is available from thehall_user if missing
+    if (!localStorage.getItem('userData') && localStorage.getItem('thehall_user')) {
+        localStorage.setItem('userData', localStorage.getItem('thehall_user'));
     }
 }
 
@@ -67,9 +80,25 @@ function populateProfile(user) {
    LOAD PROFILE DATA
    ============================================ */
 async function loadProfile() {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('authToken');
     if (!token) return;
 
+    // Demo/offline mode: load from localStorage directly
+    if (isDemoMode()) {
+        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+        if (userData) {
+            try {
+                populateProfile(JSON.parse(userData));
+            } catch {
+                showProfileError('Failed to load profile data.');
+            }
+        } else {
+            showProfileError('No profile data found. Please login again.');
+        }
+        return;
+    }
+
+    // Real API mode
     try {
         const response = await fetch(PROFILE_API_BASE + '/api/users/profile', {
             method: 'GET',
@@ -80,9 +109,8 @@ async function loadProfile() {
         });
 
         if (response.status === 401) {
-            localStorage.removeItem('userToken');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
-            localStorage.removeItem('isUserLoggedIn');
             window.location.href = 'login.html?redirect=profile.html';
             return;
         }
@@ -96,8 +124,18 @@ async function loadProfile() {
             showProfileError(user.message || 'Failed to load profile.');
         }
     } catch (error) {
-        console.warn('Profile API unavailable:', error.message);
-        showProfileError('Server unavailable. Please try again later.');
+        console.warn('Backend unavailable, trying localStorage:', error.message);
+        // Fallback: try to load from localStorage
+        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+        if (userData) {
+            try {
+                populateProfile(JSON.parse(userData));
+            } catch {
+                showProfileError('Failed to load profile data.');
+            }
+        } else {
+            showProfileError('Server unavailable. Please try again later.');
+        }
     }
 }
 
@@ -130,7 +168,7 @@ function initProfileForm() {
     editForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const token = localStorage.getItem('userToken');
+        const token = localStorage.getItem('authToken');
         if (!token) return;
 
         const name = document.getElementById('edit-name')?.value.trim();
@@ -151,6 +189,44 @@ function initProfileForm() {
             saveBtn.textContent = 'SAVING...';
         }
 
+        // Demo mode: update localStorage directly
+        if (isDemoMode()) {
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            userData.name = name;
+            userData.phone = phone || null;
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Also update demoUsers list
+            try {
+                const demoUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+                const idx = demoUsers.findIndex(u => u.email === userData.email);
+                if (idx !== -1) {
+                    demoUsers[idx].name = name;
+                    demoUsers[idx].phone = phone || null;
+                    localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
+                }
+            } catch {}
+
+            populateProfile(userData);
+
+            if (editMsg) {
+                editMsg.textContent = 'Profile updated successfully!';
+                editMsg.className = 'profile-msg success';
+            }
+            setTimeout(() => {
+                if (editSection) editSection.style.display = 'none';
+                if (editToggle) editToggle.innerHTML = '<i class="fas fa-pen"></i> EDIT PROFILE';
+                if (editMsg) editMsg.className = 'profile-msg';
+            }, 1500);
+
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'SAVE CHANGES';
+            }
+            return;
+        }
+
+        // Real API mode
         try {
             const response = await fetch(PROFILE_API_BASE + '/api/users/profile', {
                 method: 'PUT',
@@ -204,9 +280,10 @@ function initProfileForm() {
 function initLogout() {
     const logoutBtn = document.getElementById('logout-btn');
     logoutBtn?.addEventListener('click', () => {
-        localStorage.removeItem('userToken');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
-        localStorage.removeItem('isUserLoggedIn');
+        localStorage.removeItem('thehall_user');
+        localStorage.removeItem('admin_token');
         window.location.href = 'index.html';
     });
 }

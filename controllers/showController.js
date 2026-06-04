@@ -43,10 +43,6 @@ const showController = {
     // POST /api/shows (admin)
     async create(req, res, next) {
         try {
-            const { movie_id, theater_id, show_time, price } = req.body;
-            if (!movie_id || !theater_id || !show_time || Number(price) <= 0) {
-                return res.status(400).json({ message: 'Movie, theater, show time, and a positive price are required' });
-            }
             const show = await Show.create(req.body);
             res.status(201).json(show);
         } catch (error) {
@@ -57,18 +53,7 @@ const showController = {
     // PUT /api/shows/:id (admin)
     async update(req, res, next) {
         try {
-            const allowed = ['movie_id', 'theater_id', 'show_time', 'price'];
-            const fields = {};
-            allowed.forEach(key => {
-                if (req.body[key] !== undefined) fields[key] = req.body[key];
-            });
-            if (fields.price !== undefined && Number(fields.price) <= 0) {
-                return res.status(400).json({ message: 'Price must be greater than zero' });
-            }
-            if (Object.keys(fields).length === 0) {
-                return res.status(400).json({ message: 'No valid show fields provided' });
-            }
-            const show = await Show.update(req.params.id, fields);
+            const show = await Show.update(req.params.id, req.body);
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }
