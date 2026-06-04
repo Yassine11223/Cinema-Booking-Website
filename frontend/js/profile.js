@@ -6,6 +6,52 @@
 
 const PROFILE_API_BASE = 'http://localhost:5000';
 
+const PROFILE_AVATAR_OPTIONS = [
+    { label: 'Director', src: 'images/avatars/avatar-director.png' },
+    { label: 'Popcorn Fan', src: 'images/avatars/avatar-popcorn.png' },
+    { label: 'Sci-Fi Fan', src: 'images/avatars/avatar-scifi.png' },
+    { label: 'Red Carpet', src: 'images/avatars/avatar-red-carpet.png' },
+    { label: 'Film Reel', src: 'images/avatars/avatar-film-reel.png' },
+    { label: 'Ticket Fan', src: 'images/avatars/avatar-ticket-fan.png' },
+];
+
+function isProfileCinemaAvatar(src) {
+    if (!src) return false;
+    return src.includes('avatar-director.png') ||
+           src.includes('avatar-popcorn.png') ||
+           src.includes('avatar-scifi.png') ||
+           src.includes('avatar-red-carpet.png') ||
+           src.includes('avatar-film-reel.png') ||
+           src.includes('avatar-ticket-fan.png');
+}
+
+function normalizeProfileAvatarSrc(src) {
+    if (!src) return '';
+    if (/^(https?:|data:)/.test(src)) return src;
+    const clean = src.replace(/^(\.\/|\/)+/, '');
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (path.includes('/pages/')) {
+        return `../${clean}`;
+    }
+    if (path.includes('/admin/')) {
+        return `../frontend/${clean}`;
+    }
+    return clean;
+}
+
+function getDisplayProfilePhoto(user) {
+    if (isProfileCinemaAvatar(user?.profile_photo)) {
+        return normalizeProfileAvatarSrc(user.profile_photo);
+    }
+
+    const storedUser = getStoredProfileUser();
+    if (isProfileCinemaAvatar(storedUser?.profile_photo)) {
+        return normalizeProfileAvatarSrc(storedUser.profile_photo);
+    }
+
+    return user?.profile_photo ? normalizeProfileAvatarSrc(user.profile_photo) : '';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadProfile();
@@ -46,8 +92,10 @@ function populateProfile(user) {
     const profileRole = document.getElementById('profile-role');
     const profileSince = document.getElementById('profile-since');
     const profileAvatar = document.getElementById('profile-avatar-letter');
+    const profileAvatarImg = document.getElementById('profile-avatar-img');
     const editName = document.getElementById('edit-name');
     const editPhone = document.getElementById('edit-phone');
+    const editProfilePhoto = document.getElementById('edit-profile-photo');
     const profileLoading = document.getElementById('profile-loading');
     const profileContent = document.getElementById('profile-content');
 
@@ -63,17 +111,55 @@ function populateProfile(user) {
             day: 'numeric',
         });
     }
-    if (profileAvatar) {
+    const displayProfilePhoto = getDisplayProfilePhoto(user);
+    if (displayProfilePhoto && profileAvatarImg) {
+        profileAvatarImg.src = displayProfilePhoto;
+        profileAvatarImg.alt = `${user.name || 'User'} avatar`;
+        profileAvatarImg.style.display = 'block';
+        if (profileAvatar) profileAvatar.style.display = 'none';
+    } else if (profileAvatar) {
         profileAvatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
+        profileAvatar.style.display = 'block';
+        if (profileAvatarImg) profileAvatarImg.style.display = 'none';
     }
 
     // Pre-fill edit form
     if (editName) editName.value = user.name || '';
     if (editPhone) editPhone.value = user.phone || '';
+    const selectedAvatar = isProfileCinemaAvatar(displayProfilePhoto)
+        ? displayProfilePhoto.replace(/^\//, '')
+        : PROFILE_AVATAR_OPTIONS[0].src;
+    if (editProfilePhoto) editProfilePhoto.value = selectedAvatar;
+    renderProfileAvatarPicker(selectedAvatar);
 
     // Show content, hide loading
     if (profileLoading) profileLoading.style.display = 'none';
     if (profileContent) profileContent.style.display = 'block';
+    if (typeof updateNavbarAuth === 'function') updateNavbarAuth();
+}
+
+function renderProfileAvatarPicker(selectedValue = PROFILE_AVATAR_OPTIONS[0].src) {
+    const container = document.getElementById('edit-avatar-grid');
+    const input = document.getElementById('edit-profile-photo');
+    if (!container || !input) return;
+
+    input.value = selectedValue;
+    container.innerHTML = PROFILE_AVATAR_OPTIONS.map(avatar => `
+        <button type="button"
+                class="avatar-option${avatar.src === input.value ? ' selected' : ''}"
+                data-avatar="${avatar.src}"
+                aria-label="Choose ${avatar.label} avatar">
+            <img src="${avatar.src}" alt="${avatar.label}">
+        </button>
+    `).join('');
+}
+
+function getStoredProfileUser() {
+    try {
+        return JSON.parse(localStorage.getItem('userData') || localStorage.getItem('thehall_user') || '{}');
+    } catch {
+        return {};
+    }
 }
 
 /* ============================================
@@ -118,8 +204,16 @@ async function loadProfile() {
         const user = await response.json();
 
         if (response.ok) {
-            localStorage.setItem('userData', JSON.stringify(user));
-            populateProfile(user);
+            const storedUser = getStoredProfileUser();
+            const mergedUser = {
+                ...user,
+                profile_photo: isProfileCinemaAvatar(user.profile_photo)
+                    ? user.profile_photo
+                    : (isProfileCinemaAvatar(storedUser.profile_photo) ? storedUser.profile_photo : user.profile_photo),
+            };
+            localStorage.setItem('userData', JSON.stringify(mergedUser));
+            localStorage.setItem('thehall_user', JSON.stringify(mergedUser));
+            populateProfile(mergedUser);
         } else {
             showProfileError(user.message || 'Failed to load profile.');
         }
@@ -147,6 +241,17 @@ function initProfileForm() {
     const editToggle = document.getElementById('edit-toggle-btn');
     const editSection = document.getElementById('edit-section');
     const editCancel = document.getElementById('edit-cancel-btn');
+    const editAvatarGrid = document.getElementById('edit-avatar-grid');
+
+    editAvatarGrid?.addEventListener('click', event => {
+        const option = event.target.closest('.avatar-option');
+        const input = document.getElementById('edit-profile-photo');
+        if (!option || !input) return;
+        input.value = option.dataset.avatar;
+        editAvatarGrid.querySelectorAll('.avatar-option').forEach(btn => {
+            btn.classList.toggle('selected', btn === option);
+        });
+    });
 
     // Toggle edit section visibility
     editToggle?.addEventListener('click', () => {
@@ -173,6 +278,7 @@ function initProfileForm() {
 
         const name = document.getElementById('edit-name')?.value.trim();
         const phone = document.getElementById('edit-phone')?.value.trim();
+        const profile_photo = document.getElementById('edit-profile-photo')?.value || PROFILE_AVATAR_OPTIONS[0].src;
         const saveBtn = document.getElementById('edit-save-btn');
         const editMsg = document.getElementById('edit-message');
 
@@ -191,19 +297,22 @@ function initProfileForm() {
 
         // Demo mode: update localStorage directly
         if (isDemoMode()) {
-            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            const userData = getStoredProfileUser();
             userData.name = name;
             userData.phone = phone || null;
+            userData.profile_photo = profile_photo;
             localStorage.setItem('userData', JSON.stringify(userData));
+            localStorage.setItem('thehall_user', JSON.stringify(userData));
 
-            // Also update demoUsers list
+            // Also update offline users list
             try {
-                const demoUsers = JSON.parse(localStorage.getItem('demoUsers') || '[]');
+                const demoUsers = JSON.parse(localStorage.getItem('thehall_users_local') || '[]');
                 const idx = demoUsers.findIndex(u => u.email === userData.email);
                 if (idx !== -1) {
                     demoUsers[idx].name = name;
                     demoUsers[idx].phone = phone || null;
-                    localStorage.setItem('demoUsers', JSON.stringify(demoUsers));
+                    demoUsers[idx].profile_photo = profile_photo;
+                    localStorage.setItem('thehall_users_local', JSON.stringify(demoUsers));
                 }
             } catch {}
 
@@ -234,13 +343,14 @@ function initProfileForm() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, phone: phone || null }),
+                body: JSON.stringify({ name, phone: phone || null, profile_photo }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
                 localStorage.setItem('userData', JSON.stringify(data));
+                localStorage.setItem('thehall_user', JSON.stringify(data));
                 populateProfile(data);
 
                 if (editMsg) {

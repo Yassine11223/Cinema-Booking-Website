@@ -9,6 +9,39 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNavbarAuth();
 });
 
+const NAVBAR_AVATAR_OPTIONS = [
+    'images/avatars/avatar-director.png',
+    'images/avatars/avatar-popcorn.png',
+    'images/avatars/avatar-scifi.png',
+    'images/avatars/avatar-red-carpet.png',
+    'images/avatars/avatar-film-reel.png',
+    'images/avatars/avatar-ticket-fan.png',
+];
+
+function normalizeNavbarAvatarSrc(src) {
+    if (!src) return '';
+    if (/^(https?:|data:)/.test(src)) return src;
+    const clean = src.replace(/^(\.\/|\/)+/, '');
+    const path = window.location.pathname.replace(/\\/g, '/');
+    if (path.includes('/pages/')) {
+        return `../${clean}`;
+    }
+    if (path.includes('/admin/')) {
+        return `../frontend/${clean}`;
+    }
+    return clean;
+}
+
+function getNavbarUser() {
+    const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user') || localStorage.getItem('scene_user');
+    if (!userData) return null;
+    try {
+        return JSON.parse(userData);
+    } catch {
+        return null;
+    }
+}
+
 /* ============================================
    NAVBAR
    ============================================ */
@@ -35,16 +68,20 @@ function updateNavbarAuth() {
     if (!authNavLink) return;
 
     const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+    const user = getNavbarUser();
 
-    if (token && userData) {
+    if (token && user) {
         try {
-            const user = JSON.parse(userData);
             const firstName = user.name ? user.name.split(' ')[0] : 'Profile';
+            const avatarSrc = user.profile_photo
+                ? normalizeNavbarAvatarSrc(user.profile_photo)
+                : '';
 
             // Replace LOGIN link with profile link
             authNavLink.href = 'profile.html';
-            authNavLink.innerHTML = `<i class="fa-solid fa-user"></i> ${firstName.toUpperCase()}`;
+            authNavLink.innerHTML = avatarSrc
+                ? `<img class="nav-user-avatar" src="${avatarSrc}" alt="${firstName} avatar" style="width:30px;height:30px;border-radius:50%;object-fit:cover;margin-right:8px;border:1.5px solid var(--primary-light, #e50914);vertical-align:middle;"> <span>${firstName.toUpperCase()}</span>`
+                : `<i class="fa-solid fa-user"></i> <span>${firstName.toUpperCase()}</span>`;
             authNavLink.classList.add('logged-in');
         } catch (e) {
             // Invalid userData, keep login link
@@ -56,6 +93,5 @@ function updateNavbarAuth() {
    PLAY TRAILER (opens in modal or new tab)
    ============================================ */
 function playTrailer(url) {
-    // Open trailer in a new tab for now
     window.open(url, '_blank');
 }

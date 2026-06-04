@@ -5,6 +5,15 @@
 
 const API_BASE = 'http://localhost:5000/api';
 const BACKEND_BASE = 'http://localhost:5000';
+
+const AVATAR_OPTIONS = [
+    { label: 'Director', src: 'images/avatars/avatar-director.png' },
+    { label: 'Popcorn Fan', src: 'images/avatars/avatar-popcorn.png' },
+    { label: 'Sci-Fi Fan', src: 'images/avatars/avatar-scifi.png' },
+    { label: 'Red Carpet', src: 'images/avatars/avatar-red-carpet.png' },
+    { label: 'Film Reel', src: 'images/avatars/avatar-film-reel.png' },
+    { label: 'Ticket Fan', src: 'images/avatars/avatar-ticket-fan.png' },
+];
 // ============================================
 // REGEX PATTERNS
 // ============================================
@@ -111,6 +120,87 @@ function hideGlobalError() {
     const box = document.getElementById('global-error');
     if (box) box.style.display = 'none';
 }
+
+function isCinemaAvatar(src) {
+    return AVATAR_OPTIONS.some(avatar => avatar.src === src);
+}
+
+function getRedirectAfterLogin(user) {
+    const urlRedirect = new URLSearchParams(window.location.search).get('redirect');
+    if (user?.role === 'admin') return '../admin/index.html';
+    return urlRedirect || 'index.html';
+}
+
+function storeAuthUser(token, user) {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('thehall_user', JSON.stringify(user));
+    localStorage.setItem('scene_user', JSON.stringify(user));
+    localStorage.setItem('userData', JSON.stringify(user));
+    if (user?.role === 'admin') {
+        localStorage.setItem('admin_token', token);
+    }
+}
+
+function showGoogleAvatarSelector(user, token) {
+    window.history.replaceState({}, document.title, 'login.html');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'google-avatar-modal';
+    overlay.innerHTML = `
+        <div class="google-avatar-card" role="dialog" aria-modal="true" aria-labelledby="google-avatar-title">
+            <div class="card-icon"><i class="fas fa-user-astronaut"></i></div>
+            <h2 id="google-avatar-title">Choose Your Avatar</h2>
+            <p>Pick a cinema look for your profile.</p>
+            <input type="hidden" id="googleProfilePhoto" value="${AVATAR_OPTIONS[0].src}">
+            <div class="avatar-picker-grid" id="google-avatar-grid"></div>
+            <button type="button" class="submit-btn" id="google-avatar-save">
+                <i class="fas fa-check"></i> CONTINUE
+            </button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    initAvatarPicker('google-avatar-grid', 'googleProfilePhoto', AVATAR_OPTIONS[0].src);
+
+    document.getElementById('google-avatar-save')?.addEventListener('click', async () => {
+        const button = document.getElementById('google-avatar-save');
+        const profile_photo = document.getElementById('googleProfilePhoto')?.value || AVATAR_OPTIONS[0].src;
+        const updatedUser = { ...user, profile_photo };
+
+        if (button) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SAVING...';
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: user.name,
+                    phone: user.phone || null,
+                    profile_photo,
+                }),
+            });
+
+            if (response.ok) {
+                const savedUser = await response.json();
+                storeAuthUser(token, savedUser);
+                window.location.href = getRedirectAfterLogin(savedUser);
+                return;
+            }
+
+            storeAuthUser(token, updatedUser);
+            window.location.href = getRedirectAfterLogin(updatedUser);
+        } catch (_) {
+            storeAuthUser(token, updatedUser);
+            window.location.href = getRedirectAfterLogin(updatedUser);
+        }
+    });
+}
+
 function handleGoogleLoginResult() {
     const params = new URLSearchParams(window.location.search);
 
@@ -134,14 +224,17 @@ function handleGoogleLoginResult() {
         }
 
         try {
-            const user = JSON.parse(decodeURIComponent(userString));
+            const user = JSON.parse(userString);
 
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('thehall_user', JSON.stringify(user));
-            localStorage.setItem('userData', JSON.stringify(user));
+            storeAuthUser(token, user);
+
+            if (user.auth_provider === 'google' && !isCinemaAvatar(user.profile_photo)) {
+                showGoogleAvatarSelector(user, token);
+                return;
+            }
 
             window.history.replaceState({}, document.title, 'login.html');
-            window.location.href = 'index.html';
+            window.location.href = getRedirectAfterLogin(user);
         } catch (error) {
             showGlobalError('Could not finish Google login.');
         }
@@ -158,6 +251,7 @@ function trackLocalUser(user, isRegistration = false) {
         if (uIdx !== -1) {
             localUsers[uIdx].name = user.name || localUsers[uIdx].name;
             localUsers[uIdx].role = user.role || localUsers[uIdx].role;
+            localUsers[uIdx].profile_photo = user.profile_photo || localUsers[uIdx].profile_photo;
             if (!isRegistration) {
                 localUsers[uIdx].last_login = new Date().toISOString();
                 localUsers[uIdx].login_count = (localUsers[uIdx].login_count || 1) + 1;
@@ -186,11 +280,11 @@ function seedDemoUsers() {
         if (localUsers.length >= 3) return;
 
         const demoUsers = [
-            { id: 1001, name: 'Ahmed Hassan', email: 'ahmed@thehallcinemas.com', phone: '+20 100 123 4567', role: 'customer', password: 'Password1', created_at: '2026-01-15T09:30:00Z', last_login: '2026-04-20T14:22:00Z', login_count: 34 },
-            { id: 1002, name: 'Sara Mohamed', email: 'sara@thehallcinemas.com', phone: '+20 101 234 5678', role: 'customer', password: 'Password1', created_at: '2026-02-03T11:45:00Z', last_login: '2026-04-19T18:10:00Z', login_count: 21 },
-            { id: 1003, name: 'Omar Ali', email: 'omar@thehallcinemas.com', phone: '+20 102 345 6789', role: 'customer', password: 'Password1', created_at: '2026-02-20T16:00:00Z', last_login: '2026-04-21T10:05:00Z', login_count: 47 },
-            { id: 1004, name: 'Nour Ibrahim', email: 'nour@thehallcinemas.com', phone: '+20 103 456 7890', role: 'customer', password: 'Password1', created_at: '2026-03-10T08:20:00Z', last_login: '2026-04-18T22:30:00Z', login_count: 12 },
-            { id: 1005, name: 'Admin User', email: 'admin@thehallcinemas.com', phone: '+20 100 000 0000', role: 'admin', password: 'admin112', created_at: '2026-01-01T00:00:00Z', last_login: '2026-04-21T15:00:00Z', login_count: 156 },
+            { id: 1001, name: 'Ahmed Hassan', email: 'ahmed@thehallcinemas.com', phone: '+20 100 123 4567', role: 'customer', password: 'Password1', profile_photo: AVATAR_OPTIONS[0].src, created_at: '2026-01-15T09:30:00Z', last_login: '2026-04-20T14:22:00Z', login_count: 34 },
+            { id: 1002, name: 'Sara Mohamed', email: 'sara@thehallcinemas.com', phone: '+20 101 234 5678', role: 'customer', password: 'Password1', profile_photo: AVATAR_OPTIONS[3].src, created_at: '2026-02-03T11:45:00Z', last_login: '2026-04-19T18:10:00Z', login_count: 21 },
+            { id: 1003, name: 'Omar Ali', email: 'omar@thehallcinemas.com', phone: '+20 102 345 6789', role: 'customer', password: 'Password1', profile_photo: AVATAR_OPTIONS[2].src, created_at: '2026-02-20T16:00:00Z', last_login: '2026-04-21T10:05:00Z', login_count: 47 },
+            { id: 1004, name: 'Nour Ibrahim', email: 'nour@thehallcinemas.com', phone: '+20 103 456 7890', role: 'customer', password: 'Password1', profile_photo: AVATAR_OPTIONS[1].src, created_at: '2026-03-10T08:20:00Z', last_login: '2026-04-18T22:30:00Z', login_count: 12 },
+            { id: 1005, name: 'Admin User', email: 'admin@thehallcinemas.com', phone: '+20 100 000 0000', role: 'admin', password: 'admin112', profile_photo: AVATAR_OPTIONS[4].src, created_at: '2026-01-01T00:00:00Z', last_login: '2026-04-21T15:00:00Z', login_count: 156 },
         ];
 
         const emailSet = new Set(localUsers.map(u => u.email));
@@ -206,6 +300,31 @@ function seedDemoUsers() {
 
 // Seed demo users on page load
 seedDemoUsers();
+
+function initAvatarPicker(containerId, inputId, selectedValue = AVATAR_OPTIONS[0].src) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    if (!container || !input) return;
+
+    input.value = selectedValue || AVATAR_OPTIONS[0].src;
+    container.innerHTML = AVATAR_OPTIONS.map(avatar => `
+        <button type="button"
+                class="avatar-option${avatar.src === input.value ? ' selected' : ''}"
+                data-avatar="${avatar.src}"
+                aria-label="Choose ${avatar.label} avatar">
+            <img src="${avatar.src}" alt="${avatar.label}">
+        </button>
+    `).join('');
+
+    container.addEventListener('click', event => {
+        const option = event.target.closest('.avatar-option');
+        if (!option) return;
+        input.value = option.dataset.avatar;
+        container.querySelectorAll('.avatar-option').forEach(btn => {
+            btn.classList.toggle('selected', btn === option);
+        });
+    });
+}
 
 // ============================================
 // LOGIN FORM
@@ -384,10 +503,13 @@ function initRegisterForm(form) {
     const phoneEl = form.querySelector('#phone');
     const passEl = form.querySelector('#password');
     const confEl = form.querySelector('#confirmPassword');
+    const profilePhotoEl = form.querySelector('#profilePhoto');
     const regBtn = form.querySelector('#registerBtn');
     const toggler = form.querySelector('#togglePassword');
     const toggler2 = form.querySelector('#toggleConfirmPassword');
     const termsChk = form.querySelector('#termsAgree');
+
+    initAvatarPicker('register-avatar-grid', 'profilePhoto');
 
     // Show/hide passwords
     toggler?.addEventListener('click', () => {
@@ -427,6 +549,7 @@ function initRegisterForm(form) {
         const phone = phoneEl?.value.trim() || '';
         const password = passEl.value;
         const confirm = confEl.value;
+        const profile_photo = profilePhotoEl?.value || AVATAR_OPTIONS[0].src;
 
         // Validate
         const nv = validateFullName(name);
@@ -455,7 +578,7 @@ function initRegisterForm(form) {
             const res = await fetch(`${API_BASE}/users/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone: phone || null, password }),
+                body: JSON.stringify({ name, email, phone: phone || null, password, profile_photo }),
             });
             const data = await res.json();
 
@@ -487,7 +610,7 @@ function initRegisterForm(form) {
                 showGlobalError('Email already registered.');
                 setFieldStatus('email', false, 'Email already in use');
             } else {
-                const newUser = { id: Date.now(), name, email, phone, role: 'customer', password };
+                const newUser = { id: Date.now(), name, email, phone, role: 'customer', password, profile_photo };
                 trackLocalUser(newUser, true);
                 localStorage.setItem('authToken', 'offline_token_' + Date.now());
                 localStorage.setItem('thehall_user', JSON.stringify(newUser));

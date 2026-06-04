@@ -1133,12 +1133,27 @@
     border: 1px solid var(--primary);
     padding: 8px 24px;
     transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
 }
 
 .login-btn:hover {
     background: var(--primary);
     color: #fff;
     box-shadow: var(--shadow-red);
+}
+
+.nav-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.28);
+    flex: 0 0 auto;
 }
 
 /* ============================================

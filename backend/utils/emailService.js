@@ -1,14 +1,26 @@
 const nodemailer = require('nodemailer');
 const QRCode = require('qrcode');
 
+function getMailConfig() {
+    const user = process.env.MAIL_USER || process.env.EMAIL_USER;
+    return {
+        host: process.env.MAIL_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: Number(process.env.MAIL_PORT || process.env.EMAIL_PORT) || 587,
+        user,
+        pass: process.env.MAIL_PASS || process.env.EMAIL_PASS,
+        from: process.env.MAIL_FROM || process.env.EMAIL_FROM || `"The Hall Cinemas" <${user}>`,
+    };
+}
+
 function createTransporter() {
+    const mail = getMailConfig();
     return nodemailer.createTransport({
-        host: process.env.MAIL_HOST || 'smtp.gmail.com',
-        port: Number(process.env.MAIL_PORT) || 587,
-        secure: String(process.env.MAIL_PORT) === '465',
+        host: mail.host,
+        port: mail.port,
+        secure: String(mail.port) === '465',
         auth: {
-            user: process.env.MAIL_USER,
-            pass: process.env.MAIL_PASS,
+            user: mail.user,
+            pass: mail.pass,
         },
     });
 }
@@ -65,6 +77,7 @@ async function sendTicketEmail(booking, user) {
 
     try {
         const transporter = createTransporter();
+        const mail = getMailConfig();
         const seatList = booking.seats && booking.seats.length > 0
             ? booking.seats.map(getSeatLabel).join(', ')
             : 'Unassigned';
@@ -115,7 +128,7 @@ async function sendTicketEmail(booking, user) {
         `;
 
         const info = await transporter.sendMail({
-            from: process.env.MAIL_FROM || `"The Hall Cinemas" <${process.env.MAIL_USER}>`,
+            from: mail.from,
             to: user.email,
             subject: 'Your Cinema Ticket Booking Confirmation',
             html: htmlContent,

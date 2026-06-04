@@ -28,14 +28,14 @@ const userController = {
     // POST /api/users/register
     async register(req, res, next) {
         try {
-            const { name, email, password, phone } = req.body;
+            const { name, email, password, phone, profile_photo } = req.body;
 
             const existing = await User.findByEmail(email);
             if (existing) {
                 return res.status(409).json({ message: 'Email already registered' });
             }
 
-            const user = new User({ name, email, password, phone });
+            const user = new User({ name, email, password, phone, profile_photo });
             await user.save();
 
             const token = generateToken(user);
@@ -274,10 +274,10 @@ const userController = {
     // PUT /api/users/profile
     async updateProfile(req, res, next) {
         try {
-            const { name, phone } = req.body;
+            const { name, phone, profile_photo } = req.body;
             const user = await User.findByIdAndUpdate(
                 req.user.id,
-                { name, phone },
+                { name, phone, profile_photo },
                 { new: true }
             );
 

@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const passport = require('passport');
 const User = require('../models/User');
@@ -40,7 +41,9 @@ if (hasGoogleConfig) {
                     if (user) {
                         user.google_id = googleId;
                         user.auth_provider = 'google';
-                        user.profile_photo = profilePhoto;
+                        if (!user.profile_photo) {
+                            user.profile_photo = profilePhoto;
+                        }
                         await user.save();
                         return done(null, user);
                     }

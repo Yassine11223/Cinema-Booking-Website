@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 const User = {
     async findAll() {
         const result = await query(
-            `SELECT id, name, email, phone, role, created_at, last_login, login_count
+            `SELECT id, name, email, phone, role, profile_photo, created_at, last_login, login_count
              FROM users
              ORDER BY created_at DESC`
         );
@@ -18,7 +18,7 @@ const User = {
 
     async findById(id) {
         const result = await query(
-            `SELECT id, name, email, phone, role, created_at, last_login, login_count
+            `SELECT id, name, email, phone, role, profile_photo, created_at, last_login, login_count
              FROM users WHERE id = $1`,
             [id]
         );
@@ -30,13 +30,14 @@ const User = {
         return result.rows[0];
     },
 
-    async create({ name, email, password, phone, role = 'customer' }) {
-        const hashedPassword = await bcrypt.hash(password, 12);
+    async create({ name, email, password, phone, role = 'customer', profile_photo = null }) {
+        // Handle password hash if it is provided (Google login creates password-less accounts)
+        const hashedPassword = password ? await bcrypt.hash(password, 12) : null;
         const result = await query(
-            `INSERT INTO users (name, email, password, phone, role, login_count)
-             VALUES ($1, $2, $3, $4, $5, 0)
-             RETURNING id, name, email, phone, role, created_at, last_login, login_count`,
-            [name, email, hashedPassword, phone, role]
+            `INSERT INTO users (name, email, password, phone, role, profile_photo, login_count)
+             VALUES ($1, $2, $3, $4, $5, $6, 0)
+             RETURNING id, name, email, phone, role, profile_photo, created_at, last_login, login_count`,
+            [name, email, hashedPassword, phone, role, profile_photo]
         );
         return result.rows[0];
     },
@@ -48,7 +49,7 @@ const User = {
         const result = await query(
             `UPDATE users SET ${setClause}, updated_at = NOW()
              WHERE id = $${keys.length + 1}
-             RETURNING id, name, email, phone, role, last_login, login_count`,
+             RETURNING id, name, email, phone, role, profile_photo, last_login, login_count`,
             [...values, id]
         );
         return result.rows[0];

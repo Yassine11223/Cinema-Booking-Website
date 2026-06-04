@@ -230,6 +230,34 @@
         return total;
     }
 
+    function buildFoodReceiptItems() {
+        return Object.entries(cart)
+            .map(([id, qty]) => {
+                const item = FOOD_MENU.find(f => f.id === id);
+                if (!item || qty <= 0) return null;
+                return {
+                    id,
+                    name: item.name,
+                    quantity: qty,
+                    unitPrice: item.price,
+                    total: item.price * qty,
+                };
+            })
+            .filter(Boolean);
+    }
+
+    function getCurrentUser() {
+        const keys = ['thehall_user', 'userData', 'scene_user'];
+        for (const key of keys) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) continue;
+                const user = JSON.parse(raw);
+                if (user && (user.email || user.name)) return user;
+            } catch (_) {}
+        }
+        return null;
+    }
     /* =========================================================
        STEP NAVIGATION
        ========================================================= */
@@ -367,8 +395,14 @@
         try {
             const seatCount = booking.seats ? booking.seats.length : 0;
             const pricePerSeat = seatCount > 0 ? (booking.total || 0) / seatCount : 0;
+            const user = getCurrentUser();
+            const token = localStorage.getItem('authToken');
+            const foodTotal = calcFoodTotal();
+            const ticketTotal = booking.total || 0;
 
             const payload = {
+                userEmail: user?.email || '',
+                userName: user?.name || '',
                 movieTitle: booking.movie?.title || 'Unknown Movie',
                 seats: booking.seats || [],
                 date: booking.date || '',
@@ -377,14 +411,21 @@
                 hall: booking.showtime?.hall || 'Main Hall',
                 pricePerSeat: pricePerSeat,
                 currency: booking.currency || 'EGP',
+                ticketTotal,
+                foodTotal,
+                totalPaid: ticketTotal + foodTotal,
+                paymentMethod: paymentMethod === 'card' ? 'Card' : 'Fawry',
+                foodItems: buildFoodReceiptItems(),
             };
 
             const response = await fetch(`${BACKEND_URL}/api/tickets/generate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
                 body: JSON.stringify(payload),
             });
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 console.warn('[Payment] Ticket generation failed:', response.status, errorData);
