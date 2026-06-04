@@ -8,7 +8,6 @@ const router = express.Router();
 const movieController = require('../controllers/movieController');
 const { authenticate, adminOnly } = require('../middleware/auth');
 const { validateMovie } = require('../middleware/validation');
-const { uploadMovieImage } = require('../middleware/upload');
 const { getMoviePoster, getMultipleMoviePosters } = require('../utils/tmdb');
 const axios = require('axios');
 
@@ -96,7 +95,6 @@ router.get('/poster/:title', async (req, res) => {
     }
 });
 
-router.post('/upload/poster', authenticate, adminOnly, uploadMovieImage);
 router.get('/:id',  movieController.getById);
 router.post('/',    authenticate, adminOnly, validateMovie, movieController.create);
 router.put('/:id',  authenticate, adminOnly, movieController.update);

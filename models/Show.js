@@ -7,14 +7,10 @@ const { query } = require('../config/database');
 const Show = {
     async findAll(filters = {}) {
         let sql = `
-            SELECT s.*, m.title AS movie_title, m.poster_url, m.genre,
-                   t.name AS theater_name, t.capacity, t.screen_type,
-                   COUNT(bs.seat_id) FILTER (WHERE b.status != 'cancelled') AS booked
+            SELECT s.*, m.title AS movie_title, m.poster_url, t.name AS theater_name
             FROM shows s
             JOIN movies m ON s.movie_id = m.id
             JOIN theaters t ON s.theater_id = t.id
-            LEFT JOIN bookings b ON b.show_id = s.id
-            LEFT JOIN booking_seats bs ON bs.booking_id = b.id
         `;
         const params = [];
         const conditions = [];
@@ -33,7 +29,6 @@ const Show = {
             sql += ' WHERE ' + conditions.join(' AND ');
         }
 
-        sql += ' GROUP BY s.id, m.title, m.poster_url, m.genre, t.name, t.capacity, t.screen_type';
         sql += ' ORDER BY s.show_time ASC';
         const result = await query(sql, params);
         return result.rows;

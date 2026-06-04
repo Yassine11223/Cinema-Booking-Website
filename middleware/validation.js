@@ -50,10 +50,6 @@ const validateBooking = (req, res, next) => {
 
     if (!seat_ids || !Array.isArray(seat_ids) || seat_ids.length === 0) {
         errors.push('At least one seat must be selected');
-    } else if (seat_ids.some(id => !Number.isInteger(Number(id)) || Number(id) <= 0)) {
-        errors.push('Seat IDs must be positive integers');
-    } else if (new Set(seat_ids.map(id => Number(id))).size !== seat_ids.length) {
-        errors.push('Duplicate seats are not allowed');
     }
 
     if (errors.length > 0) {

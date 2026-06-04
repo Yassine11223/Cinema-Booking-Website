@@ -745,7 +745,7 @@
         // ── 1. Confirm backend booking (status: pending → confirmed) ──
         const backendBookingId = booking.backendBookingId;
         if (backendBookingId) {
-            const token = localStorage.getItem('userToken');
+            const token = localStorage.getItem('authToken');
             if (token) {
                 fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
                     method: 'PUT',

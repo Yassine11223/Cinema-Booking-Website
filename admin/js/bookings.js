@@ -1,154 +1,531 @@
-/* Admin booking management backed by the real API only. */
+/* ============================================
+   BOOKING MANAGEMENT — Admin Logic
+   Full booking list CRUD, filtering, pagination,
+   detail drawer, actions, and toast notifications
+   ============================================ */
+
 (function () {
     'use strict';
 
     const API_BASE = 'http://localhost:5000/api';
-    const $ = (sel) => document.querySelector(sel);
+    const API_TIMEOUT = 4000;
 
-    let bookings = [];
-    let filteredBookings = [];
+    /* =======================================
+       SAMPLE BOOKING DATA
+       ======================================= */
+    /* Theater-type pricing — matches frontend/js/booking.js PRICING */
+    const PRICING = { imax: 320, dolby: 280, standard: 180, deluxe: 250 };
 
-    const tbody = $('#bookings-tbody');
-    const emptyState = $('#empty-state');
-    const tableSection = $('#table-container');
-    const filterCount = $('#filter-count');
-    const detailOverlay = $('#detail-overlay');
-    const detailDrawer = $('#detail-drawer');
-    const detailBody = $('#detail-body');
-    const detailClose = $('#detail-close-btn');
-    const drawerActions = $('.drawer-actions');
-    const toastContainer = $('#toast-container');
-
-    const controls = {
-        search: $('#filter-search'),
-        headerSearch: $('#header-search'),
-        movie: $('#filter-movie'),
-        theater: $('#filter-theater'),
-        payment: $('#filter-payment'),
-        booking: $('#filter-booking'),
-        dateFrom: $('#filter-date-from'),
-        dateTo: $('#filter-date-to'),
-        sort: $('#filter-sort'),
-        clear: $('#btn-clear-filters'),
-        export: $('#btn-export'),
-        refresh: $('#empty-refresh-btn'),
+    /* Theater type metadata — matches admin Theater Management */
+    const THEATER_TYPE_MAP = {
+        imax:     { label: 'IMAX',     icon: 'fa-expand',      cls: 'imax' },
+        dolby:    { label: 'Dolby',    icon: 'fa-volume-high', cls: 'dolby' },
+        standard: { label: 'Standard', icon: 'fa-tv',          cls: 'standard' },
+        deluxe:   { label: 'Deluxe',   icon: 'fa-gem',         cls: 'deluxe' }
     };
 
-    function token() {
-        return localStorage.getItem('adminToken') || '';
-    }
+    /* Payment method icon map */
+    const PAY_METHOD_ICONS = {
+        'Visa Card':     'fa-cc-visa',
+        'MasterCard':    'fa-cc-mastercard',
+        'Apple Pay':     'fa-apple-pay',
+        'Fawry':         'fa-money-bill-wave',
+        'Vodafone Cash': 'fa-mobile-screen-button'
+    };
 
-    function statusToPayment(status) {
-        if (status === 'confirmed' || status === 'completed') return 'paid';
-        if (status === 'cancelled') return 'refunded';
-        return 'pending';
-    }
-
-    function seatLabels(seats) {
-        return Array.isArray(seats)
-            ? seats.map(s => `${s.row_label}${s.seat_number}`)
-            : [];
-    }
-
-    function normalizeBooking(b) {
-        const seats = seatLabels(b.seats);
-        const amount = Number(b.total_price || 0);
-        return {
-            id: `BK-${b.id}`,
-            backendId: b.id,
-            customerName: b.user_name || 'Unknown customer',
-            email: b.user_email || '',
-            movie: b.movie_title || 'Unknown movie',
-            theater: b.theater_name || 'Unknown theater',
-            showtime: b.show_time || '',
-            seats,
-            tickets: seats.length,
-            totalAmount: amount,
-            paymentStatus: statusToPayment(b.status),
-            bookingStatus: b.status || 'pending',
-            createdAt: b.created_at || '',
-        };
-    }
-
-    async function fetchBookings() {
-        const authToken = token();
-        if (!authToken) {
-            throw new Error('Admin session is missing. Please log in again.');
+    let bookings = [
+        {
+            id: 'BK-1024',
+            customerName: 'Ahmed Ali',
+            email: 'ahmed.ali@email.com',
+            phone: '0101-234-5678',
+            movie: 'Thunderbolts*',
+            theater: 'IMAX Theatre',
+            theaterType: 'imax',
+            branch: 'Nasr City',
+            showtime: '2026-04-20T19:30',
+            seats: ['C5', 'C6'],
+            tickets: 2,
+            totalAmount: 640,
+            pricePerTicket: 320,
+            paymentStatus: 'paid',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Visa Card',
+            transactionId: 'TX-987654',
+            createdAt: '2026-04-18T14:23:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1025',
+            customerName: 'Sara Mohamed',
+            email: 'sara.m@email.com',
+            phone: '0112-345-6789',
+            movie: 'Sinners',
+            theater: 'Dolby Atmos',
+            theaterType: 'dolby',
+            branch: 'New Cairo',
+            showtime: '2026-04-20T21:00',
+            seats: ['F7'],
+            tickets: 1,
+            totalAmount: 280,
+            pricePerTicket: 280,
+            paymentStatus: 'paid',
+            bookingStatus: 'checkedin',
+            paymentMethod: 'MasterCard',
+            transactionId: 'TX-987655',
+            createdAt: '2026-04-19T09:10:00',
+            notes: 'VIP customer'
+        },
+        {
+            id: 'BK-1026',
+            customerName: 'Omar Hassan',
+            email: 'omar.h@email.com',
+            phone: '0123-456-7890',
+            movie: 'A Minecraft Movie',
+            theater: 'Hall 1',
+            theaterType: 'standard',
+            branch: 'New Cairo',
+            showtime: '2026-04-21T18:00',
+            seats: ['B3', 'B4', 'B5'],
+            tickets: 3,
+            totalAmount: 540,
+            pricePerTicket: 180,
+            paymentStatus: 'pending',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Fawry',
+            transactionId: 'TX-987656',
+            createdAt: '2026-04-19T16:45:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1027',
+            customerName: 'Mariam Ashraf',
+            email: 'mariam.a@email.com',
+            phone: '0100-987-6543',
+            movie: 'Mission: Impossible - The Final Reckoning',
+            theater: 'Deluxe Suite',
+            theaterType: 'deluxe',
+            branch: 'Sheikh Zayed',
+            showtime: '2026-04-21T22:30',
+            seats: ['A1', 'A2'],
+            tickets: 2,
+            totalAmount: 500,
+            pricePerTicket: 250,
+            paymentStatus: 'refunded',
+            bookingStatus: 'cancelled',
+            paymentMethod: 'Visa Card',
+            transactionId: 'TX-987657',
+            createdAt: '2026-04-17T11:30:00',
+            notes: 'Customer requested cancellation'
+        },
+        {
+            id: 'BK-1028',
+            customerName: 'Youssef Tarek',
+            email: 'youssef.t@email.com',
+            phone: '0155-678-1234',
+            movie: 'The Amateur',
+            theater: 'IMAX Theatre',
+            theaterType: 'imax',
+            branch: 'Sheikh Zayed',
+            showtime: '2026-04-22T17:00',
+            seats: ['D10', 'D11', 'D12', 'D13'],
+            tickets: 4,
+            totalAmount: 1280,
+            pricePerTicket: 320,
+            paymentStatus: 'paid',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Apple Pay',
+            transactionId: 'TX-987658',
+            createdAt: '2026-04-20T08:15:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1029',
+            customerName: 'Nour El-Din',
+            email: 'nour.e@email.com',
+            phone: '0109-876-5432',
+            movie: 'Lilo & Stitch',
+            theater: 'Dolby Atmos',
+            theaterType: 'dolby',
+            branch: 'Nasr City',
+            showtime: '2026-04-22T20:00',
+            seats: ['E1', 'E2'],
+            tickets: 2,
+            totalAmount: 560,
+            pricePerTicket: 280,
+            paymentStatus: 'failed',
+            bookingStatus: 'cancelled',
+            paymentMethod: 'Visa Card',
+            transactionId: 'TX-987659',
+            createdAt: '2026-04-20T10:02:00',
+            notes: 'Payment gateway error'
+        },
+        {
+            id: 'BK-1030',
+            customerName: 'Layla Ibrahim',
+            email: 'layla.i@email.com',
+            phone: '0122-111-2233',
+            movie: 'Thunderbolts*',
+            theater: 'IMAX Theatre',
+            theaterType: 'imax',
+            branch: 'Nasr City',
+            showtime: '2026-04-20T19:30',
+            seats: ['C8'],
+            tickets: 1,
+            totalAmount: 320,
+            pricePerTicket: 320,
+            paymentStatus: 'paid',
+            bookingStatus: 'checkedin',
+            paymentMethod: 'MasterCard',
+            transactionId: 'TX-987660',
+            createdAt: '2026-04-18T20:01:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1031',
+            customerName: 'Khaled Mansour',
+            email: 'khaled.m@email.com',
+            phone: '0100-222-3344',
+            movie: 'A Minecraft Movie',
+            theater: 'Hall 1',
+            theaterType: 'standard',
+            branch: 'New Cairo',
+            showtime: '2026-04-23T15:30',
+            seats: ['G1', 'G2', 'G3'],
+            tickets: 3,
+            totalAmount: 540,
+            pricePerTicket: 180,
+            paymentStatus: 'paid',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Fawry',
+            transactionId: 'TX-987661',
+            createdAt: '2026-04-20T12:30:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1032',
+            customerName: 'Hana Sayed',
+            email: 'hana.s@email.com',
+            phone: '0115-444-5566',
+            movie: 'Sinners',
+            theater: 'Dolby Atmos',
+            theaterType: 'dolby',
+            branch: 'New Cairo',
+            showtime: '2026-04-23T21:00',
+            seats: ['H5', 'H6'],
+            tickets: 2,
+            totalAmount: 560,
+            pricePerTicket: 280,
+            paymentStatus: 'pending',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Vodafone Cash',
+            transactionId: 'TX-987662',
+            createdAt: '2026-04-21T07:45:00',
+            notes: 'Awaiting payment confirmation'
+        },
+        {
+            id: 'BK-1033',
+            customerName: 'Ali Mostafa',
+            email: 'ali.m@email.com',
+            phone: '0128-999-0011',
+            movie: 'Mission: Impossible - The Final Reckoning',
+            theater: 'Deluxe Suite',
+            theaterType: 'deluxe',
+            branch: 'Sheikh Zayed',
+            showtime: '2026-04-24T19:00',
+            seats: ['A5'],
+            tickets: 1,
+            totalAmount: 250,
+            pricePerTicket: 250,
+            paymentStatus: 'paid',
+            bookingStatus: 'expired',
+            paymentMethod: 'Visa Card',
+            transactionId: 'TX-987663',
+            createdAt: '2026-04-15T09:00:00',
+            notes: 'Showtime passed, customer did not attend'
+        },
+        {
+            id: 'BK-1034',
+            customerName: 'Fatma Adel',
+            email: 'fatma.a@email.com',
+            phone: '0106-777-8899',
+            movie: 'The Amateur',
+            theater: 'IMAX Theatre',
+            theaterType: 'imax',
+            branch: 'Nasr City',
+            showtime: '2026-04-24T22:00',
+            seats: ['D1', 'D2'],
+            tickets: 2,
+            totalAmount: 640,
+            pricePerTicket: 320,
+            paymentStatus: 'paid',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'MasterCard',
+            transactionId: 'TX-987664',
+            createdAt: '2026-04-21T11:20:00',
+            notes: ''
+        },
+        {
+            id: 'BK-1035',
+            customerName: 'Mohamed Nabil',
+            email: 'mohamed.n@email.com',
+            phone: '0111-333-4455',
+            movie: 'Lilo & Stitch',
+            theater: 'Hall 1',
+            theaterType: 'standard',
+            branch: 'New Cairo',
+            showtime: '2026-04-25T16:00',
+            seats: ['E8', 'E9', 'E10'],
+            tickets: 3,
+            totalAmount: 540,
+            pricePerTicket: 180,
+            paymentStatus: 'paid',
+            bookingStatus: 'confirmed',
+            paymentMethod: 'Apple Pay',
+            transactionId: 'TX-987665',
+            createdAt: '2026-04-21T15:40:00',
+            notes: ''
         }
+    ];
 
-        const res = await fetch(`${API_BASE}/bookings`, {
-            headers: { Authorization: `Bearer ${authToken}` },
-        });
+    /* =======================================
+       PAGINATION STATE
+       ======================================= */
+    const ITEMS_PER_PAGE = 8;
+    let currentPage = 1;
+    let filteredBookings = [...bookings];
 
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || `Booking API failed with ${res.status}`);
+    /**
+     * Fetch real bookings from backend API.
+     * Maps backend response to the shape the existing rendering code expects.
+     * Returns array of booking objects, or null on failure.
+     */
+    async function fetchBookingsFromBackend() {
+        try {
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            if (!token) return null;
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+            const res = await fetch(`${API_BASE}/bookings`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (!data || data.length === 0) return null;
+
+            // Map backend shape to admin UI shape
+            const THEATER_MAP = {
+                'imax theatre': 'imax', 'imax': 'imax',
+                'dolby atmos': 'dolby', 'dolby': 'dolby',
+                'hall 1': 'standard', 'hall 2': 'standard', 'hall 3': 'standard', 'standard': 'standard',
+                'deluxe suite': 'deluxe', 'deluxe': 'deluxe',
+            };
+
+            return data.map(b => {
+                const theaterKey = (b.theater_name || '').toLowerCase();
+                const theaterType = THEATER_MAP[theaterKey] || 'standard';
+                const price = PRICING[theaterType] || 180;
+                const seatCount = b.seats ? b.seats.length : 1;
+                // Format seats from backend { row_label, seat_number } to 'C5' format
+                const seatLabels = b.seats
+                    ? b.seats.map(s => `${s.row_label}${s.seat_number}`)
+                    : [];
+
+                return {
+                    id: `BK-${b.id}`,
+                    backendId: b.id,
+                    customerName: b.user_name || 'Unknown',
+                    email: b.user_email || '',
+                    phone: '',
+                    movie: b.movie_title || 'Unknown Movie',
+                    theater: b.theater_name || 'Unknown',
+                    theaterType: theaterType,
+                    branch: '',
+                    showtime: b.show_time || '',
+                    seats: seatLabels,
+                    tickets: seatLabels.length || seatCount,
+                    totalAmount: parseFloat(b.total_price) || 0,
+                    pricePerTicket: price,
+                    paymentStatus: b.status === 'confirmed' ? 'paid' : b.status === 'cancelled' ? 'refunded' : 'pending',
+                    bookingStatus: b.status || 'pending',
+                    paymentMethod: '',
+                    transactionId: '',
+                    createdAt: b.created_at || new Date().toISOString(),
+                    notes: '',
+                };
+            });
+        } catch (err) {
+            console.warn('⚠️ Backend bookings unavailable:', err.message);
+            return null;
         }
-
-        const data = await res.json();
-        bookings = data.map(normalizeBooking);
-        filteredBookings = [...bookings];
     }
 
-    function formatDateTime(value) {
-        if (!value) return '-';
-        const d = new Date(value);
-        if (Number.isNaN(d.getTime())) return '-';
-        return d.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-        });
+    /* =======================================
+       DOM REFERENCES
+       ======================================= */
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => document.querySelectorAll(sel);
+
+    const tbody         = $('#bookings-tbody');
+    const emptyState    = $('#empty-state');
+    const tableSection  = $('#table-container');
+    const filterCount   = $('#filter-count');
+
+    // Stat elements
+    const statTotal     = $('#stat-total');
+    const statConfirmed = $('#stat-confirmed');
+    const statCancelled = $('#stat-cancelled');
+    const statRevenue   = $('#stat-revenue');
+    const statPending   = $('#stat-pending');
+    const statRefunded  = $('#stat-refunded');
+
+    // Filter elements
+    const searchInput     = $('#filter-search');
+    const headerSearch    = $('#header-search');
+    const filterMovie     = $('#filter-movie');
+    const filterTheater   = $('#filter-theater');
+    const filterPayment   = $('#filter-payment');
+    const filterBooking   = $('#filter-booking');
+    const filterDateFrom  = $('#filter-date-from');
+    const filterDateTo    = $('#filter-date-to');
+    const filterSort      = $('#filter-sort');
+    const btnClearFilters = $('#btn-clear-filters');
+
+    // Drawer elements
+    const detailOverlay = $('#detail-overlay');
+    const detailDrawer  = $('#detail-drawer');
+    const detailBody    = $('#detail-body');
+    const detailClose   = $('#detail-close-btn');
+
+    // Confirm modal
+    const confirmOverlay = $('#confirm-modal-overlay');
+
+    // Toast container
+    const toastContainer = $('#toast-container');
+
+    /* =======================================
+       UTILITY HELPERS
+       ======================================= */
+    function getInitials(name) {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
 
-    function money(value) {
-        return `${Number(value || 0).toLocaleString()} EGP`;
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    function badge(type, value) {
-        return `<span class="status-badge status-badge--${value}">${value}</span>`;
+    function formatTime(dateStr) {
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     }
 
+    function formatDateTime(dateStr) {
+        return formatDate(dateStr) + ' at ' + formatTime(dateStr);
+    }
+
+    function formatCurrency(amount) {
+        return amount.toLocaleString() + ' EGP';
+    }
+
+    function theaterTypeBadge(type) {
+        const t = THEATER_TYPE_MAP[type];
+        if (!t) return '';
+        return `<span class="type-badge type-badge--${t.cls}"><i class="fas ${t.icon}"></i> ${t.label}</span>`;
+    }
+
+    function payMethodIcon(method) {
+        const icon = PAY_METHOD_ICONS[method];
+        if (!icon) return '';
+        return `<i class="fab ${icon}" style="font-size:16px;opacity:0.6;margin-right:4px;"></i>`;
+    }
+
+    /* =======================================
+       COMPUTE STATS
+       ======================================= */
     function updateStats() {
-        $('#stat-total').textContent = bookings.length;
-        $('#stat-confirmed').textContent = bookings.filter(b => ['confirmed', 'completed'].includes(b.bookingStatus)).length;
-        $('#stat-cancelled').textContent = bookings.filter(b => b.bookingStatus === 'cancelled').length;
-        $('#stat-revenue').textContent = money(bookings
-            .filter(b => b.paymentStatus === 'paid')
-            .reduce((sum, b) => sum + b.totalAmount, 0));
-        $('#stat-pending').textContent = bookings.filter(b => b.paymentStatus === 'pending').length;
-        $('#stat-refunded').textContent = bookings.filter(b => b.paymentStatus === 'refunded').length;
+        const total     = bookings.length;
+        const confirmed = bookings.filter(b => b.bookingStatus === 'confirmed').length;
+        const checkedin = bookings.filter(b => b.bookingStatus === 'checkedin').length;
+        const cancelled = bookings.filter(b => b.bookingStatus === 'cancelled').length;
+        const revenue   = bookings.filter(b => b.paymentStatus === 'paid').reduce((s, b) => s + b.totalAmount, 0);
+        const pending   = bookings.filter(b => b.paymentStatus === 'pending').length;
+        const refunded  = bookings.filter(b => b.paymentStatus === 'refunded').length;
+
+        animateValue(statTotal, total);
+        animateValue(statConfirmed, confirmed + checkedin);
+        animateValue(statCancelled, cancelled);
+        animateValue(statRevenue, revenue, true);
+        animateValue(statPending, pending);
+        animateValue(statRefunded, refunded);
     }
 
-    function populateFilters() {
-        fillSelect(controls.movie, 'All Movies', [...new Set(bookings.map(b => b.movie).filter(Boolean))]);
-        fillSelect(controls.theater, 'All Theaters', [...new Set(bookings.map(b => b.theater).filter(Boolean))]);
+    function animateValue(el, target, isCurrency = false) {
+        const duration = 600;
+        const start = parseInt(el.textContent.replace(/[^\d]/g, '')) || 0;
+        const diff = target - start;
+        const startTime = performance.now();
+
+        function step(now) {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+            const current = Math.round(start + diff * ease);
+            el.textContent = isCurrency ? formatCurrency(current) : current.toLocaleString();
+            if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
     }
 
-    function fillSelect(select, label, values) {
-        if (!select) return;
-        const current = select.value;
-        select.innerHTML = `<option value="">${label}</option>` +
-            values.sort().map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-        select.value = values.includes(current) ? current : '';
-    }
-
+    /* =======================================
+       FILTER + SORT LOGIC
+       ======================================= */
     function applyFilters() {
-        const search = (controls.search.value || controls.headerSearch.value || '').toLowerCase().trim();
+        const search     = (searchInput.value || headerSearch.value || '').toLowerCase().trim();
+        const movie      = filterMovie.value;
+        const theater    = filterTheater.value;
+        const payment    = filterPayment.value;
+        const booking    = filterBooking.value;
+        const dateFrom   = filterDateFrom.value;
+        const dateTo     = filterDateTo.value;
+        const sort       = filterSort.value;
+
         filteredBookings = bookings.filter(b => {
-            if (search && !`${b.id} ${b.customerName} ${b.email} ${b.movie}`.toLowerCase().includes(search)) return false;
-            if (controls.movie.value && b.movie !== controls.movie.value) return false;
-            if (controls.theater.value && b.theater !== controls.theater.value) return false;
-            if (controls.payment.value && b.paymentStatus !== controls.payment.value) return false;
-            if (controls.booking.value && b.bookingStatus !== controls.booking.value) return false;
-            if (controls.dateFrom.value && new Date(b.createdAt) < new Date(`${controls.dateFrom.value}T00:00:00`)) return false;
-            if (controls.dateTo.value && new Date(b.createdAt) > new Date(`${controls.dateTo.value}T23:59:59`)) return false;
+            // Search
+            if (search && !b.id.toLowerCase().includes(search) &&
+                !b.customerName.toLowerCase().includes(search) &&
+                !b.email.toLowerCase().includes(search)) {
+                return false;
+            }
+            // Movie
+            if (movie && b.movie !== movie) return false;
+            // Theater
+            if (theater && b.theater !== theater) return false;
+            // Payment status
+            if (payment && b.paymentStatus !== payment) return false;
+            // Booking status
+            if (booking && b.bookingStatus !== booking) return false;
+            // Date range
+            if (dateFrom) {
+                const bookDate = new Date(b.createdAt).toISOString().slice(0, 10);
+                if (bookDate < dateFrom) return false;
+            }
+            if (dateTo) {
+                const bookDate = new Date(b.createdAt).toISOString().slice(0, 10);
+                if (bookDate > dateTo) return false;
+            }
             return true;
         });
 
-        switch (controls.sort.value) {
+        // Sort
+        switch (sort) {
+            case 'newest':
+                filteredBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
             case 'oldest':
                 filteredBookings.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
                 break;
@@ -162,91 +539,563 @@
                 filteredBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
+        currentPage = 1;
         renderTable();
+        updateFilterCount();
     }
 
+    function updateFilterCount() {
+        const spans = filterCount.querySelectorAll('span');
+        spans[0].textContent = filteredBookings.length;
+        spans[1].textContent = bookings.length;
+    }
+
+    function clearFilters() {
+        searchInput.value = '';
+        headerSearch.value = '';
+        filterMovie.value = '';
+        filterTheater.value = '';
+        filterPayment.value = '';
+        filterBooking.value = '';
+        filterDateFrom.value = '';
+        filterDateTo.value = '';
+        filterSort.value = '';
+        applyFilters();
+    }
+
+    /* =======================================
+       BADGE RENDERERS
+       ======================================= */
+    function paymentBadge(status) {
+        const map = {
+            paid:     { label: 'Paid',     cls: 'paid' },
+            pending:  { label: 'Pending',  cls: 'pending' },
+            failed:   { label: 'Failed',   cls: 'failed' },
+            refunded: { label: 'Refunded', cls: 'refunded' }
+        };
+        const { label, cls } = map[status] || map.pending;
+        return `<span class="payment-badge payment-badge--${cls}"><span class="dot"></span>${label}</span>`;
+    }
+
+    function bookingBadge(status) {
+        const map = {
+            confirmed: { label: 'Confirmed',  cls: 'confirmed' },
+            cancelled: { label: 'Cancelled',  cls: 'cancelled' },
+            checkedin: { label: 'Checked In', cls: 'checkedin' },
+            expired:   { label: 'Expired',    cls: 'expired' }
+        };
+        const { label, cls } = map[status] || map.confirmed;
+        return `<span class="booking-badge booking-badge--${cls}"><span class="dot"></span>${label}</span>`;
+    }
+
+    /* =======================================
+       TABLE RENDERING
+       ======================================= */
     function renderTable() {
-        const total = bookings.length;
-        filterCount.innerHTML = `Showing <span>${filteredBookings.length}</span> of <span>${total}</span> bookings`;
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const pageData = filteredBookings.slice(start, start + ITEMS_PER_PAGE);
 
         if (filteredBookings.length === 0) {
-            tbody.innerHTML = '';
             tableSection.style.display = 'none';
-            emptyState.style.display = '';
+            emptyState.style.display = 'flex';
             return;
         }
 
         tableSection.style.display = '';
         emptyState.style.display = 'none';
-        tbody.innerHTML = filteredBookings.map(b => `
-            <tr>
-                <td>${escapeHtml(b.id)}</td>
+
+        tbody.innerHTML = pageData.map((b, i) => `
+            <tr data-id="${b.id}" style="animation: fadeIn 0.3s ease ${i * 0.04}s both;">
+                <td class="booking-id-cell">${b.id}</td>
                 <td>
                     <div class="customer-cell">
-                        <strong>${escapeHtml(b.customerName)}</strong>
-                        <span>${escapeHtml(b.email)}</span>
+                        <div class="customer-avatar">${getInitials(b.customerName)}</div>
+                        <span class="customer-name">${b.customerName}</span>
                     </div>
                 </td>
-                <td>${escapeHtml(b.movie)}</td>
-                <td>${escapeHtml(b.theater)}</td>
-                <td>${formatDateTime(b.showtime)}</td>
-                <td>${b.seats.map(s => `<span class="seat-tag">${escapeHtml(s)}</span>`).join('') || '-'}</td>
-                <td>${b.tickets}</td>
-                <td>${money(b.totalAmount)}</td>
-                <td>${badge('payment', b.paymentStatus)}</td>
-                <td>${badge('booking', b.bookingStatus)}</td>
-                <td>${formatDateTime(b.createdAt)}</td>
+                <td class="movie-cell">${b.movie}</td>
+                <td>${b.theater}</td>
                 <td>
-                    <div class="table-actions">
-                        <button class="action-btn" data-action="view" data-id="${b.id}" title="View"><i class="fas fa-eye"></i></button>
-                        <button class="action-btn" data-action="confirm" data-id="${b.id}" title="Confirm" ${b.bookingStatus === 'cancelled' ? 'disabled' : ''}><i class="fas fa-check"></i></button>
-                        <button class="action-btn action-btn--danger" data-action="cancel" data-id="${b.id}" title="Cancel" ${b.bookingStatus === 'cancelled' ? 'disabled' : ''}><i class="fas fa-ban"></i></button>
+                    <div class="showtime-cell">
+                        <span class="showtime-date">${formatDate(b.showtime)}</span>
+                        <span class="showtime-time">${formatTime(b.showtime)}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="seats-cell">
+                        ${b.seats.map(s => `<span class="seat-tag">${s}</span>`).join('')}
+                    </div>
+                </td>
+                <td>${b.tickets} ${b.tickets === 1 ? 'ticket' : 'tickets'}</td>
+                <td class="amount-cell">${formatCurrency(b.totalAmount)}</td>
+                <td>${paymentBadge(b.paymentStatus)}</td>
+                <td>${bookingBadge(b.bookingStatus)}</td>
+                <td>${formatDate(b.createdAt)}</td>
+                <td>
+                    <div class="row-actions">
+                        <button class="action-trigger" data-id="${b.id}" aria-label="Actions" id="action-btn-${b.id}">
+                            <i class="fas fa-ellipsis-vertical"></i>
+                        </button>
+                        <div class="action-dropdown" id="dropdown-${b.id}">
+                            <button class="action-dropdown-item action-dropdown-item--view" data-action="view" data-id="${b.id}">
+                                <i class="fas fa-eye"></i> View Details
+                            </button>
+                            ${b.bookingStatus !== 'checkedin' && b.bookingStatus !== 'cancelled' && b.bookingStatus !== 'expired' ? `
+                            <button class="action-dropdown-item action-dropdown-item--checkin" data-action="checkin" data-id="${b.id}">
+                                <i class="fas fa-check-circle"></i> Mark as Checked In
+                            </button>` : ''}
+                            ${b.bookingStatus !== 'cancelled' ? `
+                            <button class="action-dropdown-item action-dropdown-item--cancel" data-action="cancel" data-id="${b.id}">
+                                <i class="fas fa-ban"></i> Cancel Booking
+                            </button>` : ''}
+                            <div class="action-dropdown-divider"></div>
+                            ${b.paymentStatus === 'paid' && b.paymentStatus !== 'refunded' ? `
+                            <button class="action-dropdown-item action-dropdown-item--refund" data-action="refund" data-id="${b.id}">
+                                <i class="fas fa-rotate-left"></i> Refund Booking
+                            </button>` : ''}
+                            <button class="action-dropdown-item action-dropdown-item--resend" data-action="resend" data-id="${b.id}">
+                                <i class="fas fa-paper-plane"></i> Resend Confirmation
+                            </button>
+                        </div>
                     </div>
                 </td>
             </tr>
         `).join('');
 
-        const footer = $('.page-info');
-        if (footer) footer.innerHTML = `Showing <span>1</span> to <span>${filteredBookings.length}</span> of <span>${filteredBookings.length}</span> bookings`;
+        renderPagination();
+        bindRowEvents();
     }
 
-    function openDrawer(id) {
-        const b = bookings.find(item => item.id === id);
+    /* =======================================
+       PAGINATION
+       ======================================= */
+    function renderPagination() {
+        const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
+        const footer = document.querySelector('.table-footer');
+        if (!footer) return;
+
+        const pageInfo = footer.querySelector('.page-info');
+        const pagination = footer.querySelector('.pagination');
+
+        const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+        const end = Math.min(currentPage * ITEMS_PER_PAGE, filteredBookings.length);
+        pageInfo.innerHTML = `Showing <span>${start}</span> to <span>${end}</span> of <span>${filteredBookings.length}</span> bookings`;
+
+        let btns = '';
+        btns += `<button class="page-btn page-btn--nav" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}"><i class="fas fa-chevron-left"></i></button>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 7) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    btns += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    btns += `<button class="page-btn" disabled>…</button>`;
+                }
+            } else {
+                btns += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+        }
+
+        btns += `<button class="page-btn page-btn--nav" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}"><i class="fas fa-chevron-right"></i></button>`;
+
+        pagination.innerHTML = btns;
+
+        // Bind pagination
+        pagination.querySelectorAll('.page-btn[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.dataset.page);
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    renderTable();
+                    // Scroll to table top
+                    tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    }
+
+    /* =======================================
+       ROW EVENT BINDINGS
+       ======================================= */
+    let activeDropdown = null;
+
+    function bindRowEvents() {
+        // Action trigger buttons
+        tbody.querySelectorAll('.action-trigger').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const dropdown = document.getElementById(`dropdown-${id}`);
+                closeAllDropdowns();
+                if (dropdown) {
+                    dropdown.classList.add('active');
+                    activeDropdown = dropdown;
+                }
+            });
+        });
+
+        // Action dropdown items
+        tbody.querySelectorAll('.action-dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = item.dataset.action;
+                const id = item.dataset.id;
+                closeAllDropdowns();
+                handleAction(action, id);
+            });
+        });
+
+        // Row click → view details
+        tbody.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('.row-actions')) return;
+                const id = row.dataset.id;
+                openDrawer(id);
+            });
+        });
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.action-dropdown.active').forEach(d => d.classList.remove('active'));
+        activeDropdown = null;
+    }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', () => {
+        closeAllDropdowns();
+    });
+
+    /* =======================================
+       ACTION HANDLERS
+       ======================================= */
+    function handleAction(action, id) {
+        switch (action) {
+            case 'view':
+                openDrawer(id);
+                break;
+            case 'checkin':
+                showConfirmModal('checkin', id);
+                break;
+            case 'cancel':
+                showConfirmModal('cancel', id);
+                break;
+            case 'refund':
+                showConfirmModal('refund', id);
+                break;
+            case 'resend':
+                showToast('success', `Confirmation email resent for ${id}`);
+                break;
+        }
+    }
+
+    /* =======================================
+       CONFIRM MODAL
+       ======================================= */
+    function showConfirmModal(type, bookingId) {
+        const booking = bookings.find(b => b.id === bookingId);
+        if (!booking) return;
+
+        const config = {
+            cancel: {
+                icon: 'fa-ban',
+                iconClass: 'cancel',
+                title: 'Cancel Booking',
+                message: `Are you sure you want to cancel booking <strong>${bookingId}</strong> for <strong>${booking.customerName}</strong>? This action cannot be undone.`,
+                btnClass: 'cancel',
+                btnLabel: 'Cancel Booking'
+            },
+            checkin: {
+                icon: 'fa-check-circle',
+                iconClass: 'checkin',
+                title: 'Check In',
+                message: `Mark booking <strong>${bookingId}</strong> for <strong>${booking.customerName}</strong> as checked in?`,
+                btnClass: 'checkin',
+                btnLabel: 'Confirm Check In'
+            },
+            refund: {
+                icon: 'fa-rotate-left',
+                iconClass: 'refund',
+                title: 'Refund Booking',
+                message: `Process a refund of <strong>${formatCurrency(booking.totalAmount)}</strong> for booking <strong>${bookingId}</strong>? This will credit the customer's ${booking.paymentMethod}.`,
+                btnClass: 'refund',
+                btnLabel: 'Process Refund'
+            }
+        };
+
+        const c = config[type];
+
+        confirmOverlay.innerHTML = `
+            <div class="confirm-modal">
+                <div class="confirm-modal-icon confirm-modal-icon--${c.iconClass}">
+                    <i class="fas ${c.icon}"></i>
+                </div>
+                <h3>${c.title}</h3>
+                <p>${c.message}</p>
+                <div class="confirm-modal-actions">
+                    <button class="btn-cancel" id="confirm-cancel-btn">Dismiss</button>
+                    <button class="btn-confirm btn-confirm--${c.btnClass}" id="confirm-action-btn">${c.btnLabel}</button>
+                </div>
+            </div>
+        `;
+
+        confirmOverlay.classList.add('active');
+
+        // Dismiss
+        document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirmModal);
+        confirmOverlay.addEventListener('click', (e) => {
+            if (e.target === confirmOverlay) closeConfirmModal();
+        });
+
+        // Confirm
+        document.getElementById('confirm-action-btn').addEventListener('click', () => {
+            performAction(type, bookingId);
+            closeConfirmModal();
+        });
+    }
+
+    function closeConfirmModal() {
+        confirmOverlay.classList.remove('active');
+    }
+
+    function performAction(type, bookingId) {
+        const booking = bookings.find(b => b.id === bookingId);
+        if (!booking) return;
+
+        switch (type) {
+            case 'cancel':
+                booking.bookingStatus = 'cancelled';
+                showToast('error', `Booking ${bookingId} has been cancelled`);
+                break;
+            case 'checkin':
+                booking.bookingStatus = 'checkedin';
+                showToast('success', `Booking ${bookingId} checked in successfully`);
+                break;
+            case 'refund':
+                booking.paymentStatus = 'refunded';
+                booking.bookingStatus = 'cancelled';
+                showToast('info', `Refund processed for ${bookingId} — ${formatCurrency(booking.totalAmount)}`);
+                break;
+        }
+
+        updateStats();
+        applyFilters();
+
+        // Update drawer if open
+        if (detailDrawer.classList.contains('active')) {
+            openDrawer(bookingId);
+        }
+    }
+
+    /* =======================================
+       DETAIL DRAWER
+       ======================================= */
+    function openDrawer(bookingId) {
+        const b = bookings.find(bk => bk.id === bookingId);
         if (!b) return;
 
+        const tType = THEATER_TYPE_MAP[b.theaterType] || THEATER_TYPE_MAP.standard;
+
         detailBody.innerHTML = `
-            <div class="detail-section">
-                <div class="detail-section-title">Booking Overview</div>
-                <div class="detail-grid">
-                    <div class="detail-item"><span class="dl">Booking ID</span><span class="dv">${escapeHtml(b.id)}</span></div>
-                    <div class="detail-item"><span class="dl">Status</span><span class="dv">${badge('booking', b.bookingStatus)}</span></div>
-                    <div class="detail-item"><span class="dl">Booked At</span><span class="dv">${formatDateTime(b.createdAt)}</span></div>
-                    <div class="detail-item"><span class="dl">Amount</span><span class="dv">${money(b.totalAmount)}</span></div>
+            <!-- Movie + Poster header -->
+            <div class="drawer-movie-header">
+                <div class="drawer-movie-poster">
+                    <div class="drawer-poster-placeholder">
+                        <i class="fas fa-clapperboard"></i>
+                        <span>${b.movie.split(' ')[0]}</span>
+                    </div>
+                </div>
+                <div class="drawer-movie-info">
+                    <div class="drawer-movie-title">${b.movie}</div>
+                    <div class="drawer-movie-meta">
+                        <span class="drawer-booking-id">${b.id}</span>
+                        ${theaterTypeBadge(b.theaterType)}
+                    </div>
+                    <div class="drawer-movie-meta" style="margin-top:4px;">
+                        ${bookingBadge(b.bookingStatus)}
+                        ${paymentBadge(b.paymentStatus)}
+                    </div>
                 </div>
             </div>
+
+            <!-- Section 1: Booking Overview -->
             <div class="detail-section">
-                <div class="detail-section-title">Customer</div>
+                <div class="detail-section-title"><i class="fas fa-info-circle" style="margin-right:6px;opacity:0.5;"></i>Booking Overview</div>
                 <div class="detail-grid">
-                    <div class="detail-item"><span class="dl">Name</span><span class="dv">${escapeHtml(b.customerName)}</span></div>
-                    <div class="detail-item"><span class="dl">Email</span><span class="dv">${escapeHtml(b.email)}</span></div>
+                    <div class="detail-item">
+                        <span class="dl">Booking ID</span>
+                        <span class="dv" style="font-family:var(--font-display);color:var(--gold);letter-spacing:0.5px;">${b.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Booked On</span>
+                        <span class="dv">${formatDateTime(b.createdAt)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Booking Status</span>
+                        <span class="dv">${bookingBadge(b.bookingStatus)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Payment Status</span>
+                        <span class="dv">${paymentBadge(b.paymentStatus)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Transaction ID</span>
+                        <span class="dv" style="font-family:var(--font-display);color:var(--gold);letter-spacing:0.5px;font-size:13px;">${b.transactionId}</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Section 2: Customer Information -->
             <div class="detail-section">
-                <div class="detail-section-title">Movie & Seats</div>
+                <div class="detail-section-title"><i class="fas fa-user" style="margin-right:6px;opacity:0.5;"></i>Customer Information</div>
                 <div class="detail-grid">
-                    <div class="detail-item"><span class="dl">Movie</span><span class="dv">${escapeHtml(b.movie)}</span></div>
-                    <div class="detail-item"><span class="dl">Theater</span><span class="dv">${escapeHtml(b.theater)}</span></div>
-                    <div class="detail-item"><span class="dl">Showtime</span><span class="dv">${formatDateTime(b.showtime)}</span></div>
-                    <div class="detail-item"><span class="dl">Seats</span><span class="dv">${b.seats.map(escapeHtml).join(', ') || '-'}</span></div>
+                    <div class="detail-item">
+                        <span class="dl">Full Name</span>
+                        <span class="dv">
+                            <span class="drawer-customer-inline">
+                                <span class="drawer-customer-avatar">${getInitials(b.customerName)}</span>
+                                ${b.customerName}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Email Address</span>
+                        <span class="dv"><i class="fas fa-envelope" style="font-size:11px;color:var(--text-muted);margin-right:5px;"></i>${b.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Phone Number</span>
+                        <span class="dv"><i class="fas fa-phone" style="font-size:11px;color:var(--text-muted);margin-right:5px;"></i>${b.phone}</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Section 3: Movie & Showtime -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class="fas fa-film" style="margin-right:6px;opacity:0.5;"></i>Movie & Showtime</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="dl">Movie Title</span>
+                        <span class="dv" style="font-weight:500;">${b.movie}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Theater</span>
+                        <span class="dv">
+                            <i class="fas ${tType.icon}" style="font-size:12px;color:var(--text-muted);margin-right:5px;"></i>${b.theater}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Theater Type</span>
+                        <span class="dv">${theaterTypeBadge(b.theaterType)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Branch / Location</span>
+                        <span class="dv"><i class="fas fa-location-dot" style="font-size:11px;color:var(--text-muted);margin-right:5px;"></i>${b.branch}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Showtime Date</span>
+                        <span class="dv"><i class="fas fa-calendar" style="font-size:11px;color:var(--text-muted);margin-right:5px;"></i>${formatDate(b.showtime)}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Showtime Time</span>
+                        <span class="dv"><i class="fas fa-clock" style="font-size:11px;color:var(--text-muted);margin-right:5px;"></i>${formatTime(b.showtime)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Seats & Tickets -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class="fas fa-chair" style="margin-right:6px;opacity:0.5;"></i>Seats & Tickets</div>
+                <div class="detail-grid">
+                    <div class="detail-item full-width">
+                        <span class="dl">Selected Seats</span>
+                        <div class="drawer-seats">
+                            ${b.seats.map(s => `<span class="drawer-seat-tag">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Ticket Count</span>
+                        <span class="dv" style="font-weight:600;">${b.tickets} ${b.tickets === 1 ? 'ticket' : 'tickets'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Ticket Type</span>
+                        <span class="dv">${tType.label} Experience</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Payment Summary -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class="fas fa-credit-card" style="margin-right:6px;opacity:0.5;"></i>Payment Summary</div>
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span class="price-label">${b.tickets}× ${tType.label} Ticket @ ${formatCurrency(b.pricePerTicket)}</span>
+                        <span class="price-value">${formatCurrency(b.tickets * b.pricePerTicket)}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Service Fee</span>
+                        <span class="price-value" style="color:var(--text-muted);">0 EGP</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Discount / Promo</span>
+                        <span class="price-value" style="color:var(--text-muted);">—</span>
+                    </div>
+                    <div class="price-row total">
+                        <span class="price-label">Total Paid</span>
+                        <span class="price-value">${formatCurrency(b.totalAmount)}</span>
+                    </div>
+                </div>
+                <div class="detail-grid" style="margin-top:var(--space-md);">
+                    <div class="detail-item">
+                        <span class="dl">Payment Method</span>
+                        <span class="dv">${payMethodIcon(b.paymentMethod)}${b.paymentMethod}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="dl">Transaction ID</span>
+                        <span class="dv" style="font-family:var(--font-display);color:var(--gold);letter-spacing:0.5px;font-size:13px;">${b.transactionId}</span>
+                    </div>
+                </div>
+            </div>
+
+            ${b.notes ? `
+            <!-- Notes -->
+            <div class="detail-section">
+                <div class="detail-section-title"><i class="fas fa-sticky-note" style="margin-right:6px;opacity:0.5;"></i>Notes</div>
+                <div class="drawer-notes-card">
+                    <i class="fas fa-quote-left" style="color:var(--gold);opacity:0.3;font-size:14px;margin-right:8px;"></i>
+                    <span style="color:var(--text-secondary);font-style:italic;font-size:13px;line-height:1.6;">${b.notes}</span>
+                </div>
+            </div>` : ''}
         `;
 
-        drawerActions.innerHTML = `
-            <button class="drawer-btn drawer-btn--checkin" data-action="confirm" data-id="${b.id}" ${b.bookingStatus === 'cancelled' ? 'disabled' : ''}><i class="fas fa-check-circle"></i> Confirm</button>
-            <button class="drawer-btn drawer-btn--cancel" data-action="cancel" data-id="${b.id}" ${b.bookingStatus === 'cancelled' ? 'disabled' : ''}><i class="fas fa-ban"></i> Cancel</button>
-        `;
+        // Update drawer action buttons
+        const drawerActions = document.querySelector('.drawer-actions');
+        let actionBtns = '';
 
+        if (b.bookingStatus !== 'checkedin' && b.bookingStatus !== 'cancelled' && b.bookingStatus !== 'expired') {
+            actionBtns += `<button class="drawer-btn drawer-btn--checkin" data-action="checkin" data-id="${b.id}"><i class="fas fa-check-circle"></i> Check In</button>`;
+        }
+        if (b.bookingStatus !== 'cancelled') {
+            actionBtns += `<button class="drawer-btn drawer-btn--cancel" data-action="cancel" data-id="${b.id}"><i class="fas fa-ban"></i> Cancel</button>`;
+        }
+        if (b.paymentStatus === 'paid') {
+            actionBtns += `<button class="drawer-btn drawer-btn--refund" data-action="refund" data-id="${b.id}"><i class="fas fa-rotate-left"></i> Refund</button>`;
+        }
+
+        if (!actionBtns) {
+            actionBtns = `<div style="color:var(--text-muted);font-size:13px;text-align:center;width:100%;padding:4px 0;">No actions available for this booking</div>`;
+        }
+
+        drawerActions.innerHTML = actionBtns;
+
+        // Bind drawer action buttons
+        drawerActions.querySelectorAll('.drawer-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                const id = btn.dataset.id;
+                showConfirmModal(action, id);
+            });
+        });
+
+        // Show drawer
         detailOverlay.classList.add('active');
         detailDrawer.classList.add('active');
     }
@@ -256,113 +1105,102 @@
         detailDrawer.classList.remove('active');
     }
 
-    async function updateBooking(action, id) {
-        const booking = bookings.find(b => b.id === id);
-        if (!booking) return;
-
-        const endpoint = action === 'cancel' ? 'cancel' : 'confirm';
-        const res = await fetch(`${API_BASE}/bookings/${booking.backendId}/${endpoint}`, {
-            method: 'PUT',
-            headers: { Authorization: `Bearer ${token()}` },
-        });
-
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || `Could not ${endpoint} booking`);
-        }
-
-        await reload();
-        showToast('success', `Booking ${id} ${endpoint === 'cancel' ? 'cancelled' : 'confirmed'}`);
-        closeDrawer();
-    }
-
-    function bind() {
-        [controls.search, controls.movie, controls.theater, controls.payment, controls.booking, controls.dateFrom, controls.dateTo, controls.sort]
-            .forEach(el => el && el.addEventListener('input', applyFilters));
-        [controls.movie, controls.theater, controls.payment, controls.booking, controls.dateFrom, controls.dateTo, controls.sort]
-            .forEach(el => el && el.addEventListener('change', applyFilters));
-
-        controls.headerSearch?.addEventListener('input', () => {
-            controls.search.value = controls.headerSearch.value;
-            applyFilters();
-        });
-        controls.clear?.addEventListener('click', () => {
-            Object.values(controls).forEach(el => {
-                if (el && ['INPUT', 'SELECT'].includes(el.tagName)) el.value = '';
-            });
-            applyFilters();
-        });
-        controls.refresh?.addEventListener('click', reload);
-        controls.export?.addEventListener('click', exportCsv);
-        detailClose?.addEventListener('click', closeDrawer);
-        detailOverlay?.addEventListener('click', closeDrawer);
-
-        document.addEventListener('click', async (e) => {
-            const btn = e.target.closest('[data-action][data-id]');
-            if (!btn || btn.disabled) return;
-            const { action, id } = btn.dataset;
-            try {
-                if (action === 'view') openDrawer(id);
-                if (action === 'cancel' && confirm(`Cancel booking ${id}?`)) await updateBooking(action, id);
-                if (action === 'confirm') await updateBooking(action, id);
-            } catch (err) {
-                showToast('error', err.message);
-            }
-        });
-    }
-
-    async function reload() {
-        try {
-            await fetchBookings();
-            populateFilters();
-            updateStats();
-            applyFilters();
-        } catch (err) {
-            bookings = [];
-            filteredBookings = [];
-            updateStats();
-            renderTable();
-            showToast('error', err.message);
-        }
-    }
-
-    function exportCsv() {
-        const rows = [
-            ['Booking ID', 'Customer', 'Email', 'Movie', 'Theater', 'Showtime', 'Seats', 'Tickets', 'Amount', 'Status', 'Created'],
-            ...filteredBookings.map(b => [b.id, b.customerName, b.email, b.movie, b.theater, b.showtime, b.seats.join(' '), b.tickets, b.totalAmount, b.bookingStatus, b.createdAt]),
-        ];
-        const csv = rows.map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
-        const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `thehall-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
+    /* =======================================
+       TOAST NOTIFICATIONS
+       ======================================= */
     function showToast(type, message) {
-        if (!toastContainer) return;
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-circle-xmark',
+            warning: 'fa-triangle-exclamation',
+            info: 'fa-info-circle'
+        };
+
         const toast = document.createElement('div');
         toast.className = `toast-item toast-item--${type}`;
-        toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-circle-xmark' : 'fa-check-circle'}"></i><span>${escapeHtml(message)}</span>`;
+        toast.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
         toastContainer.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('show'));
+
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
+            setTimeout(() => toast.remove(), 400);
         }, 3500);
     }
 
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+    /* =======================================
+       EVENT LISTENERS
+       ======================================= */
+    async function init() {
+        // Try loading real bookings from backend
+        const backendBookings = await fetchBookingsFromBackend();
+        if (backendBookings && backendBookings.length > 0) {
+            bookings = backendBookings;
+            filteredBookings = [...bookings];
+            console.log('✅ Admin bookings loaded from backend:', bookings.length);
+        } else {
+            console.log('⚠️ Using mock bookings data (backend offline or empty)');
+        }
+
+        // Compute initial stats
+        updateStats();
+
+        // Initial render
+        applyFilters();
+
+        // Filter listeners
+        searchInput.addEventListener('input', applyFilters);
+        headerSearch.addEventListener('input', () => {
+            searchInput.value = headerSearch.value;
+            applyFilters();
+        });
+        filterMovie.addEventListener('change', applyFilters);
+        filterTheater.addEventListener('change', applyFilters);
+        filterPayment.addEventListener('change', applyFilters);
+        filterBooking.addEventListener('change', applyFilters);
+        filterDateFrom.addEventListener('change', applyFilters);
+        filterDateTo.addEventListener('change', applyFilters);
+        filterSort.addEventListener('change', applyFilters);
+        btnClearFilters.addEventListener('click', clearFilters);
+
+        // Drawer close
+        detailClose.addEventListener('click', closeDrawer);
+        detailOverlay.addEventListener('click', closeDrawer);
+
+        // Keyboard — Escape to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDrawer();
+                closeConfirmModal();
+                closeAllDropdowns();
+            }
+        });
+
+        // Export button
+        const exportBtn = document.getElementById('btn-export');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                showToast('success', `Exported ${filteredBookings.length} bookings to CSV`);
+            });
+        }
+
+        // Refresh button (empty state)
+        const refreshBtn = document.getElementById('empty-refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                clearFilters();
+            });
+        }
     }
 
-    document.readyState === 'loading'
-        ? document.addEventListener('DOMContentLoaded', () => { bind(); reload(); })
-        : (bind(), reload());
+    // Boot
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
 })();

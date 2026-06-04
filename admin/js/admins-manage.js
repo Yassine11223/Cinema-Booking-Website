@@ -3,7 +3,7 @@
  * Super Admin page — manage admin accounts.
  * Load all users, filter to admin/superadmin roles, display as cards.
  * Supports creating new admin accounts and deleting existing ones.
- * Requires backend API data for admin account management.
+ * Falls back to localStorage when backend is offline.
  */
 
 (function () {
@@ -109,7 +109,7 @@
     async function loadAdmins() {
         showLoading(true);
         try {
-            const token = localStorage.getItem('adminToken') || '';
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
@@ -126,9 +126,20 @@
             allUsers = await res.json();
             console.log(`[Admins] Loaded ${allUsers.length} users from API`);
         } catch (err) {
-            console.warn('[Admins] Backend unavailable. Admin data was not loaded:', err.message);
-            allUsers = [];
-            toast('Admin accounts could not be loaded from the backend. Start the API server and refresh.', 'error');
+            console.log('[Admins] Backend offline, using local data. Reason:', err.message);
+            try {
+                const localUsers  = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+                const cachedUsers = JSON.parse(localStorage.getItem('scene_admin_users')) || [];
+
+                const emailSet = new Set();
+                allUsers = [];
+                localUsers.forEach(u => {
+                    if (!emailSet.has(u.email)) { emailSet.add(u.email); allUsers.push(u); }
+                });
+                cachedUsers.forEach(u => {
+                    if (!emailSet.has(u.email)) { emailSet.add(u.email); allUsers.push(u); }
+                });
+            } catch (_) { allUsers = []; }
         }
 
         // Filter to admin and superadmin roles
@@ -198,7 +209,7 @@
         // Get current user to prevent self-deletion
         let currentUserId = null;
         try {
-            const userData = localStorage.getItem('adminUser');
+            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
             if (userData) currentUserId = JSON.parse(userData).id;
         } catch (_) {}
 
@@ -337,7 +348,7 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> CREATING…'; }
 
         try {
-            const token = localStorage.getItem('adminToken') || '';
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
             const res = await fetch(`${API_BASE}/users/admin/create`, {
                 method: 'POST',
                 headers: {
@@ -356,7 +367,31 @@
                 toast(data.message || 'Failed to create admin.', 'error');
             }
         } catch (err) {
-            toast('Failed to create admin: ' + err.message, 'error');
+            // Offline fallback — create locally
+            console.log('[Admins] Backend offline, creating admin locally.', err.message);
+            const newAdmin = {
+                id: Date.now(),
+                name,
+                email,
+                phone,
+                role: 'admin',
+                password,
+                created_at: new Date().toISOString(),
+                last_login: null,
+                login_count: 0
+            };
+
+            // Check duplicate
+            const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+            if (localUsers.find(u => u.email === email)) {
+                toast('Email already registered.', 'error');
+            } else {
+                localUsers.push(newAdmin);
+                localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
+                toast(`Admin "${name}" created locally!`, 'success');
+                closeAddModal();
+                await loadAdmins();
+            }
         } finally {
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> CREATE ADMIN'; }
         }
@@ -397,19 +432,20 @@
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }
 
         try {
-            const token = localStorage.getItem('adminToken') || '';
-            const res = await fetch(`${API_BASE}/users/${deleteTargetId}`, {
+            const token = localStorage.getItem('admin_token') || '';
+            await fetch(`${API_BASE}/users/${deleteTargetId}`, {
                 method: 'DELETE',
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
-            if (!res.ok) throw new Error('API error ' + res.status);
-        } catch (err) {
-            toast('Delete failed: ' + err.message, 'error');
-            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-times"></i> Delete'; }
-            return;
-        }
+        } catch (_) {}
 
+        // Remove from local data
         allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
+        try {
+            let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
+            localUsers = localUsers.filter(u => String(u.id) !== String(deleteTargetId));
+            localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
+        } catch (_) {}
 
         adminUsers = allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin');
 
