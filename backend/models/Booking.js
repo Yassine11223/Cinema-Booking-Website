@@ -31,6 +31,10 @@ const bookingSchema = new mongoose.Schema(
             enum: ['pending', 'confirmed', 'cancelled', 'completed'],
             default: 'pending',
         },
+        active: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
@@ -47,6 +51,13 @@ bookingSchema.virtual('id').get(function () {
 bookingSchema.index({ user_id: 1 });
 bookingSchema.index({ show_id: 1 });
 bookingSchema.index({ status: 1 });
+bookingSchema.index(
+    { show_id: 1, seats: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { active: true },
+    }
+);
 
 // ---- Static Methods ----
 
@@ -60,6 +71,7 @@ bookingSchema.statics.findAll = async function () {
                 { path: 'theater_id', select: 'name' },
             ],
         })
+        .populate('seats', 'row_label seat_number seat_type')
         .sort({ created_at: -1 });
 
     return bookings.map((b) => {
@@ -69,6 +81,7 @@ bookingSchema.statics.findAll = async function () {
         obj.movie_title = obj.show_id?.movie_id?.title || null;
         obj.show_time = obj.show_id?.show_time || null;
         obj.theater_name = obj.show_id?.theater_id?.name || null;
+        obj.seat_labels = (obj.seats || []).map((s) => `${s.row_label}${s.seat_number}`);
         return obj;
     });
 };
@@ -82,7 +95,8 @@ bookingSchema.statics.findByIdPopulated = async function (id) {
                 { path: 'movie_id', select: 'title' },
                 { path: 'theater_id', select: 'name' },
             ],
-        });
+        })
+        .populate('seats', 'row_label seat_number seat_type');
 
     if (!booking) return null;
 
@@ -92,6 +106,7 @@ bookingSchema.statics.findByIdPopulated = async function (id) {
     obj.movie_title = obj.show_id?.movie_id?.title || null;
     obj.show_time = obj.show_id?.show_time || null;
     obj.theater_name = obj.show_id?.theater_id?.name || null;
+    obj.seat_labels = (obj.seats || []).map((s) => `${s.row_label}${s.seat_number}`);
     return obj;
 };
 
@@ -104,6 +119,7 @@ bookingSchema.statics.findByUser = async function (userId) {
                 { path: 'theater_id', select: 'name' },
             ],
         })
+        .populate('seats', 'row_label seat_number seat_type')
         .sort({ created_at: -1 });
 
     return bookings.map((b) => {
@@ -112,36 +128,33 @@ bookingSchema.statics.findByUser = async function (userId) {
         obj.poster_url = obj.show_id?.movie_id?.poster_url || null;
         obj.show_time = obj.show_id?.show_time || null;
         obj.theater_name = obj.show_id?.theater_id?.name || null;
+        obj.seat_labels = (obj.seats || []).map((s) => `${s.row_label}${s.seat_number}`);
         return obj;
     });
 };
 
 bookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const booking = new this({
+        user_id,
+        show_id,
+        seats: seat_ids,
+        total_price,
+        status: 'pending',
+        active: true,
+    });
 
-    try {
-        const booking = new this({
-            user_id,
-            show_id,
-            seats: seat_ids,
-            total_price,
-            status: 'pending',
-        });
-
-        await booking.save({ session });
-        await session.commitTransaction();
-        return booking;
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        session.endSession();
-    }
+    return booking.save();
 };
 
 bookingSchema.statics.updateStatus = async function (id, status) {
-    return this.findByIdAndUpdate(id, { status }, { new: true });
+    return this.findByIdAndUpdate(
+        id,
+        {
+            status,
+            active: status !== 'cancelled',
+        },
+        { new: true }
+    );
 };
 
 bookingSchema.statics.getBookingSeats = async function (bookingId) {
@@ -149,9 +162,11 @@ bookingSchema.statics.getBookingSeats = async function (bookingId) {
     if (!booking) return [];
 
     return booking.seats.map((s) => ({
+        id: s._id.toString(),
         row_label: s.row_label,
         seat_number: s.seat_number,
         seat_type: s.seat_type,
+        label: `${s.row_label}${s.seat_number}`,
     }));
 };
 

@@ -4,6 +4,7 @@
 
 const Booking = require('../models/Booking');
 const Show = require('../models/Show');
+const Seat = require('../models/Seat');
 const { sendTicketEmail } = require('../utils/emailService');
 
 async function sendBookingConfirmationEmail(bookingId) {
@@ -55,6 +56,13 @@ const bookingController = {
     async create(req, res, next) {
         try {
             const { show_id, seat_ids } = req.body;
+            const uniqueSeatIds = [...new Set(seat_ids.map((id) => id.toString()))];
+
+            if (uniqueSeatIds.length !== seat_ids.length) {
+                return res.status(400).json({
+                    message: 'Duplicate seats are not allowed in one booking.',
+                });
+            }
 
             // Get show to calculate price
             const show = await Show.findById(show_id);
@@ -62,17 +70,50 @@ const bookingController = {
                 return res.status(404).json({ message: 'Show not found' });
             }
 
-            const total_price = parseFloat(show.price) * seat_ids.length;
+            const seats = await Seat.find({
+                _id: { $in: uniqueSeatIds },
+                theater_id: show.theater_id,
+            }).select('_id row_label seat_number');
+
+            if (seats.length !== uniqueSeatIds.length) {
+                return res.status(400).json({
+                    message: 'One or more selected seats are invalid for this show.',
+                });
+            }
+
+            const existingBooking = await Booking.findOne({
+                show_id,
+                active: true,
+                seats: { $in: uniqueSeatIds },
+            }).populate('seats', 'row_label seat_number');
+
+            if (existingBooking) {
+                const blockedSeatLabels = existingBooking.seats
+                    .filter((seat) => uniqueSeatIds.includes(seat._id.toString()))
+                    .map((seat) => `${seat.row_label}${seat.seat_number}`);
+
+                return res.status(409).json({
+                    message: 'One or more selected seats are no longer available.',
+                    seats: blockedSeatLabels,
+                });
+            }
+
+            const total_price = parseFloat(show.price) * uniqueSeatIds.length;
 
             const booking = await Booking.createBooking({
                 user_id: req.user.id,
                 show_id,
-                seat_ids,
+                seat_ids: uniqueSeatIds,
                 total_price,
             });
 
             res.status(201).json(booking);
         } catch (error) {
+            if (error.code === 11000) {
+                return res.status(409).json({
+                    message: 'One or more selected seats are no longer available.',
+                });
+            }
             next(error);
         }
     },

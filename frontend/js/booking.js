@@ -49,13 +49,6 @@
     }
     const MOVIE = loadMovieData();
 
-    const PRICING = {
-        IMAX: 320,
-        Dolby: 280,
-        Standard: 180,
-        Deluxe: 250,
-    };
-
     // ============================================
     // HALL LAYOUTS — different for each experience
     // IMAX = biggest, Dolby = slightly smaller,
@@ -149,12 +142,6 @@
     // ============================================
     // UTILITIES
     // ============================================
-    function hash(s) {
-        let h = 0;
-        for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h &= h; }
-        return Math.abs(h);
-    }
-
     function getLayout(expType) {
         return HALL_LAYOUTS[expType] || HALL_LAYOUTS.Standard;
     }
@@ -201,6 +188,10 @@
         'vip': 'Deluxe', 'deluxe': 'Deluxe', 'deluxe suite': 'Deluxe',
     };
 
+    function emptyShowtimes() {
+        return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
+    }
+
     /**
      * Fetch showtimes from backend API.
      * Returns the same { IMAX: [...], Dolby: [...] } shape the renderer expects.
@@ -242,9 +233,10 @@
                 const mins = dt.getMinutes();
                 const timeStr = `${String(hrs % 12 || 12).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
                 grouped[exp].push({
-                    id: show.id,              // real backend ID (numeric)
+                    id: show.id,              // real MongoDB show ID
                     time: timeStr,
                     hall: show.theater_name || 'Hall',
+                    price: Number(show.price) || 0,
                     sold: false,
                     backendId: show.id,       // keep reference
                 });
@@ -264,7 +256,7 @@
      */
     async function fetchSeatStatesFromAPI(showId, expType) {
         try {
-            // showId must be a numeric backend ID
+            // showId must be a MongoDB backend ID
             if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null; // mock ID like 'imx1-..'
             
             const controller = new AbortController();
@@ -295,21 +287,27 @@
      */
     async function createBookingOnBackend(showId, seatLabels) {
         try {
-            // showId must be numeric backend ID
-            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
-            const token = localStorage.getItem('authToken');
-            if (!token) return null;
+            // showId must be a MongoDB backend ID
+            if (typeof showId === 'string' && showId.match(/^[a-z]/)) {
+                throw new Error('Select a real backend showtime before checkout.');
+            }
+            const token = localStorage.getItem('userToken') || localStorage.getItem('authToken');
+            if (!token) {
+                throw new Error('Please sign in as a customer before checkout.');
+            }
 
             // We need seat IDs (database IDs), not labels.
             // First get all seats for this show to map labels -> IDs
             const seatsRes = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`);
-            if (!seatsRes.ok) return null;
+            if (!seatsRes.ok) throw new Error('Could not refresh seat availability.');
             const allSeats = await seatsRes.json();
             const seatIdMap = {};
             allSeats.forEach(s => { seatIdMap[`${s.row_label}${s.seat_number}`] = s.id; });
 
             const seat_ids = seatLabels.map(label => seatIdMap[label]).filter(Boolean);
-            if (seat_ids.length === 0) return null;
+            if (seat_ids.length !== seatLabels.length) {
+                throw new Error('One or more selected seats are no longer available.');
+            }
 
             const res = await fetch(`${CFG.API_BASE}/bookings`, {
                 method: 'POST',
@@ -322,88 +320,15 @@
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 console.warn('⚠️ Booking API error:', err.message || res.status);
-                return null;
+                throw new Error(err.message || `Booking failed with HTTP ${res.status}`);
             }
             const booking = await res.json();
             console.log('✅ Booking created in backend:', booking.id);
             return booking;
         } catch (err) {
             console.warn('⚠️ Backend booking creation failed:', err.message);
-            return null;
+            throw err;
         }
-    }
-
-    // ============================================
-    // MOCK FALLBACKS — used when backend is offline
-    // ============================================
-    function genShowtimes(dateKey) {
-        const movieIdStr = (typeof MOVIE !== 'undefined' && MOVIE) ? (MOVIE.id || MOVIE.title || '') : '';
-        const h = hash(dateKey + movieIdStr);
-        
-        // Generate an offset in 15 minute increments (between -45 and +135 minutes)
-        // using the movie ID hash so it's consistent per movie but different across movies.
-        const mHash = hash(movieIdStr || 'default');
-        const offsetMins = ((mHash % 13) - 3) * 15;
-        
-        function t(baseTime) {
-            const [hh, mm] = baseTime.split(':').map(Number);
-            let totalMins = hh * 60 + mm + offsetMins;
-            if (totalMins < 0) totalMins += 24 * 60;
-            const newH = Math.floor(totalMins / 60) % 24;
-            const newM = totalMins % 60;
-            return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
-        }
-        
-        return {
-            IMAX: [
-                { id: `imx1-${dateKey}`, time: t('12:00'), hall: 'IMAX Theatre', sold: false },
-                { id: `imx2-${dateKey}`, time: t('15:30'), hall: 'IMAX Theatre', sold: false },
-                { id: `imx3-${dateKey}`, time: t('19:00'), hall: 'IMAX Theatre', sold: (h % 4 === 0) },
-                { id: `imx4-${dateKey}`, time: t('22:15'), hall: 'IMAX Theatre', sold: false },
-            ],
-            Dolby: [
-                { id: `dlb1-${dateKey}`, time: t('11:00'), hall: 'Dolby Atmos', sold: false },
-                { id: `dlb2-${dateKey}`, time: t('14:00'), hall: 'Dolby Atmos', sold: (h % 5 === 0) },
-                { id: `dlb3-${dateKey}`, time: t('17:30'), hall: 'Dolby Atmos', sold: false },
-                { id: `dlb4-${dateKey}`, time: t('21:00'), hall: 'Dolby Atmos', sold: false },
-            ],
-            Standard: [
-                { id: `std1-${dateKey}`, time: t('11:30'), hall: 'Hall 1', sold: false },
-                { id: `std2-${dateKey}`, time: t('14:15'), hall: 'Hall 1', sold: false },
-                { id: `std3-${dateKey}`, time: t('17:00'), hall: 'Hall 3', sold: (h % 7 === 0) },
-                { id: `std4-${dateKey}`, time: t('20:30'), hall: 'Hall 1', sold: false },
-                { id: `std5-${dateKey}`, time: t('23:00'), hall: 'Hall 3', sold: false },
-            ],
-            Deluxe: [
-                { id: `dlx1-${dateKey}`, time: t('13:00'), hall: 'Deluxe Suite', sold: false },
-                { id: `dlx2-${dateKey}`, time: t('16:30'), hall: 'Deluxe Suite', sold: (h % 6 === 0) },
-                { id: `dlx3-${dateKey}`, time: t('19:45'), hall: 'Deluxe Suite', sold: false },
-            ],
-        };
-    }
-
-    /**
-     * Deterministically generate booked + held seats for a showtime.
-     * FALLBACK: used when backend is offline.
-     */
-    function genSeatStates(showtimeId, expType) {
-        const all = getAllSeatIds(expType);
-        const h = hash(showtimeId);
-        const booked = new Set();
-        const held = new Set();
-
-        const numBooked = Math.floor(all.length * (0.32 + (h % 12) * 0.012));
-        for (let i = 0; i < numBooked; i++) {
-            booked.add(all[Math.abs((h * (i + 7)) % all.length)]);
-        }
-
-        const numHeld = 3 + (h % 5);
-        for (let i = 0; i < numHeld; i++) {
-            const seat = all[Math.abs((h * (i + 41) + 19) % all.length)];
-            if (!booked.has(seat)) held.add(seat);
-        }
-
-        return { booked: [...booked], held: [...held] };
     }
 
     // ============================================
@@ -422,7 +347,10 @@
         confirmed: false,
         view: 'selection',
 
-        get price() { return this.stType ? (PRICING[this.stType] || 0) : 0; },
+        get price() {
+            const st = this.showtime;
+            return st ? (Number(st.price) || 0) : 0;
+        },
         get total() { return this.selected.length * this.price; },
         get remain() {
             if (!this.timerStart) return CFG.TIMER_DURATION;
@@ -470,8 +398,8 @@
             S.timerStart = d.timerStart;
             S.confirmed = d.confirmed || false;
             S.view = d.view || 'selection';
-            if (S.dateKey) S.showtimes = genShowtimes(S.dateKey);
-            if (S.stId && S.stType) S.seatStates = genSeatStates(S.stId, S.stType);
+            S.showtimes = emptyShowtimes();
+            S.seatStates = null;
             return true;
         } catch (_) { return false; }
     }
@@ -821,9 +749,11 @@
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
 
-        // Try backend API first, fall back to mock
         const apiShowtimes = await fetchShowtimesFromAPI(key);
-        S.showtimes = apiShowtimes || genShowtimes(key);
+        S.showtimes = apiShowtimes || emptyShowtimes();
+        if (!apiShowtimes) {
+            toast('No backend showtimes found for this date.', 'warning');
+        }
 
         save();
         renderDates();
@@ -836,9 +766,16 @@
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
 
-        // Try backend API for real seat availability, fall back to mock
         const apiSeats = await fetchSeatStatesFromAPI(id, exp);
-        S.seatStates = apiSeats || genSeatStates(id, exp);
+        if (!apiSeats) {
+            S.stId = null;
+            S.stType = null;
+            S.seatStates = null;
+            toast('Seat availability could not be loaded from the backend.', 'error');
+            renderShowtimes();
+            return;
+        }
+        S.seatStates = apiSeats;
 
         save();
 
@@ -882,21 +819,38 @@
     async function onCheckout() {
         if (!S.stId) { toast('Select a showtime first.', 'warning'); return; }
         if (S.selected.length === 0) { toast('Select at least one seat.', 'warning'); return; }
+
+        // Create a real booking in the backend database before showing success.
+        let backendBooking;
+        try {
+            backendBooking = await createBookingOnBackend(S.stId, S.selected);
+        } catch (err) {
+            S.confirmed = false;
+            stopTimer();
+            renderBottomBar();
+            renderTimer();
+            const refreshedSeats = await fetchSeatStatesFromAPI(S.stId, S.stType);
+            if (refreshedSeats) {
+                S.seatStates = refreshedSeats;
+                S.selected = S.selected.filter(seat => !refreshedSeats.booked.includes(seat));
+                renderSeatMap();
+                renderBottomBar();
+            }
+            toast(err.message || 'Booking failed. Please try again.', 'error');
+            save();
+            return;
+        }
+
         S.confirmed = true;
         stopTimer();
         save();
         renderBottomBar();
         renderTimer();
 
-        // Try to create a real booking in the backend database
-        let backendBookingId = null;
-        const backendBooking = await createBookingOnBackend(S.stId, S.selected);
-        if (backendBooking) {
-            backendBookingId = backendBooking.id;
-            toast('Booking saved to database!', 'success');
-        }
+        const backendBookingId = backendBooking.id;
+        toast('Booking saved to database!', 'success');
 
-        // Save booking summary for payment page (user info comes from localStorage)
+        // Save the confirmed MongoDB booking summary for the payment page.
         const st = S.showtime;
         const date = S.dates.find(d => d.key === S.dateKey);
         sessionStorage.setItem('bookingSummary', JSON.stringify({
@@ -968,10 +922,24 @@
         const restored = load();
         if (!restored) {
             S.dateKey = S.dates[0].key;
-            // Try backend API first for initial showtimes
             const apiShowtimes = await fetchShowtimesFromAPI(S.dateKey);
-            S.showtimes = apiShowtimes || genShowtimes(S.dateKey);
+            S.showtimes = apiShowtimes || emptyShowtimes();
+            if (!apiShowtimes) {
+                toast('No backend showtimes are available. Please check MongoDB/API data.', 'warning');
+            }
             S.view = 'selection';
+        } else {
+            const apiShowtimes = await fetchShowtimesFromAPI(S.dateKey);
+            S.showtimes = apiShowtimes || emptyShowtimes();
+            if (!apiShowtimes) {
+                S.view = 'selection';
+                S.stId = null;
+                S.stType = null;
+                S.selected = [];
+                S.timerStart = null;
+                S.confirmed = false;
+                toast('Restored showtimes could not be loaded from the backend.', 'warning');
+            }
         }
 
         renderMovieHeader();
@@ -979,9 +947,22 @@
         renderShowtimes();
 
         if (S.view === 'seatmap' && S.stId && S.stType) {
-            // Try refreshing seat states from API on page reload
             const apiSeats = await fetchSeatStatesFromAPI(S.stId, S.stType);
-            if (apiSeats) S.seatStates = apiSeats;
+            if (!apiSeats) {
+                S.view = 'selection';
+                S.stId = null;
+                S.stType = null;
+                S.selected = [];
+                S.timerStart = null;
+                S.confirmed = false;
+                toast('Seat availability could not be refreshed from the backend.', 'error');
+                renderDates();
+                renderShowtimes();
+                showView('selection');
+                save();
+                return;
+            }
+            S.seatStates = apiSeats;
             renderLegend();
             renderSeatMap();
             renderTimer();

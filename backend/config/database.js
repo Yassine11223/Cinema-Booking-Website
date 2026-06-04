@@ -4,9 +4,10 @@
  */
 
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/cinema_db';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cinema_db';
 
 /**
  * Connect to MongoDB.

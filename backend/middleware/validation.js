@@ -43,13 +43,22 @@ const validateLogin = (req, res, next) => {
 const validateBooking = (req, res, next) => {
     const { show_id, seat_ids } = req.body;
     const errors = [];
+    const objectIdPattern = /^[0-9a-fA-F]{24}$/;
 
     if (!show_id) {
         errors.push('Show ID is required');
+    } else if (!objectIdPattern.test(show_id)) {
+        errors.push('Show ID must be a valid MongoDB ObjectId');
     }
 
     if (!seat_ids || !Array.isArray(seat_ids) || seat_ids.length === 0) {
         errors.push('At least one seat must be selected');
+    } else {
+        seat_ids.forEach((seatId) => {
+            if (!objectIdPattern.test(String(seatId))) {
+                errors.push('Every selected seat ID must be a valid MongoDB ObjectId');
+            }
+        });
     }
 
     if (errors.length > 0) {

@@ -5,7 +5,8 @@
  * Usage: npm run seed
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { connectDB, mongoose } = require('../config/database');
 
 // Import models
