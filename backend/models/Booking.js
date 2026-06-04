@@ -117,27 +117,26 @@ bookingSchema.statics.findByUser = async function (userId) {
 };
 
 bookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const booking = new this({
+        user_id,
+        show_id,
+        seats: seat_ids,
+        total_price,
+        status: 'pending',
+    });
 
-    try {
-        const booking = new this({
-            user_id,
-            show_id,
-            seats: seat_ids,
-            total_price,
-            status: 'pending',
-        });
+    await booking.save();
+    return booking;
+};
 
-        await booking.save({ session });
-        await session.commitTransaction();
-        return booking;
-    } catch (error) {
-        await session.abortTransaction();
-        throw error;
-    } finally {
-        session.endSession();
-    }
+bookingSchema.statics.findActiveSeatConflicts = async function (showId, seatIds) {
+    if (!Array.isArray(seatIds) || seatIds.length === 0) return [];
+
+    return this.find({
+        show_id: showId,
+        status: { $ne: 'cancelled' },
+        seats: { $in: seatIds },
+    }).select('seats');
 };
 
 bookingSchema.statics.updateStatus = async function (id, status) {

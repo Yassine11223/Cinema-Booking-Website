@@ -18,9 +18,11 @@ const bookingRoutes = require('./routes/bookings');
 const userRoutes = require('./routes/users');
 const paymentRoutes = require('./routes/payments');
 const showRoutes = require('./routes/shows');
+const seatRoutes = require('./routes/seats');
 const theaterRoutes = require('./routes/theaters');
 const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
+const chatbotBookingRoutes = require('./routes/chatbotBooking');
 const contactRoutes = require('./routes/contact');
 
 const app = express();
@@ -54,9 +56,11 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/shows', showRoutes);
+app.use('/api/seats', seatRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/chatbot', chatbotBookingRoutes);
 app.use('/api/contact', contactRoutes);
 
 // Health check

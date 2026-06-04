@@ -48,39 +48,51 @@ showSchema.statics.findAll = async function (filters = {}) {
 
     if (filters.movieId) query.movie_id = filters.movieId;
     if (filters.date) {
-        const d = new Date(filters.date);
-        const nextDay = new Date(d);
-        nextDay.setDate(nextDay.getDate() + 1);
-        query.show_time = { $gte: d, $lt: nextDay };
+        const [year, month, day] = String(filters.date).split('-').map(Number);
+        const start = year && month && day
+            ? new Date(year, month - 1, day, 0, 0, 0, 0)
+            : new Date(filters.date);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        query.show_time = { $gte: start, $lt: end };
     }
 
-    return this.find(query)
-        .populate('movie_id', 'title poster_url')
-        .populate('theater_id', 'name')
+    const Seat = mongoose.model('Seat');
+
+    const shows = await this.find(query)
+        .populate('movie_id', 'title poster_url tmdb_id')
+        .populate('theater_id', 'name capacity screen_type')
         .sort({ show_time: 1 })
-        .then((shows) =>
-            shows.map((s) => {
-                const obj = s.toObject();
-                obj.movie_title = obj.movie_id?.title || null;
-                obj.poster_url = obj.movie_id?.poster_url || null;
-                obj.theater_name = obj.theater_id?.name || null;
-                return obj;
-            })
-        );
+
+    return Promise.all(shows.map(async (s) => {
+        const obj = s.toObject();
+        const availableSeats = await Seat.findAvailableByShow(s._id);
+        obj.movie_title = obj.movie_id?.title || null;
+        obj.tmdb_id = obj.movie_id?.tmdb_id || null;
+        obj.poster_url = obj.movie_id?.poster_url || null;
+        obj.theater_name = obj.theater_id?.name || null;
+        obj.theater_type = obj.theater_id?.screen_type || null;
+        obj.capacity = obj.theater_id?.capacity || 0;
+        obj.available_seats = availableSeats.length;
+        obj.sold_out = availableSeats.length === 0;
+        return obj;
+    }));
 };
 
 showSchema.statics.findByIdPopulated = async function (id) {
     const show = await this.findById(id)
-        .populate('movie_id', 'title duration')
-        .populate('theater_id', 'name capacity');
+        .populate('movie_id', 'title duration tmdb_id')
+        .populate('theater_id', 'name capacity screen_type');
 
     if (!show) return null;
 
     const obj = show.toObject();
     obj.movie_title = obj.movie_id?.title || null;
+    obj.tmdb_id = obj.movie_id?.tmdb_id || null;
     obj.duration = obj.movie_id?.duration || null;
     obj.theater_name = obj.theater_id?.name || null;
     obj.capacity = obj.theater_id?.capacity || null;
+    obj.theater_type = obj.theater_id?.screen_type || null;
     return obj;
 };
 

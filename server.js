@@ -22,6 +22,7 @@ const showRoutes = require('./routes/shows');
 const theaterRoutes = require('./routes/theaters');
 const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
+const chatbotBookingRoutes = require('./routes/chatbotBooking');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -60,6 +61,7 @@ app.use('/api/shows', showRoutes);
 app.use('/api/theaters', theaterRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/chatbot', chatbotBookingRoutes);
 app.use('/auth', authRoutes);
 
 // Health check

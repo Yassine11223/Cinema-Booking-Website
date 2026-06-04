@@ -62,6 +62,20 @@ const bookingController = {
                 return res.status(404).json({ message: 'Show not found' });
             }
 
+            const conflicts = await Booking.findActiveSeatConflicts(show_id, seat_ids);
+            if (conflicts.length > 0) {
+                const bookedSeatIds = [
+                    ...new Set(conflicts.flatMap((booking) => (
+                        booking.seats || []
+                    ).map((seatId) => seatId.toString()))),
+                ].filter((seatId) => seat_ids.map(String).includes(seatId));
+
+                return res.status(409).json({
+                    message: 'Selected seats are already booked.',
+                    bookedSeatIds,
+                });
+            }
+
             const total_price = parseFloat(show.price) * seat_ids.length;
 
             const booking = await Booking.createBooking({
@@ -73,6 +87,12 @@ const bookingController = {
 
             res.status(201).json(booking);
         } catch (error) {
+            console.error('[BookingController] Failed to create booking:', {
+                message: error.message,
+                show_id: req.body?.show_id,
+                seat_ids: req.body?.seat_ids,
+                user_id: req.user?.id,
+            });
             next(error);
         }
     },

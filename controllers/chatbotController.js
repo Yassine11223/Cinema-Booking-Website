@@ -6,6 +6,17 @@
 
 const { getChatResponse } = require('../utils/openaiClient');
 const { getFallbackResponse } = require('../utils/chatbotFallback');
+const { getShowtimesReplyForTmdbMovie } = require('./chatbotBookingController');
+
+function isShowtimeQuestion(message) {
+    return /\b(showtime|show\s*time|schedule|when|what\s*time|times?)\b/i.test(message);
+}
+
+function isBookingStart(message) {
+    const msg = message.toLowerCase().trim();
+    return /^(i\s+want\s+to\s+book|book\s+a\s+ticket|book\s+ticket|buy\s+a\s+ticket|buy\s+ticket|let'?s\s+book|start\s+booking|get\s+tickets|i\s+want\s+tickets|book\s+now|book\s+me)/.test(msg)
+        || /^book$/.test(msg);
+}
 
 /**
  * POST /api/chatbot
@@ -40,6 +51,21 @@ async function handleChat(req, res) {
         };
         const history = Array.isArray(conversationHistory) ? conversationHistory : [];
 
+        if (isShowtimeQuestion(trimmedMessage) && context.movieContext?.tmdb_id) {
+            const result = await getShowtimesReplyForTmdbMovie(context.movieContext.tmdb_id);
+            return res.json(result);
+        }
+
+        if (isBookingStart(trimmedMessage)) {
+            return res.json({
+                reply: "Great, let's book your tickets. First, I'll show you the movies currently playing.",
+                type: 'booking_start',
+                suggestions: [],
+                actionRequired: 'get_movies',
+                source: 'fallback',
+            });
+        }
+
         // Attempt OpenAI first
         const apiKey = process.env.OPENAI_API_KEY;
 
@@ -50,6 +76,7 @@ async function handleChat(req, res) {
                     reply: aiResult.reply,
                     type: aiResult.type,
                     suggestions: aiResult.suggestions,
+                    actionRequired: aiResult.actionRequired || null,
                     source: 'openai',
                 });
             } catch (err) {
@@ -64,6 +91,7 @@ async function handleChat(req, res) {
             reply: fallback.reply,
             type: fallback.type,
             suggestions: fallback.suggestions,
+            actionRequired: fallback.actionRequired || null,
             source: 'fallback',
         });
 
