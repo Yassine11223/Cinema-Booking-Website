@@ -4,7 +4,6 @@
 
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
-const Movie = require('../models/Movie');
 
 const showController = {
     // GET /api/shows
@@ -12,22 +11,8 @@ const showController = {
         try {
             let { movieId, date } = req.query;
 
-            // If frontend sends TMDB numeric ID, convert it to MongoDB movie _id
             if (movieId && !/^[0-9a-fA-F]{24}$/.test(movieId)) {
-                const movie = await Movie.findOne({
-                    $or: [
-                        { tmdb_id: movieId },
-                        { tmdb_id: Number(movieId) }
-                    ]
-                });
-
-                if (!movie) {
-                    return res.status(404).json({
-                        message: 'Movie not found for this TMDB ID'
-                    });
-                }
-
-                movieId = movie._id.toString();
+                return res.status(400).json({ message: 'movieId must be a MongoDB movie ID' });
             }
 
             const shows = await Show.findAll({ movieId, date });

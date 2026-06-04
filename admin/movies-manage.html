@@ -48,9 +48,9 @@
                         <i class="fas fa-plus"></i>
                         Add Manually
                     </button>
-                    <button class="btn-add-api" id="btn-open-api" title="Import from TMDB">
+                    <button class="btn-add-api" id="btn-open-api" title="External imports disabled">
                         <i class="fas fa-cloud-download-alt"></i>
-                        Import from TMDB
+                        Import Disabled
                     </button>
                 </div>
             </header>
@@ -229,14 +229,14 @@
     </div>
 
     <!-- =============================================
-         MODAL: IMPORT FROM TMDB
+         MODAL: IMPORT DISABLED
          ============================================= -->
     <div class="modal-overlay" id="modal-api" role="dialog" aria-modal="true" aria-labelledby="modal-api-title">
         <div class="modal-panel" id="modal-api-panel">
             <div class="modal-header">
                 <h2 class="modal-title" id="modal-api-title">
                     <i class="fas fa-cloud-download-alt"></i>
-                    Import from TMDB
+                    External Import Disabled
                 </h2>
                 <button class="modal-close" id="modal-api-close" aria-label="Close"><i class="fas fa-times"></i></button>
             </div>
@@ -244,12 +244,12 @@
             <div class="tmdb-search-row">
                 <div class="search-box tmdb-search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="tmdb-search-input" class="search-input" placeholder="Search TMDB for a movie…" autocomplete="off">
+                    <input type="text" id="tmdb-search-input" class="search-input" placeholder="External imports are disabled" autocomplete="off" disabled>
                 </div>
-                <button class="btn-tmdb-search" id="btn-tmdb-search">
+                <button class="btn-tmdb-search" id="btn-tmdb-search" disabled>
                     <i class="fas fa-search"></i> Search
                 </button>
-                <button class="btn-tmdb-search" id="btn-tmdb-sync" style="background:var(--success);border-color:var(--success);margin-left:8px;" title="Auto-load current Now Playing movies">
+                <button class="btn-tmdb-search" id="btn-tmdb-sync" style="background:var(--success);border-color:var(--success);margin-left:8px;" title="Sync disabled" disabled>
                     <i class="fas fa-sync-alt"></i> Sync Now Playing
                 </button>
             </div>
@@ -257,14 +257,14 @@
             <div class="tmdb-results" id="tmdb-results">
                 <div class="tmdb-hint" id="tmdb-hint">
                     <i class="fas fa-film"></i>
-                    <p>Type a movie title above and hit Search</p>
+                    <p>Add movies manually so they are saved to MongoDB.</p>
                 </div>
                 <!-- JS fills result cards here -->
             </div>
 
             <div class="tmdb-api-notice">
                 <i class="fas fa-info-circle"></i>
-                Data provided by <a href="https://www.themoviedb.org" target="_blank">TMDB</a>. Requires <code>TMDB_API_KEY</code> in your <code>.env</code> file.
+                External movie imports are disabled for this real-data pass.
             </div>
         </div>
     </div>

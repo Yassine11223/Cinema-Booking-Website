@@ -1,168 +1,58 @@
 /**
- * users-admin.js
- * User management — KPI cards show dummy stats,
- * Registered Accounts table shows real users from localStorage.
- * Falls back to localStorage when backend is offline.
+ * Admin users.
+ * Source of truth: MongoDB backend API only.
  */
-
 (function () {
     'use strict';
 
-    /* =========================================================
-       CONFIG
-       ========================================================= */
-    const API_BASE    = 'http://localhost:5000/api';
-    const STORAGE_KEY = 'scene_admin_users';
-    const API_TIMEOUT = 3000;
+    const API_BASE = 'http://localhost:5000/api';
+    const $ = (id) => document.getElementById(id);
 
-    /* =========================================================
-       STATE
-       ========================================================= */
-    let allUsers      = [];
+    let users = [];
     let filteredUsers = [];
-    let currentRole   = 'all';
-    let currentSearch = '';
-    let currentSort   = 'created_desc';
-    let deleteTargetId   = null;
-    let deleteTargetName = '';
+    let currentRole = 'all';
+    let currentSort = 'created_desc';
+    let deleteTargetId = null;
 
-    /* =========================================================
-       AVATAR COLOURS
-       ========================================================= */
-    const AVATAR_COLORS = [
-        '#b71c1c','#880e4f','#4a148c','#1a237e','#0d47a1',
-        '#006064','#1b5e20','#e65100','#bf360c','#4e342e'
-    ];
-    function avatarColor(id) { return AVATAR_COLORS[Number(id) % AVATAR_COLORS.length]; }
-    function initials(name)   { return (name || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase(); }
-
-    /* =========================================================
-       DOM REFS
-       ========================================================= */
-    const $ = id => document.getElementById(id);
-
-    /* =========================================================
-       INIT
-       ========================================================= */
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    function esc(value) {
+        return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    async function init() {
-        setDate();
-        bindEvents();
-        await loadUsers();
+    function token() {
+        return localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
     }
 
-    function setDate() {
-        const el = $('today-date-text');
-        if (el) el.textContent = new Date().toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
-    }
-
-    /* =========================================================
-       BIND EVENTS
-       ========================================================= */
-    function bindEvents() {
-        const refreshBtn = $('btn-refresh-users');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', async () => {
-                refreshBtn.classList.add('spinning');
-                await loadUsers();
-                refreshBtn.classList.remove('spinning');
-            });
-        }
-
-        const searchEl = $('user-search');
-        if (searchEl) searchEl.addEventListener('input', debounce(applyFilters, 300));
-        
-        const sortEl = $('sort-users');
-        if (sortEl) sortEl.addEventListener('change', () => { currentSort = sortEl.value; applyFilters(); });
-
-        document.querySelectorAll('[data-role]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('[data-role]').forEach(b => b.classList.remove('ftab-active'));
-                btn.classList.add('ftab-active');
-                currentRole = btn.dataset.role;
-                applyFilters();
-            });
+    async function api(path, options = {}) {
+        const response = await fetch(`${API_BASE}${path}`, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+                ...(options.headers || {}),
+            },
         });
-
-        // Delete modal
-        const delClose = $('modal-del-user-close');
-        if (delClose) delClose.addEventListener('click', closeDelModal);
-        const delCancel = $('del-user-cancel');
-        if (delCancel) delCancel.addEventListener('click', closeDelModal);
-        const delOverlay = $('modal-del-user');
-        if (delOverlay) delOverlay.addEventListener('click', e => { if (e.target === delOverlay) closeDelModal(); });
-        const delConfirm = $('btn-confirm-del-user');
-        if (delConfirm) delConfirm.addEventListener('click', confirmDeleteUser);
-
-        // Detail modal
-        const detailClose = $('modal-detail-close');
-        if (detailClose) detailClose.addEventListener('click', () => { const m = $('modal-user-detail'); if (m) m.classList.remove('open'); });
-        const detailOverlay = $('modal-user-detail');
-        if (detailOverlay) detailOverlay.addEventListener('click', e => { if (e.target === detailOverlay) detailOverlay.classList.remove('open'); });
-
-        // Export CSV
-        const exportBtn = $('btn-export-csv');
-        if (exportBtn) exportBtn.addEventListener('click', exportCsv);
-
-        // Escape closes modals
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') {
-                closeDelModal();
-                const m = $('modal-user-detail');
-                if (m) m.classList.remove('open');
-            }
-        });
+        if (!response.ok) throw new Error(`${path} returned ${response.status}`);
+        return response.json();
     }
 
-    /* =========================================================
-       LOAD USERS — real registered accounts only
-       ========================================================= */
+    function initials(name) {
+        return (name || '?').split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function avatarColor(id) {
+        const colors = ['#b71c1c', '#4a148c', '#0d47a1', '#006064', '#1b5e20', '#e65100'];
+        const text = String(id || '');
+        const total = text.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+        return colors[total % colors.length];
+    }
+
     async function loadUsers() {
         showLoading(true);
         try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-            const res = await fetch(`${API_BASE}/users`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                signal: controller.signal
-            });
-            clearTimeout(timeout);
-
-            if (!res.ok) throw new Error('API error ' + res.status);
-            allUsers = await res.json();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
-            console.log(`[Users] Loaded ${allUsers.length} users from API`);
-        } catch (err) {
-            console.log('[Users] Backend offline, using local data. Reason:', err.message);
-            try {
-                const localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-                const cachedUsers = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-                
-                const emailSet = new Set();
-                allUsers = [];
-                localUsers.forEach(u => {
-                    if (!emailSet.has(u.email)) {
-                        emailSet.add(u.email);
-                        allUsers.push(u);
-                    }
-                });
-                cachedUsers.forEach(u => {
-                    if (!emailSet.has(u.email)) {
-                        emailSet.add(u.email);
-                        allUsers.push(u);
-                    }
-                });
-            } catch (_) { allUsers = []; }
+            users = await api('/users');
+        } catch (error) {
+            users = [];
+            toast(`Unable to load backend users: ${error.message}`, 'error');
         }
         showLoading(false);
         applyFilters();
@@ -170,330 +60,183 @@
         renderLoginChart();
     }
 
-    /* =========================================================
-       FILTERS & SORT
-       ========================================================= */
+    function updateKpis() {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+        const activeThisWeek = users.filter((user) => user.last_login && Date.now() - new Date(user.last_login).getTime() <= 7 * 86400000).length;
+        const newThisMonth = users.filter((user) => {
+            if (!user.created_at) return false;
+            const date = new Date(user.created_at);
+            return date.getMonth() === month && date.getFullYear() === year;
+        }).length;
+        const admins = users.filter((user) => user.role === 'admin' || user.role === 'superadmin').length;
+        setText('kpi-total', users.length);
+        setText('kpi-active', activeThisWeek);
+        setText('kpi-new', newThisMonth);
+        setText('kpi-admins', admins);
+    }
+
     function applyFilters() {
-        const searchEl = $('user-search');
-        currentSearch = (searchEl ? searchEl.value : '').toLowerCase().trim();
-
-        filteredUsers = allUsers.filter(u => {
-            const roleOk   = currentRole === 'all' || u.role === currentRole;
-            const searchOk = !currentSearch ||
-                (u.name  || '').toLowerCase().includes(currentSearch) ||
-                (u.email || '').toLowerCase().includes(currentSearch) ||
-                (u.phone || '').toLowerCase().includes(currentSearch);
-            return roleOk && searchOk;
+        const search = ($('user-search')?.value || '').toLowerCase().trim();
+        currentSort = $('sort-users')?.value || currentSort;
+        filteredUsers = users.filter((user) => {
+            if (currentRole !== 'all' && user.role !== currentRole) return false;
+            if (search && !`${user.name} ${user.email} ${user.phone}`.toLowerCase().includes(search)) return false;
+            return true;
         });
-
         filteredUsers.sort((a, b) => {
-            switch (currentSort) {
-                case 'created_desc':    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-                case 'created_asc':     return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-                case 'logins_desc':     return (b.login_count || 0) - (a.login_count || 0);
-                case 'last_login_desc': return new Date(b.last_login || 0) - new Date(a.last_login || 0);
-                case 'name_asc':        return (a.name || '').localeCompare(b.name || '');
-                default:                return 0;
-            }
+            if (currentSort === 'created_asc') return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            if (currentSort === 'logins_desc') return Number(b.login_count || 0) - Number(a.login_count || 0);
+            if (currentSort === 'last_login_desc') return new Date(b.last_login || 0) - new Date(a.last_login || 0);
+            if (currentSort === 'name_asc') return (a.name || '').localeCompare(b.name || '');
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         });
-
         const badge = $('users-count-badge');
-        if (badge) badge.textContent = `${filteredUsers.length} user${filteredUsers.length !== 1 ? 's' : ''}`;
+        if (badge) badge.textContent = `${filteredUsers.length} user${filteredUsers.length === 1 ? '' : 's'}`;
         renderTable();
     }
 
-    /* =========================================================
-       KPI CARDS — Dummy aggregate data
-       ========================================================= */
-    function updateKpis() {
-        const realCount = allUsers.length;
-        animateCount($('kpi-total'),   1247 + realCount);
-        animateCount($('kpi-active'),  834 + Math.min(realCount, 5));
-        animateCount($('kpi-new'),     156 + realCount);
-        animateCount($('kpi-admins'),  3 + allUsers.filter(u => u.role === 'admin' || u.role === 'superadmin').length);
-    }
-
-    function animateCount(el, target) {
-        if (!el) return;
-        let cur = 0;
-        const step = Math.max(1, Math.ceil(target / 30));
-        const timer = setInterval(() => {
-            cur = Math.min(cur + step, target);
-            el.textContent = cur.toLocaleString();
-            if (cur >= target) clearInterval(timer);
-        }, 30);
-    }
-
-    /* =========================================================
-       TABLE
-       ========================================================= */
     function renderTable() {
         const tbody = $('users-tbody');
-        const wrap  = $('users-table-wrap');
+        const wrap = $('users-table-wrap');
         const empty = $('users-empty');
         if (!tbody) return;
-
         tbody.innerHTML = '';
-
-        if (filteredUsers.length === 0) {
+        if (!filteredUsers.length) {
             if (wrap) wrap.style.display = 'none';
             if (empty) empty.style.display = 'flex';
             return;
         }
-
         if (empty) empty.style.display = 'none';
         if (wrap) wrap.style.display = 'block';
-
-        const maxLogins = Math.max(1, ...filteredUsers.map(u => u.login_count || 0));
-
-        filteredUsers.forEach(user => {
-            const tr = document.createElement('tr');
-            const loginCount = user.login_count || 0;
-            const barPct     = Math.min(100, Math.round((loginCount / maxLogins) * 100));
-            const loginClass = getLoginClass(user.last_login);
-            const loginLabel = formatLastLogin(user.last_login);
-            const regDate    = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
-
-            tr.innerHTML = `
-                <td>
-                    <div class="user-cell">
-                        <div class="user-avatar" style="background:${avatarColor(user.id)};">${initials(user.name)}</div>
-                        <div>
-                            <div class="user-name">${esc(user.name || '—')}</div>
-                            <div class="user-id">#${user.id}</div>
-                        </div>
-                    </div>
-                </td>
-                <td style="color:var(--text-secondary);font-size:13px;">${esc(user.email || '—')}</td>
-                <td style="color:var(--text-muted);font-size:12.5px;">${esc(user.phone || '—')}</td>
-                <td>
-                    <span class="role-badge role-${user.role || 'customer'}">
-                        <i class="fas ${user.role === 'superadmin' ? 'fa-crown' : user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                        ${user.role === 'superadmin' ? 'Super Admin' : (user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
-                    </span>
-                </td>
-                <td style="font-size:12.5px;color:var(--text-muted);">${regDate}</td>
-                <td><span class="last-login-cell ${loginClass}">${loginLabel}</span></td>
-                <td style="text-align:center;">
-                    <span style="font-family:var(--font-display);font-size:14px;color:var(--text-primary);">${loginCount}</span>
-                </td>
-                <td>
-                    <div class="activity-bar-wrap">
-                        <div class="activity-bar-bg">
-                            <div class="activity-bar-fill" style="width:${barPct}%;"></div>
-                        </div>
-                        <span class="activity-count">${loginCount}</span>
-                    </div>
-                </td>
-                <td style="text-align:center;">
-                    <div style="display:flex;gap:6px;justify-content:center;">
-                        <button class="tbl-action-btn tbl-view" data-id="${user.id}" title="View profile"><i class="fas fa-eye"></i></button>
-                        <button class="tbl-action-btn tbl-danger" data-id="${user.id}" data-name="${esc(user.name)}" title="Delete user"><i class="fas fa-user-times"></i></button>
-                    </div>
-                </td>`;
-
-            tr.querySelector('.tbl-view').addEventListener('click', () => openUserDetail(user));
-            tr.querySelector('.tbl-danger').addEventListener('click', () => openDelModal(user.id, user.name));
-            tbody.appendChild(tr);
+        filteredUsers.forEach((user) => {
+            const id = user.id || user._id;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><div class="user-cell"><div class="user-avatar" style="background:${avatarColor(id)};">${initials(user.name)}</div><div><div class="user-name">${esc(user.name || '-')}</div><div class="user-id">#${esc(id)}</div></div></div></td>
+                <td style="color:var(--text-secondary);font-size:13px;">${esc(user.email || '-')}</td>
+                <td style="color:var(--text-muted);font-size:12.5px;">${esc(user.phone || '-')}</td>
+                <td><span class="role-badge role-${esc(user.role || 'customer')}">${esc(user.role || 'customer')}</span></td>
+                <td style="font-size:12.5px;color:var(--text-muted);">${formatDate(user.created_at)}</td>
+                <td><span class="last-login-cell">${formatLastLogin(user.last_login)}</span></td>
+                <td style="text-align:center;">${Number(user.login_count || 0).toLocaleString()}</td>
+                <td><div class="activity-bar-wrap"><div class="activity-bar-bg"><div class="activity-bar-fill" style="width:${Math.min(100, Number(user.login_count || 0) * 10)}%;"></div></div><span class="activity-count">${Number(user.login_count || 0)}</span></div></td>
+                <td style="text-align:center;"><div style="display:flex;gap:6px;justify-content:center;"><button class="tbl-action-btn tbl-view" data-view="${esc(id)}" title="View profile"><i class="fas fa-eye"></i></button><button class="tbl-action-btn tbl-danger" data-delete="${esc(id)}" data-name="${esc(user.name)}" title="Delete user"><i class="fas fa-user-times"></i></button></div></td>`;
+            tbody.appendChild(row);
         });
     }
 
-    /* =========================================================
-       LAST LOGIN HELPERS
-       ========================================================= */
-    function getLoginClass(lastLogin) {
-        if (!lastLogin) return 'last-login-never';
-        const days = (Date.now() - new Date(lastLogin)) / 86400000;
-        if (days < 1)  return 'last-login-fresh';
-        if (days < 7)  return 'last-login-recent';
-        return 'last-login-old';
-    }
-
-    function formatLastLogin(lastLogin) {
-        if (!lastLogin) return 'Never';
-        const d = new Date(lastLogin);
-        const days = Math.floor((Date.now() - d) / 86400000);
-        if (days === 0) {
-            const hrs = Math.floor((Date.now() - d) / 3600000);
-            if (hrs === 0) return 'Just now';
-            return `${hrs}h ago`;
-        }
-        if (days === 1) return 'Yesterday';
-        if (days < 7)  return `${days} days ago`;
-        if (days < 30) return `${Math.floor(days/7)}w ago`;
-        return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    }
-
-    /* =========================================================
-       LOGIN FREQUENCY CHART (simulated data)
-       ========================================================= */
     function renderLoginChart() {
-        const chartEl  = $('lfreq-chart');
-        const labelsEl = $('lfreq-labels');
-        if (!chartEl || !labelsEl) return;
-
-        const days = 14;
-        const buckets = [];
-        const now = new Date();
-
-        for (let i = days - 1; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            buckets.push({ date: d, label: d.toLocaleDateString('en-US', { weekday:'short' }), count: 0 });
+        const chart = $('lfreq-chart');
+        const labels = $('lfreq-labels');
+        if (!chart || !labels) return;
+        chart.innerHTML = '';
+        labels.innerHTML = '';
+        const days = [];
+        for (let i = 13; i >= 0; i -= 1) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const key = date.toISOString().slice(0, 10);
+            days.push({ key, label: date.toLocaleDateString('en-US', { weekday: 'short' }), count: 0 });
         }
-
-        const simData = [42, 38, 55, 67, 49, 72, 61, 45, 58, 76, 84, 63, 71, 52];
-        buckets.forEach((b, i) => { b.count = simData[i] || 40; });
-
-        allUsers.forEach(user => {
+        users.forEach((user) => {
             if (!user.last_login) return;
-            const loginDate = new Date(user.last_login);
-            const bucket = buckets.find(b =>
-                b.date.getFullYear() === loginDate.getFullYear() &&
-                b.date.getMonth() === loginDate.getMonth() &&
-                b.date.getDate() === loginDate.getDate()
-            );
+            const key = new Date(user.last_login).toISOString().slice(0, 10);
+            const bucket = days.find((day) => day.key === key);
             if (bucket) bucket.count += 1;
         });
-
-        const maxCount = Math.max(1, ...buckets.map(b => b.count));
-        chartEl.innerHTML = '';
-        labelsEl.innerHTML = '';
-
-        buckets.forEach((b, i) => {
-            const pct = Math.round((b.count / maxCount) * 100);
+        const max = Math.max(1, ...days.map((day) => day.count));
+        days.forEach((day, index) => {
             const col = document.createElement('div');
             col.className = 'lfreq-bar-col';
-            const fill = document.createElement('div');
-            fill.className = 'lfreq-bar-fill';
-            fill.dataset.val = b.count;
-            fill.style.height = '0%';
-            fill.title = `${b.label}: ${b.count} logins`;
-            col.appendChild(fill);
-            chartEl.appendChild(col);
-
-            const lbl = document.createElement('div');
-            lbl.className = 'lfreq-day-label';
-            lbl.textContent = i % 2 === 0 ? b.label : '';
-            labelsEl.appendChild(lbl);
-
-            setTimeout(() => { fill.style.height = pct + '%'; fill.style.transition = 'height 0.5s ease'; }, 50 + i * 30);
+            col.innerHTML = `<div class="lfreq-bar-fill" style="height:${Math.round((day.count / max) * 100)}%;" title="${esc(day.label)}: ${day.count} logins"></div>`;
+            chart.appendChild(col);
+            const label = document.createElement('div');
+            label.className = 'lfreq-day-label';
+            label.textContent = index % 2 === 0 ? day.label : '';
+            labels.appendChild(label);
         });
     }
 
-    /* =========================================================
-       USER DETAIL MODAL
-       ========================================================= */
     function openUserDetail(user) {
         const body = $('user-detail-body');
         if (!body) return;
-        const regDate   = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }) : '—';
-        const lastLogin = formatLastLogin(user.last_login);
-        const loginFull = user.last_login ? new Date(user.last_login).toLocaleString('en-US', { dateStyle:'medium', timeStyle:'short' }) : 'Never';
-
         body.innerHTML = `
-            <div class="udetail-top">
-                <div class="udetail-avatar" style="background:${avatarColor(user.id)};">${initials(user.name)}</div>
-                <div>
-                    <div class="udetail-name">${esc(user.name || '—')}</div>
-                    <div class="udetail-email">${esc(user.email || '—')}</div>
-                    <div style="margin-top:8px;">
-                        <span class="role-badge role-${user.role || 'customer'}">
-                            <i class="fas ${user.role === 'superadmin' ? 'fa-crown' : user.role === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                            ${user.role === 'superadmin' ? 'Super Admin' : (user.role || 'customer').charAt(0).toUpperCase() + (user.role || 'customer').slice(1)}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="udetail-stats-grid">
-                <div class="udetail-stat"><div class="udetail-stat-val">${user.login_count || 0}</div><div class="udetail-stat-label">Total Logins</div></div>
-                <div class="udetail-stat"><div class="udetail-stat-val" style="font-size:16px;">${lastLogin}</div><div class="udetail-stat-label">Last Login</div></div>
-                <div class="udetail-stat"><div class="udetail-stat-val" style="font-size:16px;">${regDate}</div><div class="udetail-stat-label">Registered</div></div>
-            </div>
+            <div class="udetail-top"><div class="udetail-avatar" style="background:${avatarColor(user.id || user._id)};">${initials(user.name)}</div><div><div class="udetail-name">${esc(user.name || '-')}</div><div class="udetail-email">${esc(user.email || '-')}</div></div></div>
             <table class="udetail-table">
-                <tr><td>User ID</td><td>#${user.id}</td></tr>
-                <tr><td>Name</td><td>${esc(user.name || '—')}</td></tr>
-                <tr><td>Email</td><td>${esc(user.email || '—')}</td></tr>
-                <tr><td>Phone</td><td>${esc(user.phone || '—')}</td></tr>
+                <tr><td>User ID</td><td>#${esc(user.id || user._id)}</td></tr>
+                <tr><td>Name</td><td>${esc(user.name || '-')}</td></tr>
+                <tr><td>Email</td><td>${esc(user.email || '-')}</td></tr>
+                <tr><td>Phone</td><td>${esc(user.phone || '-')}</td></tr>
                 <tr><td>Role</td><td>${esc(user.role || 'customer')}</td></tr>
-                <tr><td>Registered</td><td>${regDate}</td></tr>
-                <tr><td>Last Login</td><td>${loginFull}</td></tr>
-                <tr><td>Login Count</td><td>${user.login_count || 0} times</td></tr>
+                <tr><td>Registered</td><td>${formatDate(user.created_at)}</td></tr>
+                <tr><td>Last Login</td><td>${formatLastLogin(user.last_login)}</td></tr>
+                <tr><td>Login Count</td><td>${Number(user.login_count || 0)}</td></tr>
             </table>`;
-        const modal = $('modal-user-detail');
-        if (modal) modal.classList.add('open');
+        $('modal-user-detail')?.classList.add('open');
     }
 
-    /* =========================================================
-       DELETE USER
-       ========================================================= */
-    function openDelModal(id, name) {
+    function openDeleteModal(id, name) {
         deleteTargetId = id;
-        deleteTargetName = name;
-        const nameEl = $('del-user-name');
-        if (nameEl) nameEl.textContent = name;
-        const modal = $('modal-del-user');
-        if (modal) modal.classList.add('open');
+        setText('del-user-name', name || 'this user');
+        $('modal-del-user')?.classList.add('open');
     }
 
-    function closeDelModal() {
-        const modal = $('modal-del-user');
-        if (modal) modal.classList.remove('open');
+    function closeDeleteModal() {
+        $('modal-del-user')?.classList.remove('open');
         deleteTargetId = null;
-        deleteTargetName = '';
     }
 
     async function confirmDeleteUser() {
         if (!deleteTargetId) return;
-        const btn = $('btn-confirm-del-user');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting…'; }
-
         try {
-            const token = localStorage.getItem('admin_token') || '';
-            await fetch(`${API_BASE}/users/${deleteTargetId}`, { method: 'DELETE', headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
-        } catch (_) {}
-
-        allUsers = allUsers.filter(u => String(u.id) !== String(deleteTargetId));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allUsers));
-        try {
-            let localUsers = JSON.parse(localStorage.getItem('thehall_users_local')) || [];
-            localUsers = localUsers.filter(u => String(u.id) !== String(deleteTargetId));
-            localStorage.setItem('thehall_users_local', JSON.stringify(localUsers));
-        } catch(_) {}
-
-        closeDelModal();
-        applyFilters();
-        updateKpis();
-        renderLoginChart();
-        toast(`User "${deleteTargetName}" deleted.`, 'success');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-times"></i> Delete'; }
+            await api(`/users/${encodeURIComponent(deleteTargetId)}`, { method: 'DELETE' });
+            closeDeleteModal();
+            await loadUsers();
+            toast('User deleted from MongoDB.', 'success');
+        } catch (error) {
+            toast(`Delete failed: ${error.message}`, 'error');
+        }
     }
 
-    /* =========================================================
-       EXPORT CSV
-       ========================================================= */
     function exportCsv() {
-        const rows = [['ID','Name','Email','Phone','Role','Registered','Last Login','Login Count']];
-        filteredUsers.forEach(u => {
-            rows.push([u.id, u.name||'', u.email||'', u.phone||'', u.role||'customer',
-                u.created_at ? new Date(u.created_at).toLocaleDateString() : '',
-                u.last_login ? new Date(u.last_login).toLocaleString() : 'Never',
-                u.login_count || 0]);
-        });
-        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-        const blob = new Blob([csv], { type:'text/csv' });
+        const rows = [['ID', 'Name', 'Email', 'Phone', 'Role', 'Registered', 'Last Login', 'Login Count']];
+        filteredUsers.forEach((user) => rows.push([user.id || user._id, user.name || '', user.email || '', user.phone || '', user.role || '', user.created_at || '', user.last_login || '', user.login_count || 0]));
+        const blob = new Blob([rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `thehall-users-${new Date().toISOString().substring(0,10)}.csv`;
-        a.click();
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `thehall-users-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
         URL.revokeObjectURL(url);
-        toast('CSV exported!', 'success');
     }
 
-    /* =========================================================
-       UI HELPERS
-       ========================================================= */
+    function bind() {
+        $('btn-refresh-users')?.addEventListener('click', loadUsers);
+        $('user-search')?.addEventListener('input', applyFilters);
+        $('sort-users')?.addEventListener('change', applyFilters);
+        document.querySelectorAll('[data-role]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-role]').forEach((item) => item.classList.remove('ftab-active'));
+                btn.classList.add('ftab-active');
+                currentRole = btn.dataset.role;
+                applyFilters();
+            });
+        });
+        $('users-tbody')?.addEventListener('click', (event) => {
+            const viewId = event.target.closest('[data-view]')?.dataset.view;
+            const deleteId = event.target.closest('[data-delete]')?.dataset.delete;
+            if (viewId) openUserDetail(users.find((user) => String(user.id || user._id) === String(viewId)));
+            if (deleteId) openDeleteModal(deleteId, event.target.closest('[data-delete]')?.dataset.name);
+        });
+        $('modal-del-user-close')?.addEventListener('click', closeDeleteModal);
+        $('del-user-cancel')?.addEventListener('click', closeDeleteModal);
+        $('btn-confirm-del-user')?.addEventListener('click', confirmDeleteUser);
+        $('modal-detail-close')?.addEventListener('click', () => $('modal-user-detail')?.classList.remove('open'));
+        $('btn-export-csv')?.addEventListener('click', exportCsv);
+    }
+
     function showLoading(on) {
         const loading = $('users-loading');
         const wrap = $('users-table-wrap');
@@ -503,24 +246,24 @@
         if (empty) empty.style.display = 'none';
     }
 
-    function toast(msg, type = 'info') {
-        const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
-        const t = document.createElement('div');
-        t.className = `toast toast-${type}`;
-        t.innerHTML = `<i class="fas ${icons[type]}"></i> ${msg}`;
+    function setText(id, value) { const el = $(id); if (el) el.textContent = value; }
+    function formatDate(value) { return value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'; }
+    function formatLastLogin(value) { return value ? new Date(value).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'Never'; }
+
+    function toast(message, type = 'info') {
         const cont = $('toast-container');
-        if (cont) cont.appendChild(t);
-        setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(8px)'; t.style.transition = 'all 0.35s ease'; setTimeout(() => t.remove(), 400); }, 3200);
+        if (!cont) return;
+        const item = document.createElement('div');
+        item.className = `toast toast-${type}`;
+        item.textContent = message;
+        cont.appendChild(item);
+        setTimeout(() => item.remove(), 3200);
     }
 
-    function esc(str) {
-        if (str === null || str === undefined) return '';
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    async function init() {
+        bind();
+        await loadUsers();
     }
 
-    function debounce(fn, delay) {
-        let t;
-        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
-    }
-
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
 })();

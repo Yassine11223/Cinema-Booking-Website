@@ -1,585 +1,177 @@
 /**
- * dashboard.js
- * Populates the admin dashboard with analytics data,
- * animated counters, bar chart, donut chart, recent bookings,
- * top movies, and misc UI interactions.
- * 
- * Now fetches TMDB Now Playing movies so Recent Bookings
- * and Top Movies reflect real currently-showing films.
+ * Admin dashboard.
+ * Source of truth: MongoDB backend APIs only.
  */
-
 (function () {
     'use strict';
 
-    // ── Dummy Data ──────────────────────────────────────────────────────────────
+    const API_BASE = 'http://localhost:5000/api';
 
-    const MONTHLY_REVENUE = [
-        { month: 'OCT', amount: 32100 },
-        { month: 'NOV', amount: 38400 },
-        { month: 'DEC', amount: 51200 },
-        { month: 'JAN', amount: 29800 },
-        { month: 'FEB', amount: 43600 },
-        { month: 'MAR', amount: 39900 },
-        { month: 'APR', amount: 48320, current: true },
-    ];
-
-    const RECENT_BOOKINGS = [
-        { id: '#BK-00842', customer: 'Yassine K.',    movie: 'Dune: Part Three',   seats: 3, amount: '960 EGP', status: 'confirmed' },
-        { id: '#BK-00841', customer: 'Sarah M.',       movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'confirmed' },
-        { id: '#BK-00840', customer: 'Omar F.',        movie: 'The Dark Knight II', seats: 4, amount: '1300 EGP', status: 'pending'   },
-        { id: '#BK-00839', customer: 'Lina B.',        movie: 'Interstellar 2',     seats: 1, amount: '340 EGP', status: 'confirmed' },
-        { id: '#BK-00838', customer: 'Hamza R.',       movie: 'Dune: Part Three',   seats: 2, amount: '625 EGP', status: 'cancelled' },
-        { id: '#BK-00837', customer: 'Nour A.',        movie: 'Black Panther III',  seats: 3, amount: '1015 EGP', status: 'confirmed' },
-        { id: '#BK-00836', customer: 'Khaled S.',      movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'pending'   },
-    ];
-
-    const TOP_MOVIES = [
-        { rank: 1, title: 'Avengers: Doomsday',  bookings: 342, pct: 100 },
-        { rank: 2, title: 'Dune: Part Three',     bookings: 287, pct: 84  },
-        { rank: 3, title: 'Black Panther III',    bookings: 214, pct: 63  },
-        { rank: 4, title: 'The Dark Knight II',   bookings: 198, pct: 58  },
-        { rank: 5, title: 'Interstellar 2',       bookings: 143, pct: 42  },
-    ];
-
-    const SPARKLINE_DATA = {
-        revenue:  [40, 55, 70, 50, 65, 80, 95],
-        bookings: [60, 50, 75, 65, 80, 70, 90],
-        users:    [50, 65, 55, 70, 60, 85, 75],
-        shows:    [80, 70, 60, 75, 65, 55, 70],
-    };
-
-    const OCCUPANCY_PCT = 73;
-
-    // ── Init ────────────────────────────────────────────────────────────────────
-
-    let dashboardData = {
-        revenue: 0,
-        bookings: 0,
-        usersCnt: 0,
-        showsCnt: 0,
-        topMovies: TOP_MOVIES,
-        recentBookings: RECENT_BOOKINGS,
-        monthlyRev: MONTHLY_REVENUE
-    };
-
-    async function fetchRealData() {
-        try {
-            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
-            const headers = { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) };
-
-            // Fetch backend data + TMDB now playing in parallel
-            const TMDB_API_KEY = '8b17a4f6956553f204d913b742122c1e';
-            const tmdbUrl = `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_API_KEY}&language=en-US&page=1`;
-
-            const [mRes, uRes, bRes, tmdbRes] = await Promise.all([
-                fetch('http://localhost:5000/api/movies', { headers }).catch(() => null),
-                fetch('http://localhost:5000/api/users', { headers }).catch(() => null),
-                fetch('http://localhost:5000/api/bookings', { headers }).catch(() => null),
-                fetch(tmdbUrl).catch(() => null)
-            ]);
-
-            let movies = [];
-            let users = [];
-            let realBookings = [];
-            let tmdbMovies = [];
-
-            if (mRes && mRes.ok) movies = await mRes.json();
-            else movies = JSON.parse(localStorage.getItem('scene_admin_movies')) || [];
-
-            if (uRes && uRes.ok) users = await uRes.json();
-            else users = JSON.parse(localStorage.getItem('thehall_users_local')) || JSON.parse(localStorage.getItem('scene_admin_users')) || [];
-
-            // Fetch real bookings from backend
-            if (bRes && bRes.ok) {
-                realBookings = await bRes.json();
-                console.log('✅ Dashboard: loaded', realBookings.length, 'real bookings from backend');
-            }
-
-            // Parse TMDB now playing movies
-            if (tmdbRes && tmdbRes.ok) {
-                const tmdbData = await tmdbRes.json();
-                tmdbMovies = (tmdbData.results || []).slice(0, 10);
-            }
-
-            dashboardData.usersCnt = users.length > 0 ? users.length : 3942;
-            dashboardData.showsCnt = movies.length > 0 ? movies.filter(m => m.status === 'Now Showing' || m.status === 'now_showing').length * 4 : 24;
-            
-            // ── USE REAL BOOKINGS DATA if available ──
-            if (realBookings.length > 0) {
-                // Compute real revenue
-                const paidBookings = realBookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
-                dashboardData.revenue = paidBookings.reduce((sum, b) => sum + parseFloat(b.total_price || 0), 0);
-                dashboardData.bookings = realBookings.length;
-
-                // Top Movies — group bookings by movie, rank by count
-                const movieBookingCounts = {};
-                realBookings.forEach(b => {
-                    const title = b.movie_title || 'Unknown';
-                    if (!movieBookingCounts[title]) movieBookingCounts[title] = 0;
-                    movieBookingCounts[title]++;
-                });
-                const sortedMovies = Object.entries(movieBookingCounts)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5);
-                const maxBookings = sortedMovies.length > 0 ? sortedMovies[0][1] : 1;
-                dashboardData.topMovies = sortedMovies.map(([title, count], i) => ({
-                    rank: i + 1,
-                    title: title,
-                    bookings: count,
-                    pct: Math.round((count / maxBookings) * 100),
-                }));
-
-                // Recent Bookings — use actual recent bookings from database
-                const statusMap = { confirmed: 'confirmed', pending: 'pending', cancelled: 'cancelled', completed: 'confirmed' };
-                dashboardData.recentBookings = realBookings
-                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                    .slice(0, 7)
-                    .map(b => ({
-                        id: `#BK-${String(b.id).padStart(5, '0')}`,
-                        customer: b.user_name || 'Unknown',
-                        movie: b.movie_title || 'Unknown',
-                        seats: b.seats ? b.seats.length : 1,
-                        amount: `${parseFloat(b.total_price || 0).toLocaleString()} EGP`,
-                        status: statusMap[b.status] || 'pending',
-                    }));
-
-                // Monthly revenue from real data (group by month)
-                const monthMap = {};
-                const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                paidBookings.forEach(b => {
-                    const d = new Date(b.created_at);
-                    const key = monthNames[d.getMonth()];
-                    if (!monthMap[key]) monthMap[key] = 0;
-                    monthMap[key] += parseFloat(b.total_price || 0);
-                });
-                if (Object.keys(monthMap).length > 0) {
-                    const currentMonth = monthNames[new Date().getMonth()];
-                    dashboardData.monthlyRev = Object.entries(monthMap).map(([month, amount]) => ({
-                        month, amount: Math.round(amount), current: month === currentMonth,
-                    }));
-                }
-
-                console.log('✅ Dashboard stats computed from real bookings');
-            } else {
-                // Fallback: Use TMDB movies for top movies & recent bookings
-                if (tmdbMovies.length > 0) {
-                    const sorted = [...tmdbMovies].sort((a, b) => b.popularity - a.popularity).slice(0, 5);
-                    dashboardData.topMovies = sorted.map((m, i) => ({
-                        rank: i + 1,
-                        title: m.title,
-                        bookings: Math.floor(350 - (i * 45) + Math.random() * 30),
-                        pct: Math.max(100 - (i * 16), 20)
-                    }));
-
-                    const customers = [
-                        'Yassine K.', 'Sarah M.', 'Omar F.', 'Lina B.',
-                        'Hamza R.', 'Nour A.', 'Khaled S.'
-                    ];
-                    const statuses = ['confirmed', 'confirmed', 'confirmed', 'pending', 'confirmed', 'cancelled', 'pending'];
-                    const bookingMovies = tmdbMovies.slice(0, 7);
-                    dashboardData.recentBookings = customers.map((c, i) => ({
-                        id: `#BK-00${842 - i}`,
-                        customer: c,
-                        movie: bookingMovies[i % bookingMovies.length].title,
-                        seats: Math.floor(Math.random() * 4) + 1,
-                        amount: `${((Math.floor(Math.random() * 4) + 1) * 250 + Math.floor(Math.random() * 100))} EGP`,
-                        status: statuses[i]
-                    }));
-                } else if (movies.length > 0) {
-                    const shows = movies.filter(m => m.status === 'Now Showing' || m.status === 'now_showing').slice(0, 5);
-                    if (shows.length > 0) {
-                        dashboardData.topMovies = shows.map((m, i) => ({
-                            rank: i + 1,
-                            title: m.title,
-                            bookings: Math.floor(Math.random() * 200) + 100,
-                            pct: 100 - (i * 15)
-                        }));
-                    }
-                }
-            }
-        } catch (_) {
-            console.warn('Dashboard using offline or simulated data');
-        }
+    function esc(value) {
+        return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    async function init() {
-        setTodayDate();
-        await fetchRealData();
-        
-        // Update DOM targets before animating
-        const revEl = document.querySelector('#stat-revenue .stat-value');
-        const bkgEl = document.querySelector('#stat-bookings .stat-value');
-        const usrEl = document.querySelector('#stat-users .stat-value');
-        const shwEl = document.querySelector('#stat-shows .stat-value');
-
-        if (revEl) revEl.dataset.target = dashboardData.revenue || 48320;
-        if (bkgEl) bkgEl.dataset.target = dashboardData.bookings || 1284;
-        if (usrEl) usrEl.dataset.target = dashboardData.usersCnt;
-        if (shwEl) shwEl.dataset.target = dashboardData.showsCnt;
-
-        buildSparklines();
-        animateCounters();
-        buildBarChart();
-        animateDonut();
-        populateRecentBookings();
-        populateTopMovies();
-        initRefreshBtn();
-        initNotifications();
+    function token() {
+        return localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
     }
 
-    // ── Today's Date ────────────────────────────────────────────────────────────
+    async function apiGet(path) {
+        const response = await fetch(`${API_BASE}${path}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+            },
+        });
+        if (!response.ok) throw new Error(`${path} returned ${response.status}`);
+        return response.json();
+    }
 
     function setTodayDate() {
         const el = document.getElementById('today-date-text');
+        if (el) el.textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function setStat(cardId, value, currency) {
+        const el = document.querySelector(`#${cardId} .stat-value`);
         if (!el) return;
-        const now = new Date();
-        el.textContent = now.toLocaleDateString('en-US', {
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-        });
+        el.dataset.target = Number(value || 0);
+        el.textContent = currency ? `${Number(value || 0).toLocaleString()} EGP` : Number(value || 0).toLocaleString();
     }
 
-    // ── Sparklines ──────────────────────────────────────────────────────────────
-
-    function buildSparklines() {
-        const map = {
-            'spark-revenue':  { data: SPARKLINE_DATA.revenue,  color: '#ef5350' },
-            'spark-bookings': { data: SPARKLINE_DATA.bookings, color: '#9575cd' },
-            'spark-users':    { data: SPARKLINE_DATA.users,    color: '#42a5f5' },
-            'spark-shows':    { data: SPARKLINE_DATA.shows,    color: '#4db6ac' },
-        };
-
-        const max = data => Math.max(...data);
-
-        Object.entries(map).forEach(([id, { data, color }]) => {
-            const container = document.getElementById(id);
-            if (!container) return;
-            container.style.color = color;
-            const m = max(data);
-            data.forEach(v => {
-                const bar = document.createElement('div');
-                bar.className = 'spark-bar';
-                bar.style.height = `${(v / m) * 44}px`;
-                bar.style.background = color;
-                container.appendChild(bar);
-            });
-        });
-    }
-
-    // ── Animated Counters ───────────────────────────────────────────────────────
-
-    function animateCounters() {
-        const cards = document.querySelectorAll('[data-target]');
-        cards.forEach(el => {
-            const target  = parseInt(el.dataset.target, 10);
-            const isUSD   = el.closest('.stat-card-revenue') !== null;
-            const duration = 1400;
-            const start    = performance.now();
-
-            function update(now) {
-                const elapsed = now - start;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-                const value = Math.floor(eased * target);
-                el.textContent = isUSD ? `$${value.toLocaleString()}` : value.toLocaleString();
-                if (progress < 1) requestAnimationFrame(update);
-                else el.textContent = isUSD ? `$${target.toLocaleString()}` : target.toLocaleString();
-            }
-
-            requestAnimationFrame(update);
-        });
-    }
-
-    // ── Bar Chart ───────────────────────────────────────────────────────────────
-
-    function buildBarChart() {
-        const wrapper      = document.getElementById('revenue-bar-chart');
-        const labelsEl     = document.getElementById('revenue-bar-labels');
-        if (!wrapper || !labelsEl) return;
-
-        const max = Math.max(...MONTHLY_REVENUE.map(d => d.amount));
-
-        MONTHLY_REVENUE.forEach(item => {
-            const pct = (item.amount / max) * 100;
-
-            // Column
+    function renderBars(items) {
+        const wrapper = document.getElementById('revenue-bar-chart');
+        const labels = document.getElementById('revenue-bar-labels');
+        if (!wrapper || !labels) return;
+        wrapper.innerHTML = '';
+        labels.innerHTML = '';
+        const data = items && items.length ? items : [];
+        const max = Math.max(1, ...data.map((item) => Number(item.amount || 0)));
+        data.forEach((item) => {
             const col = document.createElement('div');
             col.className = 'bar-col';
-
-            const amtLabel = document.createElement('span');
-            amtLabel.className = 'bar-amount-label';
-            amtLabel.textContent = `$${(item.amount / 1000).toFixed(1)}k`;
-
-            const bar = document.createElement('div');
-            bar.className = 'bar-fill' + (item.current ? ' bar-current' : '');
-            bar.style.height = '0%';
-            bar.title = `${item.month}: $${item.amount.toLocaleString()}`;
-
-            col.appendChild(amtLabel);
-            col.appendChild(bar);
+            col.innerHTML = `<span class="bar-amount-label">${Number(item.amount || 0).toLocaleString()} EGP</span><div class="bar-fill${item.current ? ' bar-current' : ''}" style="height:${Math.round((Number(item.amount || 0) / max) * 100)}%"></div>`;
             wrapper.appendChild(col);
-
-            // Animate height after paint
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    bar.style.transition = 'height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                    bar.style.height = `${pct}%`;
-                }, 100);
-            });
-
-            // Month label
-            const lbl = document.createElement('span');
-            lbl.className = 'bar-month-label';
-            lbl.textContent = item.month;
-            labelsEl.appendChild(lbl);
+            const label = document.createElement('span');
+            label.className = 'bar-month-label';
+            label.textContent = item.month;
+            labels.appendChild(label);
         });
-    }
-
-    // ── Donut Chart ─────────────────────────────────────────────────────────────
-
-    function animateDonut() {
-        const arc    = document.getElementById('donut-fill-arc');
-        const pctEl  = document.getElementById('donut-pct');
-        if (!arc || !pctEl) return;
-
-        const circumference = 2 * Math.PI * 44; // r=44 → ~276.46
-        const offset = circumference - (OCCUPANCY_PCT / 100) * circumference;
-
-        // Counter animation
-        const duration = 1200;
-        const start    = performance.now();
-
-        function update(now) {
-            const elapsed  = now - start;
-            const progress = Math.min(elapsed / duration, 1);
-            const eased    = 1 - Math.pow(1 - progress, 3);
-            const current  = Math.floor(eased * OCCUPANCY_PCT);
-            pctEl.textContent = `${current}%`;
-            if (progress < 1) requestAnimationFrame(update);
-            else pctEl.textContent = `${OCCUPANCY_PCT}%`;
+        if (!data.length) {
+            wrapper.innerHTML = '<div style="color:var(--text-muted);padding:32px;">No revenue yet</div>';
         }
-
-        requestAnimationFrame(update);
-
-        // SVG arc
-        setTimeout(() => {
-            arc.style.strokeDashoffset = offset;
-        }, 150);
     }
 
-    // ── Recent Bookings Table ───────────────────────────────────────────────────
+    function renderDonut(occupancyPct) {
+        const arc = document.getElementById('donut-fill-arc');
+        const pct = document.getElementById('donut-pct');
+        const value = Math.max(0, Math.min(100, Number(occupancyPct || 0)));
+        if (pct) pct.textContent = `${value}%`;
+        if (arc) {
+            const circumference = 2 * Math.PI * 44;
+            arc.style.strokeDashoffset = circumference - (value / 100) * circumference;
+        }
+    }
 
-    function populateRecentBookings() {
+    function renderRecentBookings(bookings) {
         const tbody = document.getElementById('recent-bookings-tbody');
         if (!tbody) return;
-
-        dashboardData.recentBookings.forEach(booking => {
+        tbody.innerHTML = '';
+        if (!bookings || bookings.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No bookings yet</td></tr>';
+            return;
+        }
+        bookings.forEach((booking) => {
             const row = document.createElement('tr');
-
-            const statusClass = {
-                confirmed: 'status-confirmed',
-                pending:   'status-pending',
-                cancelled: 'status-cancelled',
-            }[booking.status] || '';
-
-            const statusIcon = {
-                confirmed: 'fa-check-circle',
-                pending:   'fa-clock',
-                cancelled: 'fa-times-circle',
-            }[booking.status] || '';
-
             row.innerHTML = `
-                <td>${booking.id}</td>
-                <td><strong style="color:var(--text-primary)">${booking.customer}</strong></td>
-                <td>${booking.movie}</td>
-                <td>${booking.seats}</td>
-                <td style="color:var(--text-primary);font-weight:500">${booking.amount}</td>
-                <td>
-                    <span class="booking-status ${statusClass}">
-                        <i class="fas ${statusIcon}" style="font-size:10px"></i>
-                        ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                    </span>
-                </td>
-            `;
-
+                <td>#BK-${esc(booking.id.slice(-6).toUpperCase())}</td>
+                <td><strong style="color:var(--text-primary)">${esc(booking.customer)}</strong></td>
+                <td>${esc(booking.movie)}</td>
+                <td>${(booking.seats || []).map(esc).join(', ') || '-'}</td>
+                <td style="color:var(--text-primary);font-weight:500">${Number(booking.amount || 0).toLocaleString()} EGP</td>
+                <td><span class="booking-status status-${esc(booking.status)}">${esc(booking.status)}</span></td>`;
             tbody.appendChild(row);
         });
     }
 
-    // ── Top Movies List ─────────────────────────────────────────────────────────
-
-    function populateTopMovies() {
+    function renderTopMovies(movies) {
         const list = document.getElementById('top-movies-list');
         if (!list) return;
-
-        dashboardData.topMovies.forEach(movie => {
+        list.innerHTML = '';
+        if (!movies || movies.length === 0) {
+            list.innerHTML = '<div style="color:var(--text-muted);padding:24px;">No booking data yet</div>';
+            return;
+        }
+        movies.forEach((movie) => {
             const item = document.createElement('div');
             item.className = 'top-movie-item';
-
-            const rankClass = movie.rank <= 3 ? ` rank-${movie.rank}` : '';
-
             item.innerHTML = `
-                <div class="top-movie-rank${rankClass}">${movie.rank}</div>
+                <div class="top-movie-rank${movie.rank <= 3 ? ` rank-${movie.rank}` : ''}">${movie.rank}</div>
                 <div class="top-movie-info">
-                    <div class="top-movie-title">${movie.title}</div>
-                    <div class="top-movie-meta">${movie.bookings} bookings</div>
+                    <div class="top-movie-title">${esc(movie.title)}</div>
+                    <div class="top-movie-meta">${Number(movie.bookings || 0).toLocaleString()} bookings</div>
                 </div>
-                <div class="top-movie-bar-wrapper">
-                    <div class="top-movie-bar-bg">
-                        <div class="top-movie-bar-fill" style="width:0%" data-pct="${movie.pct}"></div>
-                    </div>
-                </div>
-            `;
-
+                <div class="top-movie-bar-wrapper"><div class="top-movie-bar-bg"><div class="top-movie-bar-fill" style="width:${Number(movie.pct || 0)}%"></div></div></div>`;
             list.appendChild(item);
         });
-
-        // Animate bars
-        setTimeout(() => {
-            list.querySelectorAll('.top-movie-bar-fill').forEach(bar => {
-                bar.style.width = `${bar.dataset.pct}%`;
-            });
-        }, 300);
     }
 
-    // ── Refresh Button ──────────────────────────────────────────────────────────
-
-    function initRefreshBtn() {
-        const btn = document.getElementById('admin-refresh');
-        if (!btn) return;
-        btn.addEventListener('click', async () => {
-            btn.classList.add('spinning');
-            
-            // Re-fetch data
-            await fetchRealData();
-            
-            // Reset and re-animate
-            const revEl = document.querySelector('#stat-revenue .stat-value');
-            const bkgEl = document.querySelector('#stat-bookings .stat-value');
-            const usrEl = document.querySelector('#stat-users .stat-value');
-            const shwEl = document.querySelector('#stat-shows .stat-value');
-            
-            if (revEl) { revEl.textContent = '0'; revEl.dataset.target = dashboardData.revenue || 48320; }
-            if (bkgEl) { bkgEl.textContent = '0'; bkgEl.dataset.target = dashboardData.bookings || 1284; }
-            if (usrEl) { usrEl.textContent = '0'; usrEl.dataset.target = dashboardData.usersCnt; }
-            if (shwEl) { shwEl.textContent = '0'; shwEl.dataset.target = dashboardData.showsCnt; }
-
-            animateCounters();
-            
-            // Re-render lists
-            const tb = document.getElementById('recent-bookings-tbody');
-            if (tb) tb.innerHTML = '';
-            populateRecentBookings();
-            
-            const lm = document.getElementById('top-movies-list');
-            if (lm) lm.innerHTML = '';
-            populateTopMovies();
-
-            setTimeout(() => {
-                btn.classList.remove('spinning');
-            }, 500);
-        });
-    }
-
-    // ── Notification Panel ────────────────────────────────────────────────────
-
-    function initNotifications() {
-        const btn = document.getElementById('admin-notif');
-        const panel = document.getElementById('notif-panel');
+    function renderNotifications(stats) {
         const list = document.getElementById('notif-list');
-        const clearBtn = document.getElementById('notif-clear');
         const dot = document.getElementById('notif-dot');
-        if (!btn || !panel || !list) return;
+        if (!list) return;
+        list.innerHTML = `
+            <div class="notif-panel-empty">
+                <i class="fas fa-database"></i>
+                <p>${Number(stats.bookings || 0).toLocaleString()} real bookings in MongoDB</p>
+            </div>`;
+        if (dot) dot.classList.add('hidden');
+    }
 
-        // Notification data
-        const notifications = [
-            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Yassine K.</strong> booked 3 seats for the 7:30 PM show', time: '2 min ago', unread: true },
-            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Sarah M. registered an account', time: '15 min ago', unread: true },
-            { type: 'alert',   icon: 'fa-exclamation-triangle', text: 'Hall 2 (IMAX) is at <strong>95% capacity</strong> for tonight', time: '32 min ago', unread: true },
-            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Omar F.</strong> cancelled booking #BK-00840', time: '1 hour ago', unread: false },
-            { type: 'system',  icon: 'fa-cog',        text: 'System backup completed <strong>successfully</strong>', time: '2 hours ago', unread: false },
-            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Khaled S. registered an account', time: '3 hours ago', unread: false },
-        ];
+    async function loadDashboard() {
+        const data = await apiGet('/admin/stats');
+        const totals = data.totals || {};
+        setStat('stat-revenue', totals.revenue, true);
+        setStat('stat-bookings', totals.bookings, false);
+        setStat('stat-users', totals.users, false);
+        setStat('stat-shows', totals.showsToday, false);
+        renderBars(data.monthlyRevenue || []);
+        renderDonut(totals.occupancyPct);
+        renderRecentBookings(data.recentBookings || []);
+        renderTopMovies(data.topMovies || []);
+        renderNotifications(totals);
+    }
 
-        // Render notifications
-        function renderNotifications() {
-            list.innerHTML = '';
-            const unreadCount = notifications.filter(n => n.unread).length;
-
-            if (notifications.length === 0) {
-                list.innerHTML = `
-                    <div class="notif-panel-empty">
-                        <i class="fas fa-bell-slash"></i>
-                        <p>No notifications</p>
-                    </div>
-                `;
-                if (dot) dot.classList.add('hidden');
-                return;
-            }
-
-            if (unreadCount > 0) {
-                if (dot) dot.classList.remove('hidden');
-            } else {
-                if (dot) dot.classList.add('hidden');
-            }
-
-            notifications.forEach((notif, idx) => {
-                const item = document.createElement('div');
-                item.className = 'notif-item' + (notif.unread ? ' unread' : '');
-                item.innerHTML = `
-                    <div class="notif-icon notif-${notif.type}">
-                        <i class="fas ${notif.icon}"></i>
-                    </div>
-                    <div class="notif-content">
-                        <div class="notif-text">${notif.text}</div>
-                        <div class="notif-time">${notif.time}</div>
-                    </div>
-                `;
-                item.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    notif.unread = false;
-                    item.classList.remove('unread');
-                    const remaining = notifications.filter(n => n.unread).length;
-                    if (remaining === 0 && dot) dot.classList.add('hidden');
-                });
-                list.appendChild(item);
+    function bind() {
+        const refresh = document.getElementById('admin-refresh');
+        if (refresh) {
+            refresh.addEventListener('click', async () => {
+                refresh.classList.add('spinning');
+                try { await loadDashboard(); } finally { refresh.classList.remove('spinning'); }
             });
         }
+        const notifBtn = document.getElementById('admin-notif');
+        const panel = document.getElementById('notif-panel');
+        if (notifBtn && panel) notifBtn.addEventListener('click', (event) => { event.stopPropagation(); panel.classList.toggle('open'); });
+        document.addEventListener('click', () => panel?.classList.remove('open'));
+    }
 
-        renderNotifications();
-
-        // Toggle panel
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            panel.classList.toggle('open');
-        });
-
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!btn.contains(e.target)) {
-                panel.classList.remove('open');
-            }
-        });
-
-        // Prevent panel clicks from closing
-        panel.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        // Mark all read
-        if (clearBtn) {
-            clearBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                notifications.forEach(n => n.unread = false);
-                renderNotifications();
-            });
+    async function init() {
+        setTodayDate();
+        bind();
+        try {
+            await loadDashboard();
+        } catch (error) {
+            setStat('stat-revenue', 0, true);
+            setStat('stat-bookings', 0, false);
+            setStat('stat-users', 0, false);
+            setStat('stat-shows', 0, false);
+            renderRecentBookings([]);
+            renderTopMovies([]);
+            renderBars([]);
+            renderDonut(0);
+            console.error('[Dashboard] Backend stats failed:', error.message);
         }
     }
 
-    // Wrap initialization with DOMContentLoaded
-    if(document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-
+    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
 })();

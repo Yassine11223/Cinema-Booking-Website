@@ -1517,7 +1517,7 @@
 }
 
 /* ============================================
-   SKELETON LOADING (TMDB)
+   SKELETON LOADING
    ============================================ */
 @keyframes skeleton-shimmer {
     0% { background-position: -400px 0; }

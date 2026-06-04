@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "test": "node --check backend/server.js && node --check backend/controllers/bookingController.js && node --check frontend/js/booking.js",
+    "test": "node --check backend/server.js && node --check backend/controllers/bookingController.js && node --check backend/controllers/adminStatsController.js && node --check frontend/js/booking.js && node --check frontend/js/movies.js && node --check frontend/js/tmdb-api.js && node --check admin/js/dashboard.js && node --check admin/js/Shows.js && node --check admin/js/bookings.js && node --check admin/js/movies-admin.js && node --check admin/js/users-admin.js",
     "seed": "node backend/seeds/seed.js"
   },
   "keywords": [

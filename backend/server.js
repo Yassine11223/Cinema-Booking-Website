@@ -22,6 +22,7 @@ const theaterRoutes = require('./routes/theaters');
 const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
 const contactRoutes = require('./routes/contact');
+const adminStatsRoutes = require('./routes/adminStats');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -58,6 +59,7 @@ app.use('/api/theaters', theaterRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

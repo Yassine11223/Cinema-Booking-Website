@@ -24,7 +24,7 @@
     };
 
     // ============================================
-    // MOVIE DATA (from sessionStorage or fallback)
+    // MOVIE DATA (from backend-backed sessionStorage)
     // ============================================
     function loadMovieData() {
         try {
@@ -39,12 +39,12 @@
                 };
             }
         } catch (_) { }
-        // Fallback only if no movie was selected
+        // No selected backend movie was provided.
         return {
-            title: 'Dune: Part Three',
-            genre: 'Sci-Fi • Adventure',
-            rating: 'PG-13',
-            duration: '2h 46m',
+            title: 'Unknown Movie',
+            genre: 'Movie',
+            rating: 'NR',
+            duration: 'N/A',
         };
     }
     const MOVIE = loadMovieData();
@@ -257,7 +257,7 @@
     async function fetchSeatStatesFromAPI(showId, expType) {
         try {
             // showId must be a MongoDB backend ID
-            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null; // mock ID like 'imx1-..'
+            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
             
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 1000);
