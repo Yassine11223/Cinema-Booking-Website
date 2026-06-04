@@ -9,3 +9,5 @@ Thumbs.db
 .idea/
 dist/
 build/
+.mongodb-small/
+.mongodb/
