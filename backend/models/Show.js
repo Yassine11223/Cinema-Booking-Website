@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+const Booking = require('./Booking');
 
 const showSchema = new mongoose.Schema(
     {
@@ -54,19 +55,34 @@ showSchema.statics.findAll = async function (filters = {}) {
         query.show_time = { $gte: d, $lt: nextDay };
     }
 
-    return this.find(query)
-        .populate('movie_id', 'title poster_url')
-        .populate('theater_id', 'name')
-        .sort({ show_time: 1 })
-        .then((shows) =>
-            shows.map((s) => {
-                const obj = s.toObject();
-                obj.movie_title = obj.movie_id?.title || null;
-                obj.poster_url = obj.movie_id?.poster_url || null;
-                obj.theater_name = obj.theater_id?.name || null;
-                return obj;
-            })
-        );
+    const shows = await this.find(query)
+        .populate('movie_id', 'title poster_url genre')
+        .populate('theater_id', 'name capacity screen_type')
+        .sort({ show_time: 1 });
+
+    const bookingCounts = await Booking.aggregate([
+        {
+            $match: {
+                show_id: { $in: shows.map((s) => s._id) },
+                status: { $ne: 'cancelled' },
+            },
+        },
+        { $project: { show_id: 1, seat_count: { $size: '$seats' } } },
+        { $group: { _id: '$show_id', booked: { $sum: '$seat_count' } } },
+    ]);
+    const bookedByShow = new Map(bookingCounts.map((row) => [row._id.toString(), row.booked]));
+
+    return shows.map((s) => {
+        const obj = s.toObject();
+        obj.movie_title = obj.movie_id?.title || null;
+        obj.genre = obj.movie_id?.genre || null;
+        obj.poster_url = obj.movie_id?.poster_url || null;
+        obj.theater_name = obj.theater_id?.name || null;
+        obj.capacity = obj.theater_id?.capacity || 0;
+        obj.screen_type = obj.theater_id?.screen_type || null;
+        obj.booked = bookedByShow.get(s._id.toString()) || 0;
+        return obj;
+    });
 };
 
 showSchema.statics.findByIdPopulated = async function (id) {

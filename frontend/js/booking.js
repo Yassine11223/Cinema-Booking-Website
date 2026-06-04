@@ -269,9 +269,6 @@
      */
     async function fetchSeatStatesFromAPI(showId, expType) {
         try {
-            // showId must be a numeric backend ID
-            if (!Number.isInteger(Number(showId))) return null;
-            
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 1000);
             const res = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`, { signal: controller.signal });
@@ -300,8 +297,6 @@
      */
     async function createBookingOnBackend(showId, seatLabels) {
         try {
-            // showId must be numeric backend ID
-            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
             const token = localStorage.getItem('userToken');
             if (!token) return null;
 
@@ -314,7 +309,7 @@
             allSeats.forEach(s => { seatIdMap[`${s.row_label}${s.seat_number}`] = s.id; });
 
             const seat_ids = seatLabels.map(label => seatIdMap[label]).filter(Boolean);
-            if (seat_ids.length === 0) return null;
+            if (seat_ids.length !== seatLabels.length) return null;
 
             const res = await fetch(`${CFG.API_BASE}/bookings`, {
                 method: 'POST',
@@ -831,13 +826,19 @@
         renderBottomBar();
         renderTimer();
 
-        // Try to create a real booking in the backend database
-        let backendBookingId = null;
+        // Create a real booking in the backend database before payment.
         const backendBooking = await createBookingOnBackend(S.stId, S.selected);
-        if (backendBooking) {
-            backendBookingId = backendBooking.id;
-            toast('Booking saved to database!', 'success');
+        if (!backendBooking) {
+            S.confirmed = false;
+            save();
+            renderBottomBar();
+            renderTimer();
+            toast('Booking could not be saved. Please check seat availability and try again.', 'error');
+            return;
         }
+
+        const backendBookingId = backendBooking.id || backendBooking._id;
+        toast('Booking saved to database!', 'success');
 
         // Save booking summary for payment page (user info comes from localStorage)
         const st = S.showtime;

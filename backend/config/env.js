@@ -2,7 +2,9 @@
  * Environment Configuration
  */
 
-require('dotenv').config();
+const loadEnv = require('./loadEnv');
+
+loadEnv();
 
 module.exports = {
     port: process.env.PORT || 5000,

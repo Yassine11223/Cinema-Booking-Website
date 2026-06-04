@@ -7,33 +7,22 @@
 const express = require('express');
 const router = express.Router();
 
-const passport = require('../config/passport');
 const userController = require('../controllers/userController');
 
 const { authenticate, adminOnly, superAdminOnly } = require('../middleware/auth');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 
-console.log('passport.authenticate type:', typeof passport.authenticate);
-console.log('googleCallback type:', typeof userController.googleCallback);
+const googleAuthUnavailable = (_req, res) => {
+    res.status(503).json({
+        message: 'Google OAuth is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_CALLBACK_URL to enable it.',
+    });
+};
 
 // Google Login - Customer only
-router.get(
-    '/google',
-    passport.authenticate('google', {
-        scope: ['profile', 'email'],
-        session: false,
-    })
-);
+router.get('/google', googleAuthUnavailable);
 
 // Google Login Callback
-router.get(
-    '/google/callback',
-    passport.authenticate('google', {
-        session: false,
-        failureRedirect: `${process.env.FRONTEND_URL || 'http://127.0.0.1:5500'}/login.html?google=failed`,
-    }),
-    userController.googleCallback
-);
+router.get('/google/callback', googleAuthUnavailable);
 
 // Public auth routes
 router.post('/register', validateRegistration, userController.register);

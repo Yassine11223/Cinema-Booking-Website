@@ -33,10 +33,10 @@
         const dt = new Date(show.show_time);
         return {
             id: show.id,
-            movie_id: Number(show.movie_id),
+            movie_id: idOf(show.movie_id),
             movie_title: show.movie_title || movieTitle(show.movie_id),
             movie_genre: show.genre || '',
-            theater_id: Number(show.theater_id),
+            theater_id: idOf(show.theater_id),
             theater_name: show.theater_name || theaterName(show.theater_id),
             screen_type: screenType(show),
             capacity: Number(show.capacity || theaterById(show.theater_id)?.capacity || 0),
@@ -50,11 +50,11 @@
     }
 
     function movieTitle(id) {
-        return movies.find(m => Number(m.id) === Number(id))?.title || 'Unknown movie';
+        return movies.find(m => idOf(m) === idOf(id))?.title || 'Unknown movie';
     }
 
     function theaterById(id) {
-        return theaters.find(t => Number(t.id) === Number(id));
+        return theaters.find(t => idOf(t) === idOf(id));
     }
 
     function theaterName(id) {
@@ -68,6 +68,11 @@
         if (raw.includes('dolby')) return 'dolby';
         if (raw.includes('vip') || raw.includes('deluxe')) return 'deluxe';
         return 'standard';
+    }
+
+    function idOf(value) {
+        if (!value) return '';
+        return String(value.id || value._id || value);
     }
 
     function statusFor(show, dt) {
@@ -167,8 +172,8 @@
     function openForm(show = null) {
         editingId = show?.id || null;
         $('m-title').textContent = editingId ? 'Edit Show' : 'Add New Show';
-        const movieOptions = movies.map(m => `<option value="${m.id}" ${Number(show?.movie_id) === Number(m.id) ? 'selected' : ''}>${esc(m.title)}</option>`).join('');
-        const theaterOptions = theaters.map(t => `<option value="${t.id}" ${Number(show?.theater_id) === Number(t.id) ? 'selected' : ''}>${esc(t.name)} (${esc(t.screen_type || 'standard')} - ${Number(t.capacity || 0)} seats)</option>`).join('');
+        const movieOptions = movies.map(m => `<option value="${idOf(m)}" ${idOf(show?.movie_id) === idOf(m) ? 'selected' : ''}>${esc(m.title)}</option>`).join('');
+        const theaterOptions = theaters.map(t => `<option value="${idOf(t)}" ${idOf(show?.theater_id) === idOf(t) ? 'selected' : ''}>${esc(t.name)} (${esc(t.screen_type || 'standard')} - ${Number(t.capacity || 0)} seats)</option>`).join('');
 
         $('m-body').innerHTML = `
             <div class="fg"><label>Movie</label><select class="fc" id="fm-movie"><option value="">Select...</option>${movieOptions}</select></div>
@@ -189,8 +194,8 @@
     }
 
     async function saveShow() {
-        const movie_id = Number($('fm-movie').value);
-        const theater_id = Number($('fm-hall').value);
+        const movie_id = $('fm-movie').value;
+        const theater_id = $('fm-hall').value;
         const date = $('fm-date').value;
         const time = $('fm-time').value;
         const price = Number($('fm-price').value);
@@ -269,7 +274,7 @@
         $('tbody').addEventListener('click', e => {
             const btn = e.target.closest('[data-action][data-id]');
             if (!btn) return;
-            const show = shows.find(s => Number(s.id) === Number(btn.dataset.id));
+            const show = shows.find(s => idOf(s.id) === idOf(btn.dataset.id));
             if (!show) return;
             if (btn.dataset.action === 'edit') openForm(show);
             if (btn.dataset.action === 'delete') confirmDelete(show);

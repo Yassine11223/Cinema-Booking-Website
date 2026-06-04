@@ -6,7 +6,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+const loadEnv = require('./config/loadEnv');
+
+loadEnv();
 
 const { connectDB } = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');

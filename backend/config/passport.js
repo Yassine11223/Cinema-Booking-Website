@@ -1,4 +1,6 @@
-require('dotenv').config();
+const loadEnv = require('./loadEnv');
+
+loadEnv();
 
 const passport = require('passport');
 const User = require('../models/User');

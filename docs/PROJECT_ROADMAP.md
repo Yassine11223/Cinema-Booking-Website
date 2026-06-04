@@ -293,61 +293,61 @@ database/
 │   ├── 005_create_theaters.sql
 │   ├── 006_create_seats.sql
 │   └── 007_create_payments.sql
-└── schema.sql
+└── seed.js
 ```
 
-**Database Tables:**
+**MongoDB Collections:**
 
 1. **users**
-   - id (PK)
+   - _id (ObjectId)
    - name, email (unique), password (hashed)
    - phone, address
    - role (customer, admin)
    - created_at, updated_at
 
 2. **movies**
-   - id (PK)
+   - _id (ObjectId)
    - title, description, genre
    - duration, rating, language
    - poster_url, release_date
    - created_at, updated_at
 
 3. **theaters**
-   - id (PK)
+   - _id (ObjectId)
    - name, location, city
    - total_screens
    - created_at, updated_at
 
 4. **shows**
-   - id (PK)
-   - movie_id (FK), theater_id (FK)
+   - _id (ObjectId)
+   - movie_id (ObjectId ref Movie), theater_id (ObjectId ref Theater)
    - show_date, show_time
    - screen_number
    - price_standard, price_premium
    - created_at, updated_at
 
 5. **seats**
-   - id (PK)
-   - show_id (FK), theater_id (FK)
+   - _id (ObjectId)
+   - theater_id (ObjectId ref Theater)
    - row, column, seat_number
    - status (available, booked, reserved)
    - category (standard, premium)
    - created_at, updated_at
 
 6. **bookings**
-   - id (PK)
-   - user_id (FK), show_id (FK)
+   - _id (ObjectId)
+   - user_id (ObjectId ref User), show_id (ObjectId ref Show)
    - booking_date, status (confirmed, cancelled)
    - total_price, quantity
    - created_at, updated_at
 
 7. **booking_seats** (Junction table)
-   - id (PK)
-   - booking_id (FK), seat_id (FK)
+   - _id (ObjectId)
+   - seats: ObjectId[] ref Seat
 
 8. **payments**
-   - id (PK)
-   - booking_id (FK), user_id (FK)
+   - _id (ObjectId)
+   - booking_id (ObjectId ref Booking), user_id (ObjectId ref User)
    - amount, payment_method
    - status (pending, success, failed)
    - transaction_id
@@ -372,12 +372,12 @@ backend/models/
 ```
 
 **Tasks:**
-- [ ] Set up ORM (Sequelize or TypeORM)
-- [ ] Create model definitions for each table
-- [ ] Define relationships (one-to-many, many-to-many)
+- [ ] Set up Mongoose ODM
+- [ ] Create schema/model definitions for each collection
+- [ ] Define references and populate paths
 - [ ] Add data validation at model level
 - [ ] Create model methods (findAll, create, update, delete)
-- [ ] Set up database migrations
+- [ ] Set up seed and index creation scripts
 
 ---
 
@@ -765,11 +765,11 @@ docs/
 ### Backend
 - Node.js + Express.js (or Python Flask/Django)
 - Authentication: JWT
-- Database: PostgreSQL / MySQL
-- ORM: Sequelize / TypeORM
+- Database: MongoDB
+- ODM: Mongoose
 
 ### Database
-- PostgreSQL or MySQL
+- MongoDB local or MongoDB Atlas
 - Redis (for caching)
 
 ### DevOps & Hosting
@@ -809,3 +809,4 @@ docs/
 **Document Version:** 1.0  
 **Last Updated:** April 6, 2026  
 **Next Review:** As phases progress
+

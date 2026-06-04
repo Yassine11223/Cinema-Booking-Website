@@ -10,8 +10,8 @@
  * generates one unique QR code per seat and returns them as base64
  * data URLs. Tickets are rendered as premium cards in Step 3.
  *
- * Graceful fallback: If the backend is unavailable, confirmation
- * still renders without QR codes (degraded but functional).
+ * QR ticket generation can fail gracefully, but booking confirmation must use
+ * the MongoDB booking created during seat selection.
  */
 (function () {
     'use strict';
@@ -83,6 +83,17 @@
                     <h2 style="font-family:var(--font-display);letter-spacing:2px;margin-bottom:10px;">NO BOOKING FOUND</h2>
                     <p style="color:var(--text-muted);margin-bottom:20px;">Please select a movie and complete the seat selection first.</p>
                     <a href="index.html" class="pay-btn pay-btn-primary">BROWSE MOVIES</a>
+                </div>`;
+            return;
+        }
+
+        if (!booking.backendBookingId) {
+            document.querySelector('.payment-page').innerHTML = `
+                <div style="text-align:center;padding:100px 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size:48px;color:var(--primary-light);margin-bottom:20px;"></i>
+                    <h2 style="font-family:var(--font-display);letter-spacing:2px;margin-bottom:10px;">BOOKING NOT SAVED</h2>
+                    <p style="color:var(--text-muted);margin-bottom:20px;">Please return to seat selection and create a database-backed booking first.</p>
+                    <a href="booking.html" class="pay-btn pay-btn-primary">SELECT SEATS</a>
                 </div>`;
             return;
         }
@@ -340,8 +351,18 @@
             // Attempt to generate QR tickets from backend
             await generateTicketsFromBackend();
 
-            // Save booking (includes tickets if generated)
-            saveBooking();
+            const confirmed = await confirmBackendBooking();
+            if (!confirmed) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-lock"></i> PAY NOW';
+                }
+                alert('Payment could not confirm the booking in the database. Please try again.');
+                return;
+            }
+
+            // Cache the confirmed booking and tickets for local viewing.
+            saveBookingCache();
 
             // Navigate to confirmation step
             goToStep(3);
@@ -736,36 +757,36 @@
     /* =========================================================
        SAVE BOOKING
        =========================================================
-       Persists booking data to localStorage (thehall_bookings).
-       Now includes the generated ticket data for offline viewing.
-       
-       FUTURE: Replace localStorage with backend database.
+       Confirms through the backend first, then caches ticket data locally.
        ========================================================= */
-    function saveBooking() {
-        // ── 1. Confirm backend booking (status: pending → confirmed) ──
+    async function confirmBackendBooking() {
         const backendBookingId = booking.backendBookingId;
-        if (backendBookingId) {
-            const token = localStorage.getItem('userToken');
-            if (token) {
-                fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                })
-                .then(res => {
-                    if (res.ok) {
-                        console.log('✅ Backend booking confirmed:', backendBookingId);
-                    } else {
-                        console.warn('⚠️ Backend booking confirm failed:', res.status);
-                    }
-                })
-                .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
-            }
-        }
+        const token = localStorage.getItem('userToken');
+        if (!backendBookingId || !token) return false;
 
-        // ── 2. Save to localStorage as cache/offline backup ──
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            if (res.ok) {
+                console.log('Backend booking confirmed:', backendBookingId);
+                return true;
+            }
+            console.warn('Backend booking confirm failed:', res.status);
+            return false;
+        } catch (err) {
+            console.warn('Backend confirm error:', err.message);
+            return false;
+        }
+    }
+
+    function saveBookingCache() {
+        // Cache only; the backend booking was already confirmed.
+        const backendBookingId = booking.backendBookingId;
         try {
             const bookings = JSON.parse(localStorage.getItem('thehall_bookings') || '[]');
             bookings.push({

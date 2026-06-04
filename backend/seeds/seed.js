@@ -5,7 +5,7 @@
  * Usage: npm run seed
  */
 
-require('dotenv').config();
+require('../config/loadEnv')();
 const { connectDB, mongoose } = require('../config/database');
 
 // Import models
@@ -57,7 +57,7 @@ async function seed() {
         console.log('🎭 Creating theaters...');
         const theaters = await Theater.insertMany([
             { name: 'IMAX Theatre', capacity: 310, screen_type: 'imax' },
-            { name: 'Dolby Atmos', capacity: 256, screen_type: 'standard' },
+            { name: 'Dolby Atmos', capacity: 268, screen_type: 'standard' },
             { name: 'Hall 1', capacity: 200, screen_type: 'standard' },
             { name: 'Deluxe Suite', capacity: 116, screen_type: 'vip' },
         ]);
@@ -81,8 +81,8 @@ async function seed() {
             }
         }
 
-        // Dolby Atmos: rows A-J (24), K-L (19), M (16)
-        const dolbyRows = { A: 24, B: 24, C: 24, D: 24, E: 24, F: 24, G: 24, H: 24, J: 24, K: 19, L: 19, M: 16 };
+        // Dolby Atmos: A (22), B-J excluding I (24), K-L (19), M (16)
+        const dolbyRows = { A: 22, B: 24, C: 24, D: 24, E: 24, F: 24, G: 24, H: 24, J: 24, K: 19, L: 19, M: 16 };
         for (const [row, count] of Object.entries(dolbyRows)) {
             for (let n = 1; n <= count; n++) {
                 allSeats.push({

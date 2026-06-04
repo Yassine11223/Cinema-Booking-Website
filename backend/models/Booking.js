@@ -47,6 +47,19 @@ bookingSchema.virtual('id').get(function () {
 bookingSchema.index({ user_id: 1 });
 bookingSchema.index({ show_id: 1 });
 bookingSchema.index({ status: 1 });
+bookingSchema.index({ show_id: 1, seats: 1, status: 1 });
+bookingSchema.index(
+    { show_id: 1, seats: 1 },
+    { unique: true, partialFilterExpression: { status: 'pending' }, name: 'unique_pending_show_seat' }
+);
+bookingSchema.index(
+    { show_id: 1, seats: 1 },
+    { unique: true, partialFilterExpression: { status: 'confirmed' }, name: 'unique_confirmed_show_seat' }
+);
+bookingSchema.index(
+    { show_id: 1, seats: 1 },
+    { unique: true, partialFilterExpression: { status: 'completed' }, name: 'unique_completed_show_seat' }
+);
 
 // ---- Static Methods ----
 
@@ -117,27 +130,64 @@ bookingSchema.statics.findByUser = async function (userId) {
 };
 
 bookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const Show = mongoose.model('Show');
+    const Seat = mongoose.model('Seat');
 
-    try {
-        const booking = new this({
-            user_id,
-            show_id,
-            seats: seat_ids,
-            total_price,
-            status: 'pending',
-        });
-
-        await booking.save({ session });
-        await session.commitTransaction();
-        return booking;
-    } catch (error) {
-        await session.abortTransaction();
+    const uniqueSeatIds = [...new Set((seat_ids || []).map(String))];
+    if (uniqueSeatIds.length !== (seat_ids || []).length) {
+        const error = new Error('Duplicate seats are not allowed');
+        error.status = 400;
         throw error;
-    } finally {
-        session.endSession();
     }
+
+    if (!mongoose.isValidObjectId(show_id) || uniqueSeatIds.some((id) => !mongoose.isValidObjectId(id))) {
+        const error = new Error('Show ID and seat IDs must be valid MongoDB ObjectIds');
+        error.status = 400;
+        throw error;
+    }
+
+    const show = await Show.findById(show_id).select('theater_id');
+    if (!show) {
+        const error = new Error('Show not found');
+        error.status = 404;
+        throw error;
+    }
+
+    const seats = await Seat.find({
+        _id: { $in: uniqueSeatIds },
+        theater_id: show.theater_id,
+    }).select('_id row_label seat_number');
+
+    if (seats.length !== uniqueSeatIds.length) {
+        const error = new Error('One or more selected seats do not belong to this show theater');
+        error.status = 400;
+        throw error;
+    }
+
+    const existingBooking = await this.findOne({
+        show_id,
+        status: { $ne: 'cancelled' },
+        seats: { $in: uniqueSeatIds },
+    }).populate('seats', 'row_label seat_number');
+
+    if (existingBooking) {
+        const selected = new Set(uniqueSeatIds);
+        const labels = existingBooking.seats
+            .filter((seat) => selected.has(String(seat._id)))
+            .map((seat) => `${seat.row_label}${seat.seat_number}`)
+            .join(', ');
+        const error = new Error(`Selected seat(s) already booked${labels ? `: ${labels}` : ''}`);
+        error.status = 409;
+        throw error;
+    }
+
+    return this.create({
+        user_id,
+        show_id,
+        seats: uniqueSeatIds,
+        total_price,
+        status: 'pending',
+    });
 };
 
 bookingSchema.statics.updateStatus = async function (id, status) {
