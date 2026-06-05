@@ -1,42 +1,41 @@
 /**
- * Theater Model - SQL Queries
+ * Theater model - MongoDB/Mongoose.
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Theater = {
-    async findAll() {
-        const result = await query('SELECT * FROM theaters ORDER BY name ASC');
-        return result.rows;
+const TheaterSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    capacity: { type: Number, required: true, min: 1 },
+    screen_type: { type: String, default: 'standard' },
+}, {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+});
+
+TheaterSchema.virtual('id').get(function () {
+    return this._id.toString();
+});
+
+TheaterSchema.set('toJSON', {
+    virtuals: true,
+    transform: (_doc, ret) => {
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        return ret;
     },
+});
 
-    async findById(id) {
-        const result = await query('SELECT * FROM theaters WHERE id = $1', [id]);
-        return result.rows[0];
-    },
-
-    async create({ name, capacity, screen_type }) {
-        const result = await query(
-            'INSERT INTO theaters (name, capacity, screen_type) VALUES ($1, $2, $3) RETURNING *',
-            [name, capacity, screen_type]
-        );
-        return result.rows[0];
-    },
-
-    async update(id, fields) {
-        const keys = Object.keys(fields);
-        const values = Object.values(fields);
-        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
-        const result = await query(
-            `UPDATE theaters SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
-            [...values, id]
-        );
-        return result.rows[0];
-    },
-
-    async delete(id) {
-        await query('DELETE FROM theaters WHERE id = $1', [id]);
-    }
+TheaterSchema.statics.findAll = function () {
+    return this.find({}).sort({ name: 1 });
 };
 
-module.exports = Theater;
+TheaterSchema.statics.update = function (id, fields) {
+    return this.findByIdAndUpdate(id, fields, { new: true, runValidators: true });
+};
+
+TheaterSchema.statics.delete = function (id) {
+    return this.findByIdAndDelete(id);
+};
+
+module.exports = mongoose.model('Theater', TheaterSchema);

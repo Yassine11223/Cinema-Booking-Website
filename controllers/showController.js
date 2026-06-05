@@ -20,7 +20,7 @@ const showController = {
     // GET /api/shows/:id
     async getById(req, res, next) {
         try {
-            const show = await Show.findById(req.params.id);
+            const show = await Show.findDetailedById(req.params.id);
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }

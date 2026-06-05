@@ -1,36 +1,42 @@
 /**
- * sidebar-loader.js
- * Loads the sidebar component and highlights the active nav link
- * based on the current page filename.
- * Also handles the logout button and superadmin-only visibility.
+ * Loads the admin sidebar, guards admin pages, and applies role visibility.
  */
 
 (function () {
     'use strict';
 
-    // ============================================
-    // AUTH GUARD — Redirect to login if not admin/superadmin
-    // ============================================
-    (function enforceAdminAuth() {
-        const token = localStorage.getItem('admin_token');
-        const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
+    function normalizeRole(role) {
+        return role === 'superadmin' ? 'super_admin' : role;
+    }
 
-        let isAdmin = false;
-        if (token && userData) {
-            try {
-                const user = JSON.parse(userData);
-                if (user && (user.role === 'admin' || user.role === 'superadmin')) isAdmin = true;
-            } catch (_) { }
+    function getAdminToken() {
+        return localStorage.getItem('adminToken') || localStorage.getItem('admin_token');
+    }
+
+    function getAdminUser() {
+        const raw = localStorage.getItem('adminUser') || localStorage.getItem('thehall_user');
+        if (!raw) return null;
+        try {
+            const user = JSON.parse(raw);
+            return { ...user, role: normalizeRole(user.role) };
+        } catch (_) {
+            return null;
         }
+    }
 
-        if (!isAdmin) {
-            // Not authenticated as admin/superadmin — redirect to login page
+    function isAdmin(user) {
+        return user?.role === 'admin' || user?.role === 'super_admin';
+    }
+
+    (function enforceAdminAuth() {
+        const token = getAdminToken();
+        const user = getAdminUser();
+
+        if (!token || !isAdmin(user)) {
             window.location.href = 'login.html';
-            return;
         }
     })();
 
-    // Map page filenames → nav link IDs
     const PAGE_NAV_MAP = {
         'index.html': 'nav-dashboard',
         'movies-manage.html': 'nav-movies',
@@ -41,10 +47,6 @@
         'admins-manage.html': 'nav-admins',
     };
 
-    /**
-     * Fetch the sidebar HTML and inject it into #sidebar-container,
-     * then activate the correct nav link.
-     */
     async function loadSidebar() {
         const container = document.getElementById('sidebar-container');
         if (!container) return;
@@ -52,109 +54,66 @@
         try {
             const response = await fetch('components/sidebar.html');
             if (!response.ok) throw new Error('Sidebar fetch failed');
-            const html = await response.text();
-            container.innerHTML = html;
+            container.innerHTML = await response.text();
 
             activateCurrentLink();
             initMobileToggle();
             initLogout();
             applySuperadminVisibility();
             updateSidebarUserInfo();
-
         } catch (err) {
             console.warn('[Sidebar] Could not load sidebar component:', err);
         }
     }
 
-    /**
-     * Add .active class to the nav link matching the current page.
-     */
     function activateCurrentLink() {
         const currentFile = window.location.pathname.split('/').pop() || 'index.html';
-        const activeLinkId = PAGE_NAV_MAP[currentFile];
-
-        if (activeLinkId) {
-            const link = document.getElementById(activeLinkId);
-            if (link) link.classList.add('active');
-        }
+        const link = document.getElementById(PAGE_NAV_MAP[currentFile]);
+        if (link) link.classList.add('active');
     }
 
-    /**
-     * Show/hide elements with data-superadmin-only based on user role.
-     * Also enforce page-level access: if current page is admins-manage.html
-     * and user is not superadmin, redirect to dashboard.
-     */
     function applySuperadminVisibility() {
-        let isSuperadmin = false;
-        try {
-            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
-            if (userData) {
-                const user = JSON.parse(userData);
-                isSuperadmin = user && user.role === 'superadmin';
-            }
-        } catch (_) { }
+        const user = getAdminUser();
+        const isSuperadmin = user?.role === 'super_admin';
 
-        // Show/hide superadmin-only nav items
         document.querySelectorAll('[data-superadmin-only]').forEach(el => {
             el.style.display = isSuperadmin ? '' : 'none';
         });
 
-        // Page-level access control: redirect non-superadmin from superadmin pages
         const currentFile = window.location.pathname.split('/').pop() || 'index.html';
         if (currentFile === 'admins-manage.html' && !isSuperadmin) {
             window.location.href = 'index.html';
         }
     }
 
-    /**
-     * Update sidebar user info (name and role badge) from stored user data.
-     */
     function updateSidebarUserInfo() {
-        try {
-            const userData = localStorage.getItem('thehall_user') || localStorage.getItem('userData');
-            if (!userData) return;
-            const user = JSON.parse(userData);
-            if (!user) return;
+        const user = getAdminUser();
+        if (!user) return;
 
-            // Update admin name
-            const nameEl = document.getElementById('sidebar-admin-name');
-            if (nameEl && user.name) nameEl.textContent = user.name;
+        const nameEl = document.getElementById('sidebar-admin-name');
+        if (nameEl && user.name) nameEl.textContent = user.name;
 
-            // Update role label
-            const roleEl = document.getElementById('sidebar-admin-role');
-            if (roleEl) {
-                if (user.role === 'superadmin') {
-                    roleEl.textContent = 'Super Admin';
-                    roleEl.style.color = '#e040fb';
-                } else {
-                    roleEl.textContent = 'Admin';
-                }
-            }
+        const isSuperadmin = user.role === 'super_admin';
 
-            // Update brand sub label
-            const brandSub = document.getElementById('sidebar-role-label');
-            if (brandSub) {
-                brandSub.textContent = user.role === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN';
-            }
+        const roleEl = document.getElementById('sidebar-admin-role');
+        if (roleEl) {
+            roleEl.textContent = isSuperadmin ? 'Super Admin' : 'Admin';
+            roleEl.style.color = isSuperadmin ? '#f5c451' : '';
+        }
 
-            // Update avatar icon
-            const avatarEl = document.getElementById('sidebar-avatar-icon');
-            if (avatarEl && user.role === 'superadmin') {
-                avatarEl.innerHTML = '<i class="fas fa-crown"></i>';
-                avatarEl.style.background = 'linear-gradient(135deg, rgba(224,64,251,0.2), rgba(156,39,176,0.1))';
-                avatarEl.style.borderColor = 'rgba(224,64,251,0.3)';
-            }
-        } catch (_) { }
+        const brandSub = document.getElementById('sidebar-role-label');
+        if (brandSub) brandSub.textContent = isSuperadmin ? 'SUPER ADMIN' : 'ADMIN';
+
+        const avatarEl = document.getElementById('sidebar-avatar-icon');
+        if (avatarEl && isSuperadmin) {
+            avatarEl.innerHTML = '<i class="fas fa-crown"></i>';
+        }
     }
 
-    /**
-     * Mobile hamburger toggle.
-     */
     function initMobileToggle() {
         const toggleBtn = document.getElementById('sidebar-toggle');
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebar-backdrop');
-
         if (!toggleBtn || !sidebar) return;
 
         function openSidebar() {
@@ -171,8 +130,6 @@
 
         toggleBtn.addEventListener('click', openSidebar);
         if (backdrop) backdrop.addEventListener('click', closeSidebar);
-
-        // Close on nav link click (mobile UX)
         sidebar.querySelectorAll('.sidebar-nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 768) closeSidebar();
@@ -180,33 +137,23 @@
         });
     }
 
-    /**
-     * Logout button handler.
-     * Clears all admin auth tokens and redirects to the admin login page.
-     */
     function initLogout() {
         const logoutBtn = document.getElementById('nav-logout');
         if (!logoutBtn) return;
 
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-
-            // Clear all auth data set during login
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('thehall_user');
-            localStorage.removeItem('userData');
-
-            // Redirect to admin login page
+            [
+                'adminToken', 'adminUser', 'isAdminLoggedIn',
+                'admin_token', 'authToken', 'thehall_user',
+            ].forEach(key => localStorage.removeItem(key));
             window.location.href = 'login.html';
         });
     }
 
-    // Run when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadSidebar);
     } else {
         loadSidebar();
     }
-
 })();

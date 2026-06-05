@@ -19,13 +19,12 @@ const bookingController = {
     // GET /api/bookings/:id
     async getById(req, res, next) {
         try {
-            const booking = await Booking.findById(req.params.id);
+            const booking = await Booking.findDetailedById(req.params.id);
             if (!booking) {
                 return res.status(404).json({ message: 'Booking not found' });
             }
 
-            const seats = await Booking.getBookingSeats(booking.id);
-            res.json({ ...booking, seats });
+            res.json(booking);
         } catch (error) {
             next(error);
         }
@@ -47,14 +46,14 @@ const bookingController = {
             const { show_id, seat_ids } = req.body;
 
             // Get show to calculate price
-            const show = await Show.findById(show_id);
+            const show = await Show.findDetailedById(show_id);
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }
 
             const total_price = parseFloat(show.price) * seat_ids.length;
 
-            const booking = await Booking.create({
+            const booking = await Booking.createBooking({
                 user_id: req.user.id,
                 show_id,
                 seat_ids,

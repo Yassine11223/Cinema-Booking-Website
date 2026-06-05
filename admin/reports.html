@@ -1,1 +1,59 @@
-<!-- Reports & Analytics -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports | THE HALL CINEMAS Admin</title>
+    <link rel="stylesheet" href="../shared/css/global.css">
+    <link rel="stylesheet" href="../shared/css/components.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="admin-body">
+    <div class="admin-layout">
+        <div id="sidebar-container"></div>
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <h1 class="admin-page-title"><i class="fas fa-chart-line admin-title-icon"></i> Reports</h1>
+                    <p class="admin-page-subtitle">MongoDB-backed bookings, revenue, movies, users, and showtimes</p>
+                </div>
+                <div class="admin-header-right">
+                    <button class="admin-refresh-btn" id="reports-refresh" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                    <button class="quick-action-btn" id="reports-export"><i class="fas fa-file-export"></i><span>Export CSV</span></button>
+                </div>
+            </header>
+
+            <section class="stats-grid">
+                <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Revenue</span><span class="stat-value" id="r-revenue">0 EGP</span></div></div>
+                <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Bookings</span><span class="stat-value" id="r-bookings">0</span></div></div>
+                <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Movies</span><span class="stat-value" id="r-movies">0</span></div></div>
+                <div class="stat-card"><div class="stat-card-body"><span class="stat-label">Customers</span><span class="stat-value" id="r-users">0</span></div></div>
+            </section>
+
+            <section class="dashboard-bottom-row">
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header"><h2 class="chart-title">Top Movies</h2></div>
+                    <div class="top-movies-list" id="reports-top-movies"></div>
+                </div>
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header"><h2 class="chart-title">Recent Bookings</h2></div>
+                    <div class="table-scroll">
+                        <table class="admin-table">
+                            <thead><tr><th>ID</th><th>Customer</th><th>Movie</th><th>Seats</th><th>Total</th><th>Status</th></tr></thead>
+                            <tbody id="reports-bookings"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div class="toast-container" id="toast-container"></div>
+    <script src="js/sidebar-loader.js"></script>
+    <script src="js/reports.js"></script>
+</body>
+
+</html>

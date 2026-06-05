@@ -1,47 +1,44 @@
 /**
- * Payment Model - SQL Queries
+ * Payment model - MongoDB/Mongoose.
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Payment = {
-    async findAll() {
-        const result = await query(
-            `SELECT p.*, b.total_price, u.name AS user_name
-             FROM payments p
-             JOIN bookings b ON p.booking_id = b.id
-             JOIN users u ON b.user_id = u.id
-             ORDER BY p.created_at DESC`
-        );
-        return result.rows;
+const PaymentSchema = new mongoose.Schema({
+    booking_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
+    amount: { type: Number, required: true, min: 0 },
+    payment_method: { type: String, default: '' },
+    transaction_id: { type: String, default: '' },
+    status: { type: String, enum: ['pending', 'completed', 'failed', 'refunded'], default: 'completed' },
+}, {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+});
+
+PaymentSchema.virtual('id').get(function () {
+    return this._id.toString();
+});
+
+PaymentSchema.set('toJSON', {
+    virtuals: true,
+    transform: (_doc, ret) => {
+        ret.id = ret._id.toString();
+        ret.booking_id = ret.booking_id?.toString?.() || ret.booking_id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
     },
+});
 
-    async findById(id) {
-        const result = await query('SELECT * FROM payments WHERE id = $1', [id]);
-        return result.rows[0];
-    },
-
-    async findByBooking(bookingId) {
-        const result = await query('SELECT * FROM payments WHERE booking_id = $1', [bookingId]);
-        return result.rows[0];
-    },
-
-    async create({ booking_id, amount, payment_method, transaction_id }) {
-        const result = await query(
-            `INSERT INTO payments (booking_id, amount, payment_method, transaction_id, status)
-             VALUES ($1, $2, $3, $4, 'completed') RETURNING *`,
-            [booking_id, amount, payment_method, transaction_id]
-        );
-        return result.rows[0];
-    },
-
-    async updateStatus(id, status) {
-        const result = await query(
-            'UPDATE payments SET status = $1 WHERE id = $2 RETURNING *',
-            [status, id]
-        );
-        return result.rows[0];
-    }
+PaymentSchema.statics.findAll = function () {
+    return this.find({}).populate('booking_id').sort({ created_at: -1 });
 };
 
-module.exports = Payment;
+PaymentSchema.statics.findByBooking = function (bookingId) {
+    return this.findOne({ booking_id: bookingId });
+};
+
+PaymentSchema.statics.updateStatus = function (id, status) {
+    return this.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+};
+
+module.exports = mongoose.model('Payment', PaymentSchema);

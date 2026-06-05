@@ -1,57 +1,71 @@
 /**
- * Seat Model - SQL Queries
+ * Seat model - MongoDB/Mongoose.
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Seat = {
-    async findByTheater(theaterId) {
-        const result = await query(
-            'SELECT * FROM seats WHERE theater_id = $1 ORDER BY row_label, seat_number',
-            [theaterId]
-        );
-        return result.rows;
+const SeatSchema = new mongoose.Schema({
+    theater_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Theater', required: true },
+    row_label: { type: String, required: true, trim: true },
+    seat_number: { type: Number, required: true },
+    seat_type: { type: String, default: 'standard' },
+    status: { type: String, enum: ['available', 'blocked'], default: 'available' },
+}, {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+});
+
+SeatSchema.virtual('id').get(function () {
+    return this._id.toString();
+});
+
+SeatSchema.set('toJSON', {
+    virtuals: true,
+    transform: (_doc, ret) => {
+        ret.id = ret._id.toString();
+        ret.theater_id = ret.theater_id?.toString?.() || ret.theater_id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
     },
+});
 
-    async findById(id) {
-        const result = await query('SELECT * FROM seats WHERE id = $1', [id]);
-        return result.rows[0];
-    },
-
-    async findAvailableByShow(showId) {
-        const result = await query(
-            `SELECT s.* FROM seats s
-             JOIN shows sh ON sh.theater_id = s.theater_id
-             WHERE sh.id = $1
-             AND s.id NOT IN (
-                SELECT seat_id FROM booking_seats bs
-                JOIN bookings b ON b.id = bs.booking_id
-                WHERE b.show_id = $1 AND b.status != 'cancelled'
-             )
-             ORDER BY s.row_label, s.seat_number`,
-            [showId]
-        );
-        return result.rows;
-    },
-
-    async createBulk(theaterId, seats) {
-        const values = seats.map((seat, i) => {
-            const offset = i * 4;
-            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`;
-        }).join(', ');
-
-        const params = seats.flatMap(seat => [theaterId, seat.row_label, seat.seat_number, seat.seat_type || 'standard']);
-
-        const result = await query(
-            `INSERT INTO seats (theater_id, row_label, seat_number, seat_type) VALUES ${values} RETURNING *`,
-            params
-        );
-        return result.rows;
-    },
-
-    async delete(id) {
-        await query('DELETE FROM seats WHERE id = $1', [id]);
-    }
+SeatSchema.statics.findByTheater = function (theaterId) {
+    return this.find({ theater_id: theaterId }).sort({ row_label: 1, seat_number: 1 });
 };
 
-module.exports = Seat;
+SeatSchema.statics.findAvailableByShow = async function (showId) {
+    const Show = require('./Show');
+    const Booking = require('./Booking');
+
+    const show = await Show.findById(showId);
+    if (!show) return [];
+
+    const bookings = await Booking.find({
+        show_id: showId,
+        status: { $ne: 'cancelled' },
+    }).select('seat_ids');
+
+    const bookedSeatIds = bookings.flatMap((booking) => booking.seat_ids.map((seatId) => seatId.toString()));
+
+    return this.find({
+        theater_id: show.theater_id,
+        status: { $ne: 'blocked' },
+        _id: { $nin: bookedSeatIds },
+    }).sort({ row_label: 1, seat_number: 1 });
+};
+
+SeatSchema.statics.createBulk = function (theaterId, seats) {
+    return this.insertMany(seats.map((seat) => ({
+        theater_id: theaterId,
+        row_label: seat.row_label,
+        seat_number: seat.seat_number,
+        seat_type: seat.seat_type || 'standard',
+        status: seat.status || 'available',
+    })));
+};
+
+SeatSchema.statics.delete = function (id) {
+    return this.findByIdAndDelete(id);
+};
+
+module.exports = mongoose.model('Seat', SeatSchema);

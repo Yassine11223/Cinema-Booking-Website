@@ -9,7 +9,17 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "seed": "node seeds/seed.js",
+    "seed:super-admin": "node backend/seeds/createSuperAdmin.js",
     "migrate": "node config/migrate.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/tests/smoke/**/*.test.js"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/backend"
+    ]
   },
   "keywords": [
     "cinema",
@@ -26,14 +36,16 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.4",
+    "nodemailer": "^8.0.10",
     "openai": "^6.39.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.16.0",
     "puppeteer": "^25.1.0",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14"
   }
 }

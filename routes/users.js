@@ -7,7 +7,7 @@
 const express = require('express');
 const router = express.Router();
 
-const passport = require('../config/passport');
+const passport = require('../backend/config/passport');
 const userController = require('../controllers/userController');
 
 const { authenticate, adminOnly, superAdminOnly } = require('../middleware/auth');
