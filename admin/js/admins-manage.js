@@ -15,11 +15,11 @@
     const $ = id => document.getElementById(id);
 
     function token() {
-        return localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || '';
+        return localStorage.getItem('adminToken') || '';
     }
 
     function currentUser() {
-        const raw = localStorage.getItem('adminUser') || localStorage.getItem('thehall_user');
+        const raw = localStorage.getItem('adminUser');
         if (!raw) return null;
         try {
             const user = JSON.parse(raw);

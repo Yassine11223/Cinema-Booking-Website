@@ -13,9 +13,6 @@ const userController = require('../controllers/userController');
 const { authenticate, adminOnly, superAdminOnly } = require('../middleware/auth');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 
-console.log('passport.authenticate type:', typeof passport.authenticate);
-console.log('googleCallback type:', typeof userController.googleCallback);
-
 // Google Login - Customer only
 router.get(
     '/google',

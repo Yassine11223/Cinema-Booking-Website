@@ -10,7 +10,7 @@
     let report = null;
 
     function token() {
-        return localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || '';
+        return localStorage.getItem('adminToken') || '';
     }
 
     async function loadReport() {

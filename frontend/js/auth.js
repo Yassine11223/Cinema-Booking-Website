@@ -159,7 +159,7 @@ function trackLocalUser(user, isRegistration = false) {
     return { user, isRegistration };
 }
 
-// Demo/offline users are intentionally not seeded. MongoDB is the source of truth.
+// Local placeholder users are intentionally not seeded. MongoDB is the source of truth.
 
 // ============================================
 // LOGIN FORM
@@ -167,8 +167,8 @@ function trackLocalUser(user, isRegistration = false) {
 document.addEventListener('DOMContentLoaded', () => {
     handleGoogleLoginResult();
     // If already logged in and on the login page, redirect to home
-    const token = localStorage.getItem('userToken') || localStorage.getItem('authToken');
-    const user = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+    const token = localStorage.getItem('userToken');
+    const user = localStorage.getItem('userData');
     const isLoginPage = !!document.getElementById('loginForm');
     const isRegisterPage = !!document.getElementById('registerForm');
     const urlParams = new URLSearchParams(window.location.search);

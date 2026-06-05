@@ -1,6 +1,6 @@
 /**
  * Admin login.
- * Real backend auth only; no demo/offline admin accounts.
+ * Real backend auth only.
  */
 
 const API_BASE = 'http://localhost:5000/api';
@@ -75,14 +75,14 @@ function storeAdminSession(token, user) {
     localStorage.removeItem('userData');
     localStorage.removeItem('isUserLoggedIn');
 
-    localStorage.setItem('admin_token', token);
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('thehall_user', JSON.stringify(adminUser));
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('thehall_user');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('adminToken') || localStorage.getItem('admin_token');
-    const userData = localStorage.getItem('adminUser') || localStorage.getItem('thehall_user');
+    const token = localStorage.getItem('adminToken');
+    const userData = localStorage.getItem('adminUser');
 
     if (token && userData) {
         try {

@@ -297,7 +297,7 @@
         try {
             // showId must be numeric backend ID
             if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('userToken');
             if (!token) return null;
 
             // We need seat IDs (database IDs), not labels.

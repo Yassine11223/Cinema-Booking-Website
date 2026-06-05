@@ -21,7 +21,7 @@
     };
 
     function getToken() {
-        return localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || '';
+        return localStorage.getItem('adminToken') || '';
     }
 
     function money(value) {

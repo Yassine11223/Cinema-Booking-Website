@@ -8,6 +8,11 @@ const TheaterSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     capacity: { type: Number, required: true, min: 1 },
     screen_type: { type: String, default: 'standard' },
+    branch: { type: String, default: '' },
+    rows: { type: Number, default: 0 },
+    seats_per_row: { type: Number, default: 0 },
+    status: { type: String, enum: ['active', 'maintenance', 'inactive'], default: 'active' },
+    notes: { type: String, default: '' },
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
 });

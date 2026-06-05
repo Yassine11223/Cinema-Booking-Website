@@ -14,7 +14,7 @@
     let deleteTargetId = null;
 
     function token() {
-        return localStorage.getItem('adminToken') || localStorage.getItem('admin_token') || '';
+        return localStorage.getItem('adminToken') || '';
     }
 
     function headers() {

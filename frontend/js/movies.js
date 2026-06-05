@@ -1078,7 +1078,7 @@ function handleBookNow() {
     }
 
     // Check if user is logged in
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
     if (!token) {
         window.location.href = 'login.html?redirect=booking.html';
     } else {
