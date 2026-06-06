@@ -866,6 +866,51 @@
         } else {
             showView('selection');
         }
+
+        // ── Option B: Auto-select showtime from chatbot redirect ──
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoShowId = urlParams.get('showId');
+        if (autoShowId && !restored) {
+            console.log('[Booking] Auto-select showId from chatbot:', autoShowId);
+            // Search current date's showtimes first
+            let foundExp = null;
+            if (S.showtimes) {
+                for (const [exp, times] of Object.entries(S.showtimes)) {
+                    const match = times.find(t => String(t.id) === autoShowId || String(t.backendId) === autoShowId);
+                    if (match) { foundExp = exp; break; }
+                }
+            }
+
+            // If not found on current date, try all 7 dates
+            if (!foundExp) {
+                for (const dateObj of S.dates) {
+                    if (dateObj.key === S.dateKey) continue; // already checked
+                    const dateSt = await fetchShowtimesFromAPI(dateObj.key);
+                    for (const [exp, times] of Object.entries(dateSt)) {
+                        const match = times.find(t => String(t.id) === autoShowId || String(t.backendId) === autoShowId);
+                        if (match) {
+                            // Found: switch to this date
+                            S.dateKey = dateObj.key;
+                            S.showtimes = dateSt;
+                            renderDates();
+                            renderShowtimes();
+                            foundExp = exp;
+                            break;
+                        }
+                    }
+                    if (foundExp) break;
+                }
+            }
+
+            if (foundExp) {
+                // Auto-click the showtime → goes directly to seat map
+                await onShowtimeClick(autoShowId, foundExp);
+                toast('Showtime selected from assistant. Choose your seats!', 'info');
+            } else {
+                console.warn('[Booking] showId not found in any date:', autoShowId);
+                toast('Could not find that showtime. Please select manually.', 'warning');
+            }
+        }
     }
 
     document.readyState === 'loading'

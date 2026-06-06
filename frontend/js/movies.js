@@ -577,7 +577,7 @@ function renderMovieDetailPage(movie) {
     renderBookingSection(movie);
 
     // Update page title
-    document.title = `${movie.title} | THE HALL CINEMASs`;
+    document.title = `${movie.title} | The Hall`;
 }
 
 /**
@@ -1138,7 +1138,7 @@ function renderMovieDetailPageMock(movie) {
     renderBookingSection(movie);
 
     // Update page title
-    document.title = `${movie.title} | THE HALL CINEMASs`;
+    document.title = `${movie.title} | The Hall`;
 }
 
 // ============================================

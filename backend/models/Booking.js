@@ -57,7 +57,7 @@ bookingSchema.statics.findAll = async function () {
             path: 'show_id',
             populate: [
                 { path: 'movie_id', select: 'title' },
-                { path: 'theater_id', select: 'name' },
+                { path: 'theater_id', select: 'name screen_type' },
             ],
         })
         .sort({ created_at: -1 });
@@ -80,7 +80,7 @@ bookingSchema.statics.findByIdPopulated = async function (id) {
             path: 'show_id',
             populate: [
                 { path: 'movie_id', select: 'title' },
-                { path: 'theater_id', select: 'name' },
+                { path: 'theater_id', select: 'name screen_type' },
             ],
         });
 
@@ -148,6 +148,8 @@ bookingSchema.statics.getBookingSeats = async function (bookingId) {
     if (!booking) return [];
 
     return booking.seats.map((s) => ({
+        id: s._id.toString(),
+        _id: s._id,
         row_label: s.row_label,
         seat_number: s.seat_number,
         seat_type: s.seat_type,

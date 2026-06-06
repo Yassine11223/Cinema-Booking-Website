@@ -34,7 +34,7 @@ async function sendContactMessage(req, res, next) {
 
         await sendEmail({
             to: email.trim(),
-            subject: `Vision X Cinemas Contact - ${subjectLabels[subject]}`,
+            subject: `The Hall Contact - ${subjectLabels[subject]}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 20px;">
                     <h2 style="color:#b71c1c;">Contact Message Received</h2>

@@ -6,16 +6,43 @@
 
 const { getChatResponse } = require('../utils/openaiClient');
 const { getFallbackResponse } = require('../utils/chatbotFallback');
-const { getShowtimesReplyForTmdbMovie } = require('./chatbotBookingController');
+const {
+    getShowtimesReplyForTmdbMovie,
+    getGeneralShowtimesReply,
+    getMoviesListReply,
+    getMoviesByGenreReply,
+} = require('./chatbotBookingController');
 
 function isShowtimeQuestion(message) {
-    return /\b(showtime|show\s*time|schedule|when|what\s*time|times?)\b/i.test(message);
+    return /\b(showtimes?|show\s*times?|schedule|when|what\s*time|times?)\b/i.test(message);
+}
+
+function isMoviesAvailabilityQuestion(message) {
+    const msg = message.toLowerCase();
+    return /\b(movies?|films?)\b/.test(msg)
+        && /\b(available|showing|playing|now|current|currently|list|what|which)\b/.test(msg);
 }
 
 function isBookingStart(message) {
     const msg = message.toLowerCase().trim();
     return /^(i\s+want\s+to\s+book|book\s+a\s+ticket|book\s+ticket|buy\s+a\s+ticket|buy\s+ticket|let'?s\s+book|start\s+booking|get\s+tickets|i\s+want\s+tickets|book\s+now|book\s+me)/.test(msg)
         || /^book$/.test(msg);
+}
+
+function isRecommendationStart(message) {
+    const msg = message.toLowerCase().trim();
+    return /\b(recommend|suggest|what\s+should\s+i\s+watch|what\s+to\s+watch|any\s+good\s+movies|movie\s+suggestion)\b/.test(msg);
+}
+
+const GENRE_CHIPS = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance', 'Thriller', 'Adventure', 'Animation'];
+
+function extractRequestedGenre(message) {
+    const msg = message.toLowerCase();
+    return GENRE_CHIPS.find((genre) => {
+        const normalized = genre.toLowerCase();
+        if (normalized === 'sci-fi') return /\b(sci-fi|sci\s*fi|science fiction)\b/.test(msg);
+        return new RegExp(`\\b${normalized}\\b`).test(msg);
+    }) || null;
 }
 
 /**
@@ -51,9 +78,17 @@ async function handleChat(req, res) {
         };
         const history = Array.isArray(conversationHistory) ? conversationHistory : [];
 
+        if (isMoviesAvailabilityQuestion(trimmedMessage)) {
+            return res.json(await getMoviesListReply());
+        }
+
         if (isShowtimeQuestion(trimmedMessage) && context.movieContext?.tmdb_id) {
             const result = await getShowtimesReplyForTmdbMovie(context.movieContext.tmdb_id);
             return res.json(result);
+        }
+
+        if (isShowtimeQuestion(trimmedMessage)) {
+            return res.json(await getGeneralShowtimesReply());
         }
 
         if (isBookingStart(trimmedMessage)) {
@@ -62,6 +97,22 @@ async function handleChat(req, res) {
                 type: 'booking_start',
                 suggestions: [],
                 actionRequired: 'get_movies',
+                source: 'fallback',
+            });
+        }
+
+        // Recommendation intent — return genre selection chips
+        if (isRecommendationStart(trimmedMessage)) {
+            const requestedGenre = extractRequestedGenre(trimmedMessage);
+            if (requestedGenre) {
+                return res.json(await getMoviesByGenreReply(requestedGenre));
+            }
+
+            return res.json({
+                reply: "🎬 I'd love to help you find the perfect movie! What genre are you in the mood for?",
+                type: 'recommend_start',
+                suggestions: GENRE_CHIPS,
+                genreChips: GENRE_CHIPS,
                 source: 'fallback',
             });
         }

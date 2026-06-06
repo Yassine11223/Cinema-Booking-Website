@@ -188,6 +188,9 @@
             step: 'choose_movie',
             selectedMovieId: null,
             selectedMovieTitle: null,
+            selectedExperience: null,
+            selectedDate: null,
+            selectedDateLabel: null,
             selectedShowId: null,
             selectedShowTime: null,
             selectedShowTheater: null,
@@ -355,10 +358,32 @@
                         </button>
                     `).join('')}
                 </div>`;
+            } else if (btnType === 'experience_option') {
+                buttonsHtml = `<div class="chatbot-showtime-options">
+                    ${buttons.map(b => `
+                        <button class="chatbot-experience-btn" data-experience="${escapeHTML(b.experience)}">
+                            <div class="chatbot-showtime-time">${escapeHTML(b.label)}</div>
+                        </button>
+                    `).join('')}
+                </div>`;
+            } else if (btnType === 'date_option') {
+                buttonsHtml = `<div class="chatbot-showtime-options">
+                    ${buttons.map(b => `
+                        <button class="chatbot-date-btn" data-date="${escapeHTML(b.date)}">
+                            <div class="chatbot-showtime-time">${escapeHTML(b.label)}</div>
+                        </button>
+                    `).join('')}
+                </div>`;
             } else if (btnType === 'show_option') {
                 buttonsHtml = `<div class="chatbot-showtime-options">
                     ${buttons.map(b => `
-                        <button class="chatbot-showtime-btn${b.soldOut ? ' chatbot-showtime-btn--disabled' : ''}" data-show-id="${b.showId}" data-movie-id="${b.movieId}" ${b.soldOut ? 'disabled' : ''}>
+                        <button class="chatbot-showtime-btn${b.soldOut ? ' chatbot-showtime-btn--disabled' : ''}"
+                                data-show-id="${b.showId}"
+                                data-movie-id="${b.movieId}"
+                                data-local-movie-id="${escapeHTML(b.localMovieId || '')}"
+                                data-movie-title="${escapeHTML(b.movieTitle || '')}"
+                                data-theater-name="${escapeHTML(b.theaterName || '')}"
+                                ${b.soldOut ? 'disabled' : ''}>
                             <div class="chatbot-showtime-time">${escapeHTML(b.label)}</div>
                             <div class="chatbot-showtime-date">${escapeHTML(b.sublabel)}${b.price ? ` • ${b.price} EGP` : ''}${typeof b.availableSeats === 'number' ? ` • ${b.availableSeats} seats` : ''}</div>
                         </button>
@@ -550,9 +575,9 @@
         `;
     }
 
-    /** Handle movie selection → fetch shows */
+    /** Handle movie selection → fetch experiences (Step 2) */
     async function handleMovieSelected(movieId) {
-        if (!bookingState) return;
+        if (!bookingState) startBookingFlow();
 
         // Find movie title from last message buttons
         const movieBtn = DOM.messages.querySelector(`[data-movie-id="${movieId}"]`);
@@ -560,7 +585,7 @@
 
         bookingState.selectedMovieId = movieId;
         bookingState.selectedMovieTitle = movieTitle;
-        bookingState.step = 'choose_show';
+        bookingState.step = 'choose_experience';
         saveBookingState();
 
         // Show user's choice
@@ -568,33 +593,95 @@
         addToHistory('user', movieTitle);
 
         showTypingIndicator();
-        const result = await bookingAction('get_shows', { movieId });
+        const result = await bookingAction('get_experiences', { movieId });
         await sleep(400);
         hideTypingIndicator();
 
         if (!result || !result.buttons || result.buttons.length === 0) {
-            addMessage('ai', result?.reply || "I can't see any showtimes for that movie right now. Please check back later! 🕐", null);
-            addToHistory('assistant', result?.reply || 'No showtimes available');
-            // Let user pick another movie
+            addMessage('ai', result?.reply || "No experiences available for that movie right now. 🕐", null);
+            addToHistory('assistant', result?.reply || 'No experiences available');
             bookingState.step = 'choose_movie';
             saveBookingState();
-            DOM.suggestions.innerHTML = `
-                <button class="chatbot-suggestion-chip" data-rebrowse="movies">
-                    <i class="fas fa-arrow-left"></i> Pick another movie
-                </button>
-                <button class="chatbot-suggestion-chip chatbot-cancel-booking">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            `;
+            showBookingBackButtons('movies');
             return;
         }
 
         addMessageWithButtons(result.reply, result.buttons, 'fallback');
         addToHistory('assistant', result.reply);
+        showBookingBackButtons('movies');
+    }
 
+    /** Handle experience selection → fetch dates (Step 3) */
+    async function handleExperienceSelected(experience) {
+        if (!bookingState || !bookingState.selectedMovieId) return;
+
+        bookingState.selectedExperience = experience;
+        bookingState.step = 'choose_date';
+        saveBookingState();
+
+        addMessage('user', `🎞️ ${experience}`);
+        addToHistory('user', experience);
+
+        showTypingIndicator();
+        const result = await bookingAction('get_dates', {
+            movieId: bookingState.selectedMovieId,
+            experience,
+        });
+        await sleep(400);
+        hideTypingIndicator();
+
+        if (!result || !result.buttons || result.buttons.length === 0) {
+            addMessage('ai', result?.reply || `No dates available for ${experience}. 🕐`, null);
+            bookingState.step = 'choose_experience';
+            saveBookingState();
+            showBookingBackButtons('experiences');
+            return;
+        }
+
+        addMessageWithButtons(result.reply, result.buttons, 'fallback');
+        addToHistory('assistant', result.reply);
+        showBookingBackButtons('experiences');
+    }
+
+    /** Handle date selection → fetch filtered showtimes (Step 4) */
+    async function handleDateSelected(date, dateLabel) {
+        if (!bookingState || !bookingState.selectedMovieId || !bookingState.selectedExperience) return;
+
+        bookingState.selectedDate = date;
+        bookingState.selectedDateLabel = dateLabel || date;
+        bookingState.step = 'choose_showtime';
+        saveBookingState();
+
+        addMessage('user', `📅 ${dateLabel || date}`);
+        addToHistory('user', dateLabel || date);
+
+        showTypingIndicator();
+        const result = await bookingAction('get_shows_filtered', {
+            movieId: bookingState.selectedMovieId,
+            experience: bookingState.selectedExperience,
+            date,
+        });
+        await sleep(400);
+        hideTypingIndicator();
+
+        if (!result || !result.buttons || result.buttons.length === 0) {
+            addMessage('ai', result?.reply || 'No showtimes available for this date. 🕐', null);
+            bookingState.step = 'choose_date';
+            saveBookingState();
+            showBookingBackButtons('dates');
+            return;
+        }
+
+        addMessageWithButtons(result.reply, result.buttons, 'fallback');
+        addToHistory('assistant', result.reply);
+        showBookingBackButtons('dates');
+    }
+
+    /** Helper: show back/cancel buttons for booking flow */
+    function showBookingBackButtons(backTarget) {
         DOM.suggestions.innerHTML = `
-            <button class="chatbot-suggestion-chip" data-rebrowse="movies">
-                <i class="fas fa-arrow-left"></i> Pick another movie
+            <button class="chatbot-suggestion-chip" data-rebrowse="${backTarget}">
+                <i class="fas fa-arrow-left"></i> Go back
             </button>
             <button class="chatbot-suggestion-chip chatbot-cancel-booking">
                 <i class="fas fa-times"></i> Cancel
@@ -602,56 +689,64 @@
         `;
     }
 
-    /** Handle showtime selection → fetch seat info */
+    /** Handle showtime selection → redirect to booking page (Option B) */
     async function handleShowSelected(showId, movieId) {
-        if (!bookingState) return;
-
         // Find show label from last message buttons
         const showBtn = DOM.messages.querySelector(`[data-show-id="${showId}"]`);
         const showLabel = showBtn?.querySelector('.chatbot-showtime-time')?.textContent || 'this showtime';
+        const movieTitle = showBtn?.dataset.movieTitle || bookingState?.selectedMovieTitle || 'the movie';
+        const localMovieId = showBtn?.dataset.localMovieId || '';
+
+        if (!bookingState) startBookingFlow();
+        if (!bookingState) return;
+
+        bookingState.selectedMovieId = movieId || bookingState.selectedMovieId;
+        bookingState.selectedMovieTitle = movieTitle;
+        bookingState.selectedShowTheater = showBtn?.dataset.theaterName || bookingState.selectedShowTheater || '';
 
         bookingState.selectedShowId = showId;
         bookingState.selectedShowTime = showLabel;
-        bookingState.step = 'confirm';
+        bookingState.step = 'redirecting';
         saveBookingState();
 
         // Show user's choice
         addMessage('user', `🕐 ${showLabel}`);
         addToHistory('user', showLabel);
 
-        showTypingIndicator();
-        const result = await bookingAction('get_seats', { showId });
-        await sleep(400);
-        hideTypingIndicator();
+        // Use the movieId from the button or from booking state
+        const redirectMovieId = movieId || bookingState.selectedMovieId;
 
-        if (!result) {
-            addMessage('ai', "Something went wrong checking seat availability. Please try again! 🎬", null);
-            return;
-        }
+        addMessage('ai', `Great choice! Redirecting you to select your seats for **${bookingState.selectedMovieTitle || 'the movie'}**...\n\n🎬 ${bookingState.selectedExperience || ''} • ${bookingState.selectedDateLabel || ''} • ${showLabel}`, null);
 
-        addMessageWithButtons(result.reply, result.buttons || [], 'fallback');
-        addToHistory('assistant', result.reply);
+        // Store movie context for booking page
+        sessionStorage.setItem('selectedMovie', JSON.stringify({
+            id: redirectMovieId,
+            tmdb_id: redirectMovieId,
+            backendMovieId: localMovieId,
+            title: bookingState.selectedMovieTitle || '',
+            genre: '',
+            rating: '',
+            duration: '',
+        }));
 
-        DOM.suggestions.innerHTML = `
-            <button class="chatbot-suggestion-chip" data-rebrowse="shows">
-                <i class="fas fa-arrow-left"></i> Different showtime
-            </button>
-            <button class="chatbot-suggestion-chip chatbot-cancel-booking">
-                <i class="fas fa-times"></i> Cancel
-            </button>
-        `;
+        resetBookingState();
+
+        // Option B: Redirect with movieId + showId so booking page can auto-select
+        setTimeout(() => {
+            window.location.href = `booking.html?movieId=${redirectMovieId}&showId=${showId}`;
+        }, 1200);
     }
 
     /** Handle Continue Booking click — redirect to booking page */
     function handleContinueBooking(btn) {
         const movieId = btn.dataset.movieId;
+        const showId = btn.dataset.showId || '';
         const movieTitle = btn.dataset.movieTitle || '';
         const movieDuration = btn.dataset.movieDuration || '';
-        const theaterName = btn.dataset.theaterName || '';
 
         if (!movieId) return;
 
-        // Store movie in sessionStorage (same format as movies.js)
+        // Store movie in sessionStorage
         sessionStorage.setItem('selectedMovie', JSON.stringify({
             id: movieId,
             tmdb_id: movieId,
@@ -662,11 +757,13 @@
             duration: movieDuration,
         }));
 
-        // Reset booking state
         resetBookingState();
 
-        // Redirect to booking page
-        window.location.href = `booking.html?movieId=${movieId}`;
+        // Option B redirect with showId
+        const url = showId
+            ? `booking.html?movieId=${movieId}&showId=${showId}`
+            : `booking.html?movieId=${movieId}`;
+        window.location.href = url;
     }
 
     // ============================================
@@ -729,8 +826,29 @@
                 addToHistory('assistant', data.reply);
                 isWaiting = false;
                 DOM.sendBtn.disabled = false;
-                // Auto-trigger movies fetch
                 await handleBookMovies();
+                return;
+            }
+
+            // Recommendation intent → show genre chips
+            if (data.type === 'recommend_start' && data.genreChips) {
+                addMessage('ai', data.reply, data.source);
+                addToHistory('assistant', data.reply);
+                isWaiting = false;
+                DOM.sendBtn.disabled = false;
+                renderGenreChips(data.genreChips);
+                return;
+            }
+
+            if (data.buttons && data.buttons.length) {
+                addMessageWithButtons(data.reply, data.buttons, data.source);
+                addToHistory('assistant', data.reply);
+
+                if (data.suggestions && data.suggestions.length) {
+                    renderSuggestions(data.suggestions);
+                } else {
+                    renderQuickActions();
+                }
                 return;
             }
 
@@ -773,12 +891,59 @@
     // ============================================
     // QUICK ACTION HANDLERS
     // ============================================
+    /** Render genre selection chips for recommendations */
+    function renderGenreChips(genres) {
+        DOM.suggestions.innerHTML = genres.map(g =>
+            `<button class="chatbot-suggestion-chip chatbot-genre-chip" data-genre="${escapeHTML(g)}">
+                ${escapeHTML(g)}
+            </button>`
+        ).join('') + `
+            <button class="chatbot-suggestion-chip chatbot-cancel-booking">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        `;
+    }
+
+    /** Handle genre selection → fetch movies by genre from MongoDB */
+    async function handleGenreSelected(genre) {
+        addMessage('user', `🎭 ${genre}`);
+        addToHistory('user', genre);
+
+        // Start booking flow so movie clicks go through booking steps
+        startBookingFlow();
+
+        showTypingIndicator();
+        const result = await bookingAction('get_movies_by_genre', { genre });
+        await sleep(400);
+        hideTypingIndicator();
+
+        if (!result || !result.buttons || result.buttons.length === 0) {
+            addMessage('ai', result?.reply || `No ${genre} movies available right now. 🎬`, null);
+            resetBookingState();
+            renderQuickActions();
+            return;
+        }
+
+        addMessageWithButtons(result.reply, result.buttons, 'fallback');
+        addToHistory('assistant', result.reply);
+
+        DOM.suggestions.innerHTML = `
+            <button class="chatbot-suggestion-chip chatbot-cancel-booking">
+                <i class="fas fa-times"></i> Cancel booking
+            </button>
+        `;
+    }
+
     async function handleQuickAction(action) {
         switch (action) {
             case 'book':
                 addMessage('user', '🎟️ Book a ticket');
                 addToHistory('user', 'Book a ticket');
                 await handleBookMovies();
+                break;
+
+            case 'recommend':
+                sendMessage('Recommend me a movie');
                 break;
 
             case 'movies':
@@ -901,15 +1066,27 @@
                 const target = rebrowse.dataset.rebrowse;
                 if (target === 'movies') {
                     handleBookMovies();
+                } else if (target === 'experiences' && bookingState?.selectedMovieId) {
+                    handleMovieSelected(bookingState.selectedMovieId);
+                } else if (target === 'dates' && bookingState?.selectedMovieId && bookingState?.selectedExperience) {
+                    handleExperienceSelected(bookingState.selectedExperience);
                 } else if (target === 'shows' && bookingState?.selectedMovieId) {
                     handleMovieSelected(bookingState.selectedMovieId);
                 }
                 return;
             }
 
+            // Genre chip clicked (recommendation flow)
+            const genreChip = e.target.closest('.chatbot-genre-chip');
+            if (genreChip && !isWaiting) {
+                const genre = genreChip.dataset.genre;
+                if (genre) handleGenreSelected(genre);
+                return;
+            }
+
             // Standard suggestion chips
             const chip = e.target.closest('.chatbot-suggestion-chip');
-            if (chip && !isWaiting && !chip.classList.contains('chatbot-cancel-booking') && !chip.dataset.rebrowse) {
+            if (chip && !isWaiting && !chip.classList.contains('chatbot-cancel-booking') && !chip.dataset.rebrowse && !chip.classList.contains('chatbot-genre-chip')) {
                 sendMessage(chip.textContent);
             }
         });
@@ -923,6 +1100,23 @@
             if (movieBtn) {
                 const movieId = movieBtn.dataset.movieId;
                 if (movieId) handleMovieSelected(movieId);
+                return;
+            }
+
+            // Experience option clicked
+            const expBtn = e.target.closest('.chatbot-experience-btn');
+            if (expBtn) {
+                const experience = expBtn.dataset.experience;
+                if (experience) handleExperienceSelected(experience);
+                return;
+            }
+
+            // Date option clicked
+            const dateBtn = e.target.closest('.chatbot-date-btn');
+            if (dateBtn) {
+                const date = dateBtn.dataset.date;
+                const label = dateBtn.querySelector('.chatbot-showtime-time')?.textContent || date;
+                if (date) handleDateSelected(date, label);
                 return;
             }
 

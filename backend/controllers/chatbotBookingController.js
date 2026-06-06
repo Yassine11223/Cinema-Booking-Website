@@ -6,9 +6,26 @@
 const Movie = require('../models/Movie');
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
+const Theater = require('../models/Theater');
+
+// Maps theater screen_type to customer-facing experience name
+const SCREEN_TO_EXP = {
+    'imax': 'IMAX', '3d': 'IMAX',
+    'dolby': 'Dolby',
+    'standard': 'Standard',
+    'vip': 'Deluxe', '4dx': '4DX',
+};
+const EXP_TO_SCREENS = {
+    'IMAX': ['imax', '3d'],
+    'Dolby': ['dolby'],
+    'Standard': ['standard'],
+    'Deluxe': ['vip'],
+    '4DX': ['4dx'],
+};
 const { getHomepageNowPlayingMovies, getMovieDetails, posterUrl, genreFromDetails } = require('../utils/tmdbMovieSource');
 
 const NO_SHOWTIMES_MESSAGE = 'This movie is showing on the site, but I cannot see available showtimes for it right now.';
+const MOVIE_LIMIT = 12;
 
 async function resolveOrCreateLocalMovie(tmdbId) {
     let movie = await Movie.findOne({
@@ -43,6 +60,8 @@ async function handleBookingChat(req, res) {
             });
         }
 
+        const { experience, genre } = req.body;
+
         switch (action) {
             case 'get_movies':
                 return handleGetMovies(res);
@@ -50,6 +69,14 @@ async function handleBookingChat(req, res) {
                 return handleGetShows(res, movieId, date);
             case 'get_seats':
                 return handleGetSeats(res, showId);
+            case 'get_experiences':
+                return handleGetExperiences(res, movieId);
+            case 'get_dates':
+                return handleGetDates(res, movieId, experience);
+            case 'get_shows_filtered':
+                return handleGetShowsFiltered(res, movieId, experience, date);
+            case 'get_movies_by_genre':
+                return handleGetMoviesByGenre(res, genre);
             default:
                 return res.status(400).json({
                     reply: `Unknown action: ${action}`,
@@ -66,46 +93,71 @@ async function handleBookingChat(req, res) {
 }
 
 async function handleGetMovies(res) {
-    const tmdbMovies = await getHomepageNowPlayingMovies();
-    const localMovies = await Promise.all(tmdbMovies.map((movie) => Movie.upsertFromTmdb(movie)));
+    return res.json(await getMoviesListReply());
+}
 
-    if (!tmdbMovies.length) {
-        return res.json({
-            reply: "I don't see any movies showing right now. Please check back later!",
+async function findMoviesWithUpcomingShows(extraMovieQuery = {}) {
+    const now = new Date();
+    const activeMovieIds = await Show.find({ show_time: { $gt: now } }).distinct('movie_id');
+
+    if (!activeMovieIds.length) return [];
+
+    return Movie.find({
+        _id: { $in: activeMovieIds },
+        ...extraMovieQuery,
+    }).sort({ release_date: -1 }).limit(MOVIE_LIMIT);
+}
+
+function movieButton(movie) {
+    return {
+        type: 'movie_option',
+        label: movie.title,
+        movieId: movie.tmdb_id ? String(movie.tmdb_id) : movie._id.toString(),
+        localMovieId: movie._id.toString(),
+        tmdb_id: movie.tmdb_id,
+        posterUrl: movie.poster_url,
+        genre: movie.genre,
+        duration: movie.duration || 0,
+        rating: movie.rating || '',
+    };
+}
+
+function movieData(movie) {
+    const obj = typeof movie.toObject === 'function' ? movie.toObject() : movie;
+    return {
+        ...obj,
+        id: movie.tmdb_id ? String(movie.tmdb_id) : movie._id.toString(),
+        local_id: movie._id.toString(),
+    };
+}
+
+function moviesListResponse(movies, intro = 'Here are the movies currently showing') {
+    if (!movies.length) {
+        return {
+            reply: "I don't see any movies with upcoming showtimes right now. Please check back later!",
             type: 'no_movies',
             data: [],
             buttons: [],
-        });
+            source: 'database',
+        };
     }
-
-    const movies = tmdbMovies.map((movie, index) => ({
-        ...movie,
-        id: String(movie.tmdb_id),
-        local_id: localMovies[index]?._id?.toString(),
-    }));
-
-    const buttons = movies.map((m) => ({
-        type: 'movie_option',
-        label: m.title,
-        movieId: String(m.tmdb_id),
-        localMovieId: m.local_id,
-        tmdb_id: m.tmdb_id,
-        posterUrl: m.poster_url,
-        genre: m.genre,
-        duration: m.duration || 0,
-        rating: m.rating || '',
-    }));
 
     const movieList = movies
         .map((m, i) => `${i + 1}. **${m.title}**${m.genre ? ` (${m.genre})` : ''}`)
         .join('\n');
 
-    return res.json({
-        reply: `Here are the movies currently showing:\n\n${movieList}\n\nTap a movie to see available showtimes!`,
+    return {
+        reply: `${intro}:\n\n${movieList}\n\nTap a movie to see available showtimes!`,
         type: 'movies_list',
-        data: movies,
-        buttons,
-    });
+        data: movies.map(movieData),
+        buttons: movies.map(movieButton),
+        source: 'database',
+    };
+}
+
+async function getMoviesListReply() {
+    const movies = await findMoviesWithUpcomingShows();
+    return moviesListResponse(movies);
 }
 
 async function handleGetShows(res, movieId, date) {
@@ -291,8 +343,252 @@ async function getShowtimesReplyForTmdbMovie(tmdbId) {
     };
 }
 
+async function getGeneralShowtimesReply() {
+    const now = new Date();
+    const shows = await Show.find({ show_time: { $gt: now } })
+        .populate('movie_id', 'title tmdb_id')
+        .populate('theater_id', 'name screen_type')
+        .sort({ show_time: 1 })
+        .limit(10);
+
+    if (!shows.length) {
+        return {
+            reply: 'I cannot see any upcoming showtimes in the database right now. Please check back later or try another date.',
+            type: 'no_shows',
+            suggestions: ['Movies showing now', 'How do I book a ticket?'],
+            buttons: [],
+            source: 'database',
+        };
+    }
+
+    const buttons = shows.map((s) => {
+        const dt = new Date(s.show_time);
+        const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return {
+            type: 'show_option',
+            label: `${timeStr} - ${s.theater_id?.name || 'Hall'}`,
+            sublabel: `${dateStr} • ${s.price || 0} EGP`,
+            showId: s._id.toString(),
+            movieId: s.movie_id?.tmdb_id ? String(s.movie_id.tmdb_id) : s.movie_id?._id?.toString(),
+            localMovieId: s.movie_id?._id?.toString(),
+            movieTitle: s.movie_id?.title || 'Movie',
+            theaterName: s.theater_id?.name || 'Hall',
+            price: s.price || 0,
+            availableSeats: null,
+            soldOut: false,
+        };
+    });
+
+    const showList = buttons
+        .map((b, i) => `${i + 1}. **${b.movieTitle}** — ${b.label} (${b.sublabel})`)
+        .join('\n');
+
+    return {
+        reply: `Here are the next available showtimes from our booking system:\n\n${showList}\n\nPick a showtime or ask for a specific movie/date.`,
+        type: 'shows_list',
+        suggestions: ['Book a ticket', 'Movies showing now', 'Help me choose seats'],
+        buttons,
+        source: 'database',
+    };
+}
+
+// ── New step-by-step booking handlers ──────────────────────────
+
+async function resolveMovieId(movieId) {
+    if (/^[0-9a-fA-F]{24}$/.test(movieId)) {
+        return movieId;
+    }
+    const movie = await resolveOrCreateLocalMovie(movieId);
+    return movie?._id?.toString() || null;
+}
+
+async function handleGetExperiences(res, movieId) {
+    if (!movieId) {
+        return res.status(400).json({ reply: 'Please select a movie first!', type: 'error' });
+    }
+    const resolvedId = await resolveMovieId(movieId);
+    if (!resolvedId) {
+        return res.json({ reply: 'Movie not found in our system.', type: 'error', buttons: [] });
+    }
+
+    const now = new Date();
+    const shows = await Show.find({ movie_id: resolvedId, show_time: { $gt: now } })
+        .populate('theater_id', 'screen_type name');
+
+    if (!shows.length) {
+        return res.json({
+            reply: 'No upcoming showtimes found for this movie.',
+            type: 'no_shows', buttons: [],
+        });
+    }
+
+    // Collect distinct experiences
+    const expSet = new Map();
+    for (const s of shows) {
+        const screenType = s.theater_id?.screen_type || 'standard';
+        const exp = SCREEN_TO_EXP[screenType] || 'Standard';
+        if (!expSet.has(exp)) expSet.set(exp, screenType);
+    }
+
+    const EXP_ORDER = ['IMAX', 'Dolby', '4DX', 'Deluxe', 'Standard'];
+    const experiences = EXP_ORDER.filter(e => expSet.has(e));
+
+    const buttons = experiences.map(exp => ({
+        type: 'experience_option',
+        label: exp,
+        experience: exp,
+    }));
+
+    const movie = await Movie.findById(resolvedId);
+    return res.json({
+        reply: `Great choice! **${movie?.title || 'This movie'}** is available in the following experiences:\n\n${experiences.map(e => `• **${e}**`).join('\n')}\n\nWhich experience would you like?`,
+        type: 'experiences_list',
+        buttons,
+    });
+}
+
+async function handleGetDates(res, movieId, experience) {
+    if (!movieId || !experience) {
+        return res.status(400).json({ reply: 'Please select a movie and experience first!', type: 'error' });
+    }
+    const resolvedId = await resolveMovieId(movieId);
+    if (!resolvedId) {
+        return res.json({ reply: 'Movie not found.', type: 'error', buttons: [] });
+    }
+
+    const screenTypes = EXP_TO_SCREENS[experience] || ['standard'];
+    const theaters = await Theater.find({ screen_type: { $in: screenTypes } });
+    const theaterIds = theaters.map(t => t._id);
+
+    const now = new Date();
+    const shows = await Show.find({
+        movie_id: resolvedId,
+        theater_id: { $in: theaterIds },
+        show_time: { $gt: now },
+    }).sort({ show_time: 1 });
+
+    if (!shows.length) {
+        return res.json({
+            reply: `No upcoming ${experience} showtimes for this movie.`,
+            type: 'no_shows', buttons: [],
+        });
+    }
+
+    // Collect distinct dates
+    const dateMap = new Map();
+    for (const s of shows) {
+        const dt = new Date(s.show_time);
+        const key = dt.toISOString().split('T')[0];
+        if (!dateMap.has(key)) {
+            dateMap.set(key, dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+        }
+    }
+
+    const buttons = Array.from(dateMap.entries()).slice(0, 7).map(([key, label]) => ({
+        type: 'date_option',
+        label,
+        date: key,
+    }));
+
+    return res.json({
+        reply: `**${experience}** showtimes are available on these dates:\n\n${buttons.map(b => `• **${b.label}**`).join('\n')}\n\nWhich day works for you?`,
+        type: 'dates_list',
+        buttons,
+    });
+}
+
+async function handleGetShowsFiltered(res, movieId, experience, date) {
+    if (!movieId || !experience || !date) {
+        return res.status(400).json({ reply: 'Please select movie, experience, and date first!', type: 'error' });
+    }
+    const resolvedId = await resolveMovieId(movieId);
+    if (!resolvedId) {
+        return res.json({ reply: 'Movie not found.', type: 'error', buttons: [] });
+    }
+
+    const screenTypes = EXP_TO_SCREENS[experience] || ['standard'];
+    const theaters = await Theater.find({ screen_type: { $in: screenTypes } });
+    const theaterIds = theaters.map(t => t._id);
+
+    const [year, month, day] = String(date).split('-').map(Number);
+    const dayStart = new Date(year, month - 1, day, 0, 0, 0);
+    const dayEnd = new Date(year, month - 1, day + 1, 0, 0, 0);
+    const now = new Date();
+
+    const shows = await Show.find({
+        movie_id: resolvedId,
+        theater_id: { $in: theaterIds },
+        show_time: { $gte: dayStart < now ? now : dayStart, $lt: dayEnd },
+    }).populate('theater_id', 'name capacity screen_type').sort({ show_time: 1 });
+
+    if (!shows.length) {
+        return res.json({
+            reply: `No ${experience} showtimes available on this date.`,
+            type: 'no_shows', buttons: [],
+        });
+    }
+
+    const movie = await Movie.findById(resolvedId);
+    const buttons = shows.map(s => {
+        const dt = new Date(s.show_time);
+        const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return {
+            type: 'show_option',
+            label: `${timeStr} - ${s.theater_id?.name || 'Hall'}`,
+            sublabel: `${experience} • ${s.price} EGP`,
+            showId: s._id.toString(),
+            movieId: movie?.tmdb_id ? String(movie.tmdb_id) : resolvedId,
+            localMovieId: resolvedId,
+            theaterName: s.theater_id?.name || 'Hall',
+            price: s.price,
+            availableSeats: null, // skip heavy seat count for speed
+            soldOut: false,
+        };
+    });
+
+    return res.json({
+        reply: `**${experience}** showtimes for **${movie?.title || 'this movie'}** on **${buttons[0]?.sublabel?.split('•')[0]?.trim() || date}**:\n\n${buttons.map(b => `• ${b.label} — ${b.sublabel}`).join('\n')}\n\nPick a showtime to continue!`,
+        type: 'shows_list',
+        buttons,
+    });
+}
+
+async function handleGetMoviesByGenre(res, genre) {
+    return res.json(await getMoviesByGenreReply(genre));
+}
+
+async function getMoviesByGenreReply(genre) {
+    if (!genre) {
+        return { reply: 'Please tell me what genre you\'re interested in!', type: 'error', buttons: [] };
+    }
+
+    const movies = await findMoviesWithUpcomingShows({ genre: { $regex: genre, $options: 'i' } });
+
+    if (!movies.length) {
+        // Fallback: show all movies with active shows
+        const allMovies = await findMoviesWithUpcomingShows();
+        if (!allMovies.length) {
+            return {
+                reply: `I couldn't find any **${genre}** movies with upcoming showtimes. Check back soon! 🎬`,
+                type: 'no_movies', buttons: [],
+                source: 'database',
+            };
+        }
+        return moviesListResponse(
+            allMovies,
+            `I don't have **${genre}** movies right now, but here are movies with upcoming showtimes`
+        );
+    }
+
+    return moviesListResponse(movies, `Here are **${genre}** movies with upcoming showtimes`);
+}
+
 module.exports = {
     handleBookingChat,
     getShowtimesReplyForTmdbMovie,
+    getGeneralShowtimesReply,
+    getMoviesListReply,
+    getMoviesByGenreReply,
     NO_SHOWTIMES_MESSAGE,
 };

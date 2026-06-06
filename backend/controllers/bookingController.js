@@ -8,11 +8,11 @@ const { sendTicketEmail } = require('../utils/emailService');
 
 async function sendBookingConfirmationEmail(bookingId) {
     const populatedBooking = await Booking.findByIdPopulated(bookingId);
-    if (!populatedBooking) return;
+    if (!populatedBooking) return null;
 
     const seats = await Booking.getBookingSeats(bookingId);
     populatedBooking.seats = seats;
-    await sendTicketEmail(populatedBooking, populatedBooking.user_id);
+    return sendTicketEmail(populatedBooking, populatedBooking.user_id);
 }
 
 const bookingController = {
@@ -119,13 +119,26 @@ const bookingController = {
             }
 
             // Send ticket confirmation email
+            let ticketData = null;
             try {
-                await sendBookingConfirmationEmail(req.params.id);
+                ticketData = await sendBookingConfirmationEmail(req.params.id);
             } catch (emailError) {
                 console.error('[BookingController] Failed to send email during confirmation:', emailError);
             }
 
-            res.json({ message: 'Booking confirmed', booking });
+            res.json({
+                message: 'Booking confirmed',
+                booking,
+                ticketData: ticketData ? {
+                    bookingId: ticketData.bookingId,
+                    purchaseTimestamp: ticketData.purchaseTimestamp,
+                    tickets: ticketData.tickets,
+                    emailSentTo: ticketData.recipient,
+                    emailSent: ticketData.emailSent,
+                    messageId: ticketData.messageId,
+                    emailError: ticketData.error,
+                } : null,
+            });
         } catch (error) {
             next(error);
         }

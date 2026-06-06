@@ -75,7 +75,7 @@ async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, ticket
 
     const attachments = [];
     const ticketCards = tickets.map((ticket, index) => {
-        const cid = `qr-${index}-${bookingId}@visionx`;
+        const cid = `qr-${index}-${bookingId}@thehall`;
         const attachment = dataUrlToAttachment(ticket.qrCodeDataUrl, `ticket-${ticket.seatNumber}.png`, cid);
         if (attachment) attachments.push(attachment);
 
