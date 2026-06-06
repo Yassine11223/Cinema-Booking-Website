@@ -8,11 +8,11 @@ const { sendTicketEmail } = require('../utils/emailService');
 
 async function sendBookingConfirmationEmail(bookingId) {
     const populatedBooking = await Booking.findByIdPopulated(bookingId);
-    if (!populatedBooking) return;
+    if (!populatedBooking) return null;
 
     const seats = await Booking.getBookingSeats(bookingId);
     populatedBooking.seats = seats;
-    await sendTicketEmail(populatedBooking, populatedBooking.user_id);
+    return sendTicketEmail(populatedBooking, populatedBooking.user_id);
 }
 
 const bookingController = {
@@ -62,6 +62,20 @@ const bookingController = {
                 return res.status(404).json({ message: 'Show not found' });
             }
 
+            const conflicts = await Booking.findActiveSeatConflicts(show_id, seat_ids);
+            if (conflicts.length > 0) {
+                const bookedSeatIds = [
+                    ...new Set(conflicts.flatMap((booking) => (
+                        booking.seats || []
+                    ).map((seatId) => seatId.toString()))),
+                ].filter((seatId) => seat_ids.map(String).includes(seatId));
+
+                return res.status(409).json({
+                    message: 'Selected seats are already booked.',
+                    bookedSeatIds,
+                });
+            }
+
             const total_price = parseFloat(show.price) * seat_ids.length;
 
             const booking = await Booking.createBooking({
@@ -73,6 +87,12 @@ const bookingController = {
 
             res.status(201).json(booking);
         } catch (error) {
+            console.error('[BookingController] Failed to create booking:', {
+                message: error.message,
+                show_id: req.body?.show_id,
+                seat_ids: req.body?.seat_ids,
+                user_id: req.user?.id,
+            });
             next(error);
         }
     },
@@ -99,13 +119,26 @@ const bookingController = {
             }
 
             // Send ticket confirmation email
+            let ticketData = null;
             try {
-                await sendBookingConfirmationEmail(req.params.id);
+                ticketData = await sendBookingConfirmationEmail(req.params.id);
             } catch (emailError) {
                 console.error('[BookingController] Failed to send email during confirmation:', emailError);
             }
 
-            res.json({ message: 'Booking confirmed', booking });
+            res.json({
+                message: 'Booking confirmed',
+                booking,
+                ticketData: ticketData ? {
+                    bookingId: ticketData.bookingId,
+                    purchaseTimestamp: ticketData.purchaseTimestamp,
+                    tickets: ticketData.tickets,
+                    emailSentTo: ticketData.recipient,
+                    emailSent: ticketData.emailSent,
+                    messageId: ticketData.messageId,
+                    emailError: ticketData.error,
+                } : null,
+            });
         } catch (error) {
             next(error);
         }

@@ -61,6 +61,7 @@
      * Null if ticket generation hasn't happened or failed.
      */
     let generatedTicketData = null;
+    let backendConfirmation = null;
 
     /* =========================================================
        DOM
@@ -335,10 +336,14 @@
 
         // After simulated payment delay, generate QR tickets via backend
         setTimeout(async () => {
-            bookingNumber = generateBookingNumber();
+            bookingNumber = booking.backendBookingId || generateBookingNumber();
 
-            // Attempt to generate QR tickets from backend
-            await generateTicketsFromBackend();
+            if (booking.backendBookingId) {
+                await confirmBackendBookingAndEmail();
+            } else {
+                // Legacy fallback for sessions that do not have a MongoDB booking.
+                await generateTicketsFromBackend();
+            }
 
             // Save booking (includes tickets if generated)
             saveBooking();
@@ -346,6 +351,51 @@
             // Navigate to confirmation step
             goToStep(3);
         }, 2000);
+    }
+
+    async function confirmBackendBookingAndEmail() {
+        const backendBookingId = booking?.backendBookingId;
+        if (!backendBookingId) return false;
+
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('[Payment] Cannot confirm backend booking without auth token.');
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                console.warn('[Payment] Backend booking confirm failed:', response.status, data);
+                return false;
+            }
+
+            backendConfirmation = data.ticketData || null;
+            if (backendConfirmation?.tickets?.length) {
+                generatedTicketData = backendConfirmation;
+                bookingNumber = backendConfirmation.bookingId || backendBookingId;
+            }
+
+            console.info('[Payment] Backend booking confirmed:', {
+                bookingId: backendBookingId,
+                emailSent: backendConfirmation?.emailSent === true,
+                emailSentTo: backendConfirmation?.emailSentTo || null,
+                tickets: backendConfirmation?.tickets?.length || 0,
+            });
+
+            return true;
+        } catch (error) {
+            console.warn('[Payment] Backend confirm unavailable:', error.message);
+            return false;
+        }
     }
 
     /* =========================================================
@@ -630,7 +680,7 @@
         ctx.fillStyle = '#e53935';
         ctx.font = 'bold 28px "Segoe UI", Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('THE HALL CINEMASS', width / 2, 50);
+        ctx.fillText('THE HALL', width / 2, 50);
 
         // Experience badge
         ctx.fillStyle = 'rgba(183, 28, 28, 0.3)';
@@ -742,30 +792,8 @@
        FUTURE: Replace localStorage with backend database.
        ========================================================= */
     function saveBooking() {
-        // ── 1. Confirm backend booking (status: pending → confirmed) ──
         const backendBookingId = booking.backendBookingId;
-        if (backendBookingId) {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-                fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                })
-                .then(res => {
-                    if (res.ok) {
-                        console.log('✅ Backend booking confirmed:', backendBookingId);
-                    } else {
-                        console.warn('⚠️ Backend booking confirm failed:', res.status);
-                    }
-                })
-                .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
-            }
-        }
 
-        // ── 2. Save to localStorage as cache/offline backup ──
         try {
             const bookings = JSON.parse(localStorage.getItem('thehall_bookings') || '[]');
             bookings.push({
@@ -783,6 +811,12 @@
                 paymentMethod,
                 currency: booking.currency,
                 createdAt: new Date().toISOString(),
+                confirmationEmail: backendConfirmation ? {
+                    emailSent: backendConfirmation.emailSent === true,
+                    emailSentTo: backendConfirmation.emailSentTo || null,
+                    messageId: backendConfirmation.messageId || null,
+                    error: backendConfirmation.emailError || null,
+                } : null,
                 // Include ticket data for offline reference
                 tickets: generatedTicketData ? generatedTicketData.tickets.map(t => ({
                     ticketId: t.ticketId,
