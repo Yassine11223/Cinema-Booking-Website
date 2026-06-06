@@ -4,12 +4,20 @@
 
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
+const Movie = require('../models/Movie');
 
 const showController = {
     // GET /api/shows
     async getAll(req, res, next) {
         try {
-            const { movieId, date } = req.query;
+            let { movieId, date } = req.query;
+            if (movieId && /^\d+$/.test(String(movieId))) {
+                const movie = await Movie.findByTmdbId(movieId);
+                if (!movie) {
+                    return res.json([]);
+                }
+                movieId = movie.id;
+            }
             const shows = await Show.findAll({ movieId, date });
             res.json(shows);
         } catch (error) {

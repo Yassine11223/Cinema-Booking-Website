@@ -2,6 +2,7 @@
 
 CREATE TABLE IF NOT EXISTS movies (
     id            SERIAL PRIMARY KEY,
+    tmdb_id       INTEGER UNIQUE,
     title         VARCHAR(255) NOT NULL,
     description   TEXT,
     genre         VARCHAR(50),
@@ -16,3 +17,4 @@ CREATE TABLE IF NOT EXISTS movies (
 );
 
 CREATE INDEX idx_movies_status ON movies(status);
+CREATE INDEX idx_movies_tmdb_id ON movies(tmdb_id);

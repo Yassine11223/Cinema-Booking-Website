@@ -32,6 +32,12 @@ function detectIntent(message) {
         return 'showtime_help';
     }
 
+    // Active booking request (user wants to book NOW, not just asking how)
+    if (/^(i\s+want\s+to\s+book|book\s+a\s+ticket|book\s+ticket|buy\s+a\s+ticket|buy\s+ticket|let'?s\s+book|start\s+booking|get\s+tickets|i\s+want\s+tickets|book\s+now|book\s+me)/.test(msg)
+        || /^book$/.test(msg)) {
+        return 'booking_start';
+    }
+
     // Booking help
     if (/book|how.*book|checkout|can't.*checkout|what.*next|step|process|how.*do.*i|unavailable/.test(msg)) {
         return 'booking_help';
@@ -57,6 +63,16 @@ function detectIntent(message) {
 
 // ── Response Templates ─────────────────────────────────────────────
 const RESPONSES = {
+    booking_start: {
+        replies: [
+            "Let's get you booked! I'll pull up the movies currently showing.",
+            "Great, let's book your tickets. First, here are the movies currently playing.",
+        ],
+        type: 'booking_start',
+        suggestions: [],
+        actionRequired: 'get_movies',
+    },
+
     greeting: {
         replies: [
             "Hey there! 🎬 Welcome to THE HALL CINEMASs! I'm your AI cinema assistant. I can help you pick the perfect movie, find the best seats, compare experiences, and much more. What can I help you with?",
@@ -171,6 +187,7 @@ function getFallbackResponse(message, context = {}) {
         reply: enrichedReply,
         type: template.type,
         suggestions: template.suggestions,
+        actionRequired: template.actionRequired || null,
     };
 }
 

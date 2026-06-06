@@ -24,6 +24,7 @@ const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
 const adminRoutes = require('./routes/admin');
 const adminsRoutes = require('./routes/admins');
+const chatbotBookingRoutes = require('./routes/chatbotBooking');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -57,6 +58,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admins', adminsRoutes);
+app.use('/api/chatbot', chatbotBookingRoutes);
 app.use('/auth', authRoutes);
 
 app.get('/api/health', (_req, res) => {

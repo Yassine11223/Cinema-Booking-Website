@@ -32,6 +32,9 @@
             if (stored) {
                 const parsed = JSON.parse(stored);
                 return {
+                    id: parsed.id || null,
+                    tmdb_id: parsed.tmdb_id || parsed.id || null,
+                    backendMovieId: parsed.backendMovieId || parsed.localMovieId || null,
                     title: parsed.title || 'Unknown Movie',
                     genre: parsed.genre || 'Movie',
                     rating: parsed.rating || 'NR',
@@ -55,120 +58,6 @@
         Standard: 180,
         Deluxe: 250,
     };
-
-    // ============================================
-    // HALL LAYOUTS — different for each experience
-    // IMAX = biggest, Dolby = slightly smaller,
-    // Standard ≈ 20% smaller, Deluxe = smallest
-    // ============================================
-    function rng(a, b) {
-        const arr = [];
-        for (let i = a; i <= b; i++) arr.push(i);
-        return arr;
-    }
-
-    const HALL_LAYOUTS = {
-        // ── IMAX — 14 rows, widest, ~310 seats ──
-        IMAX: {
-            upper: [
-                { row: 'A', sections: [rng(1, 7), rng(8, 18), rng(19, 25)] },
-                { row: 'B', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'C', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'D', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'E', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'F', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'G', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'H', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'J', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-                { row: 'K', sections: [rng(1, 8), rng(9, 19), rng(20, 27)] },
-            ],
-            lower: [
-                { row: 'L', sections: [rng(1, 6), rng(7, 17), rng(18, 23)] },
-                { row: 'M', sections: [rng(1, 6), rng(7, 17), rng(18, 23)] },
-                { row: 'N', sections: [rng(1, 5), rng(6, 14), rng(15, 19)] },
-                { row: 'P', sections: [rng(1, 4), rng(5, 11), rng(12, 15)] },
-            ],
-        },
-
-        // ── Dolby — 12 rows, slightly smaller, ~256 seats ──
-        Dolby: {
-            upper: [
-                { row: 'A', sections: [rng(1, 6), rng(7, 16), rng(17, 22)] },
-                { row: 'B', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'C', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'D', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'E', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'F', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'G', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'H', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-                { row: 'J', sections: [rng(1, 7), rng(8, 17), rng(18, 24)] },
-            ],
-            lower: [
-                { row: 'K', sections: [rng(1, 5), rng(6, 14), rng(15, 19)] },
-                { row: 'L', sections: [rng(1, 5), rng(6, 14), rng(15, 19)] },
-                { row: 'M', sections: [rng(1, 4), rng(5, 12), rng(13, 16)] },
-            ],
-        },
-
-        // ── Standard — 11 rows, ~200 seats (≈20% smaller than IMAX) ──
-        Standard: {
-            upper: [
-                { row: 'A', sections: [rng(1, 5), rng(6, 13), rng(14, 18)] },
-                { row: 'B', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'C', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'D', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'E', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'F', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'G', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-                { row: 'H', sections: [rng(1, 6), rng(7, 15), rng(16, 21)] },
-            ],
-            lower: [
-                { row: 'J', sections: [rng(1, 4), rng(5, 12), rng(13, 16)] },
-                { row: 'K', sections: [rng(1, 4), rng(5, 12), rng(13, 16)] },
-                { row: 'L', sections: [rng(1, 3), rng(4, 10), rng(11, 13)] },
-            ],
-        },
-
-        // ── Deluxe — 8 rows, compact premium, ~116 seats ──
-        Deluxe: {
-            upper: [
-                { row: 'A', sections: [rng(1, 4), rng(5, 10), rng(11, 14)] },
-                { row: 'B', sections: [rng(1, 5), rng(6, 12), rng(13, 17)] },
-                { row: 'C', sections: [rng(1, 5), rng(6, 12), rng(13, 17)] },
-                { row: 'D', sections: [rng(1, 5), rng(6, 12), rng(13, 17)] },
-                { row: 'E', sections: [rng(1, 5), rng(6, 12), rng(13, 17)] },
-                { row: 'F', sections: [rng(1, 5), rng(6, 12), rng(13, 17)] },
-            ],
-            lower: [
-                { row: 'G', sections: [rng(1, 3), rng(4, 10), rng(11, 13)] },
-                { row: 'H', sections: [rng(1, 3), rng(4, 10), rng(11, 13)] },
-            ],
-        },
-    };
-
-    // ============================================
-    // UTILITIES
-    // ============================================
-    function hash(s) {
-        let h = 0;
-        for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h &= h; }
-        return Math.abs(h);
-    }
-
-    function getLayout(expType) {
-        return HALL_LAYOUTS[expType] || HALL_LAYOUTS.Standard;
-    }
-
-    function getAllRows(expType) {
-        const lay = getLayout(expType);
-        return [...lay.upper, ...lay.lower];
-    }
-
-    function getAllSeatIds(expType) {
-        const ids = [];
-        getAllRows(expType).forEach(r => r.sections.forEach(sec => sec.forEach(n => ids.push(`${r.row}${n}`))));
-        return ids;
-    }
 
     // ============================================
     // DATE / SHOWTIME GENERATION
@@ -210,14 +99,16 @@
         try {
             // Get movieId from URL or sessionStorage
             const urlParams = new URLSearchParams(window.location.search);
-            let movieId = urlParams.get('movieId') || urlParams.get('showId');
+            let movieId = urlParams.get('movieId');
             // Also check selectedMovie from movies.js
             if (!movieId) {
                 try {
                     const sm = JSON.parse(sessionStorage.getItem('selectedMovie'));
-                    if (sm && sm.backendMovieId) movieId = sm.backendMovieId;
+                    movieId = sm?.backendMovieId || sm?.tmdb_id || sm?.id || null;
                 } catch(_) {}
             }
+
+            if (!movieId) return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
 
             const url = movieId
                 ? `${CFG.API_BASE}/shows?movieId=${movieId}&date=${dateKey}`
@@ -228,9 +119,9 @@
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
             
-            if (!res.ok) return null;
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const shows = await res.json();
-            if (!shows || shows.length === 0) return null;
+            if (!shows || shows.length === 0) return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
 
             // Group by experience type
             const grouped = { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
@@ -240,20 +131,24 @@
                 const dt = new Date(show.show_time);
                 const hrs = dt.getHours();
                 const mins = dt.getMinutes();
-                const timeStr = `${String(hrs % 12 || 12).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+                const timeStr = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
                 grouped[exp].push({
-                    id: show.id,              // real backend ID (numeric)
+                    id: show.id || show._id,
                     time: timeStr,
                     hall: show.theater_name || 'Hall',
-                    sold: false,
-                    backendId: show.id,       // keep reference
+                    sold: show.sold_out === true || Number(show.available_seats || 0) === 0,
+                    backendId: show.id || show._id,
+                    theaterId: show.theater_id?._id || show.theater_id,
+                    price: Number(show.price || 0),
+                    availableSeats: Number(show.available_seats || 0),
+                    capacity: Number(show.capacity || 0),
                 });
             });
             console.log('✅ Showtimes loaded from backend API');
             return grouped;
         } catch (err) {
             console.warn('⚠️ Backend showtimes unavailable:', err.message);
-            return null;
+            return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
         }
     }
 
@@ -264,29 +159,58 @@
      */
     async function fetchSeatStatesFromAPI(showId, expType) {
         try {
-            // showId must be a numeric backend ID
-            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null; // mock ID like 'imx1-..'
-            
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 1000);
-            const res = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
-            if (!res.ok) return null;
-            const availableSeats = await res.json();
-            if (!availableSeats) return null;
+            const [showRes, availableRes] = await Promise.all([
+                fetch(`${CFG.API_BASE}/shows/${showId}`),
+                fetch(`${CFG.API_BASE}/seats/available?showId=${showId}`),
+            ]);
+            if (!showRes.ok || !availableRes.ok) throw new Error('Seat API unavailable');
 
-            // Backend returns AVAILABLE seats. We need to compute BOOKED seats.
-            const allSeatIds = getAllSeatIds(expType);
+            const show = await showRes.json();
+            const theaterId = show.theater_id?._id || show.theater_id;
+            const theaterSeatsRes = await fetch(`${CFG.API_BASE}/theaters/${theaterId}/seats`);
+            if (!theaterSeatsRes.ok) throw new Error('Theater seat API unavailable');
+
+            const availableSeats = await availableRes.json();
+            const allSeats = await theaterSeatsRes.json();
             const availableSet = new Set(availableSeats.map(s => `${s.row_label}${s.seat_number}`));
-            const booked = allSeatIds.filter(id => !availableSet.has(id));
+            const booked = [];
+            const seatIdMap = {};
+            const seatTypeMap = {};
+            const rowMap = new Map();
+
+            allSeats.forEach((seat) => {
+                const label = `${seat.row_label}${seat.seat_number}`;
+                seatIdMap[label] = seat.id || seat._id;
+                seatTypeMap[label] = seat.seat_type || 'standard';
+                if (!availableSet.has(label)) booked.push(label);
+                if (!rowMap.has(seat.row_label)) rowMap.set(seat.row_label, []);
+                rowMap.get(seat.row_label).push(Number(seat.seat_number));
+            });
+
+            const rows = Array.from(rowMap.entries())
+                .sort((a, b) => a[0].localeCompare(b[0], undefined, { numeric: true }))
+                .map(([row, nums]) => ({
+                    row,
+                    sections: splitSeatSections(nums.sort((a, b) => a - b)),
+                }));
 
             console.log(`✅ Seat states from API: ${booked.length} booked, ${availableSeats.length} available`);
-            return { booked, held: [] };
+            return { booked, held: [], layout: { rows }, seatIdMap, seatTypeMap, price: Number(show.price || 0) };
         } catch (err) {
             console.warn('⚠️ Backend seat states unavailable:', err.message);
-            return null;
+            return { booked: [], held: [], layout: { rows: [] }, seatIdMap: {}, seatTypeMap: {} };
         }
+    }
+
+    function splitSeatSections(nums) {
+        if (nums.length <= 12) return [nums];
+        const left = Math.floor(nums.length * 0.3);
+        const right = nums.length - left;
+        return [
+            nums.slice(0, left),
+            nums.slice(left, right),
+            nums.slice(right),
+        ].filter(section => section.length > 0);
     }
 
     /**
@@ -300,15 +224,7 @@
             const token = localStorage.getItem('userToken');
             if (!token) return null;
 
-            // We need seat IDs (database IDs), not labels.
-            // First get all seats for this show to map labels -> IDs
-            const seatsRes = await fetch(`${CFG.API_BASE}/shows/${showId}/seats`);
-            if (!seatsRes.ok) return null;
-            const allSeats = await seatsRes.json();
-            const seatIdMap = {};
-            allSeats.forEach(s => { seatIdMap[`${s.row_label}${s.seat_number}`] = s.id; });
-
-            const seat_ids = seatLabels.map(label => seatIdMap[label]).filter(Boolean);
+            const seat_ids = seatLabels.map(label => S.seatStates?.seatIdMap?.[label]).filter(Boolean);
             if (seat_ids.length === 0) return null;
 
             const res = await fetch(`${CFG.API_BASE}/bookings`, {
@@ -334,79 +250,6 @@
     }
 
     // ============================================
-    // MOCK FALLBACKS — used when backend is offline
-    // ============================================
-    function genShowtimes(dateKey) {
-        const movieIdStr = (typeof MOVIE !== 'undefined' && MOVIE) ? (MOVIE.id || MOVIE.title || '') : '';
-        const h = hash(dateKey + movieIdStr);
-        
-        // Generate an offset in 15 minute increments (between -45 and +135 minutes)
-        // using the movie ID hash so it's consistent per movie but different across movies.
-        const mHash = hash(movieIdStr || 'default');
-        const offsetMins = ((mHash % 13) - 3) * 15;
-        
-        function t(baseTime) {
-            const [hh, mm] = baseTime.split(':').map(Number);
-            let totalMins = hh * 60 + mm + offsetMins;
-            if (totalMins < 0) totalMins += 24 * 60;
-            const newH = Math.floor(totalMins / 60) % 24;
-            const newM = totalMins % 60;
-            return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
-        }
-        
-        return {
-            IMAX: [
-                { id: `imx1-${dateKey}`, time: t('12:00'), hall: 'IMAX Theatre', sold: false },
-                { id: `imx2-${dateKey}`, time: t('15:30'), hall: 'IMAX Theatre', sold: false },
-                { id: `imx3-${dateKey}`, time: t('19:00'), hall: 'IMAX Theatre', sold: (h % 4 === 0) },
-                { id: `imx4-${dateKey}`, time: t('22:15'), hall: 'IMAX Theatre', sold: false },
-            ],
-            Dolby: [
-                { id: `dlb1-${dateKey}`, time: t('11:00'), hall: 'Dolby Atmos', sold: false },
-                { id: `dlb2-${dateKey}`, time: t('14:00'), hall: 'Dolby Atmos', sold: (h % 5 === 0) },
-                { id: `dlb3-${dateKey}`, time: t('17:30'), hall: 'Dolby Atmos', sold: false },
-                { id: `dlb4-${dateKey}`, time: t('21:00'), hall: 'Dolby Atmos', sold: false },
-            ],
-            Standard: [
-                { id: `std1-${dateKey}`, time: t('11:30'), hall: 'Hall 1', sold: false },
-                { id: `std2-${dateKey}`, time: t('14:15'), hall: 'Hall 1', sold: false },
-                { id: `std3-${dateKey}`, time: t('17:00'), hall: 'Hall 3', sold: (h % 7 === 0) },
-                { id: `std4-${dateKey}`, time: t('20:30'), hall: 'Hall 1', sold: false },
-                { id: `std5-${dateKey}`, time: t('23:00'), hall: 'Hall 3', sold: false },
-            ],
-            Deluxe: [
-                { id: `dlx1-${dateKey}`, time: t('13:00'), hall: 'Deluxe Suite', sold: false },
-                { id: `dlx2-${dateKey}`, time: t('16:30'), hall: 'Deluxe Suite', sold: (h % 6 === 0) },
-                { id: `dlx3-${dateKey}`, time: t('19:45'), hall: 'Deluxe Suite', sold: false },
-            ],
-        };
-    }
-
-    /**
-     * Deterministically generate booked + held seats for a showtime.
-     * FALLBACK: used when backend is offline.
-     */
-    function genSeatStates(showtimeId, expType) {
-        const all = getAllSeatIds(expType);
-        const h = hash(showtimeId);
-        const booked = new Set();
-        const held = new Set();
-
-        const numBooked = Math.floor(all.length * (0.32 + (h % 12) * 0.012));
-        for (let i = 0; i < numBooked; i++) {
-            booked.add(all[Math.abs((h * (i + 7)) % all.length)]);
-        }
-
-        const numHeld = 3 + (h % 5);
-        for (let i = 0; i < numHeld; i++) {
-            const seat = all[Math.abs((h * (i + 41) + 19) % all.length)];
-            if (!booked.has(seat)) held.add(seat);
-        }
-
-        return { booked: [...booked], held: [...held] };
-    }
-
-    // ============================================
     // STATE
     // ============================================
     const S = {
@@ -422,7 +265,12 @@
         confirmed: false,
         view: 'selection',
 
-        get price() { return this.stType ? (PRICING[this.stType] || 0) : 0; },
+        get price() {
+            const st = this.showtime;
+            if (st?.price) return st.price;
+            if (this.seatStates?.price) return this.seatStates.price;
+            return this.stType ? (PRICING[this.stType] || 0) : 0;
+        },
         get total() { return this.selected.length * this.price; },
         get remain() {
             if (!this.timerStart) return CFG.TIMER_DURATION;
@@ -470,8 +318,6 @@
             S.timerStart = d.timerStart;
             S.confirmed = d.confirmed || false;
             S.view = d.view || 'selection';
-            if (S.dateKey) S.showtimes = genShowtimes(S.dateKey);
-            if (S.stId && S.stType) S.seatStates = genSeatStates(S.stId, S.stType);
             return true;
         } catch (_) { return false; }
     }
@@ -549,7 +395,7 @@
         const now = new Date();
         const [year, month, day] = S.dateKey.split('-');
         
-        const st = S.showtimes;
+        const st = S.showtimes || { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
         const order = ['IMAX', 'Dolby', 'Standard', 'Deluxe'];
         let html = '<div class="showtime-groups">';
         let hasAnyShowtimes = false;
@@ -612,27 +458,53 @@
     function renderSeatMap() {
         if (!S.seatStates || !S.stType) { D.seatMap.innerHTML = ''; return; }
 
-        const layout = getLayout(S.stType);
+        const rows = S.seatStates.layout?.rows || [];
+        if (!rows.length) {
+            D.seatMap.innerHTML = `<div class="showtime-placeholder">
+                <i class="fas fa-chair"></i>No seat layout found for this theater.</div>`;
+            return;
+        }
+
         const booked = new Set(S.seatStates.booked);
         const held = new Set(S.seatStates.held);
         const sel = new Set(S.selected);
+        D.seatMap.innerHTML = rows.map(rowDef => buildDbRow(rowDef, booked, held, sel)).join('');
+    }
 
-        let html = '';
+    function buildDbRow(rowDef, booked, held, sel) {
+        let seats = '';
+        let prev = false;
 
-        // Upper section
-        layout.upper.forEach(rowDef => {
-            html += buildRow(rowDef, 'standard', booked, held, sel);
+        rowDef.sections.forEach(sec => {
+            if (sec.length === 0) return;
+            if (prev) seats += '<div class="seat-aisle"></div>';
+            sec.forEach(n => {
+                const id = `${rowDef.row}${n}`;
+                const seatType = S.seatStates.seatTypeMap?.[id] || 'standard';
+                let cls = 'seat';
+                let dis = false;
+
+                if (booked.has(id)) {
+                    cls += ' seat--occupied'; dis = true;
+                } else if (held.has(id)) {
+                    cls += ' seat--held'; dis = true;
+                } else if (sel.has(id)) {
+                    cls += ' seat--selected';
+                    if (seatType !== 'standard') cls += ' seat--premium-available';
+                } else {
+                    cls += seatType === 'standard' ? ' seat--available' : ' seat--premium-available';
+                }
+
+                seats += `<button class="${cls}" data-id="${id}" ${dis ? 'disabled' : ''}></button>`;
+            });
+            prev = true;
         });
 
-        // Section gap
-        html += '<div class="section-gap"></div>';
-
-        // Lower section (premium)
-        layout.lower.forEach(rowDef => {
-            html += buildRow(rowDef, 'premium', booked, held, sel);
-        });
-
-        D.seatMap.innerHTML = html;
+        return `<div class="seat-row">
+            <span class="row-label">${rowDef.row}</span>
+            <div class="row-seats">${seats}</div>
+            <span class="row-label">${rowDef.row}</span>
+        </div>`;
     }
 
     function buildRow(rowDef, seatType, booked, held, sel) {
@@ -821,9 +693,7 @@
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
 
-        // Try backend API first, fall back to mock
-        const apiShowtimes = await fetchShowtimesFromAPI(key);
-        S.showtimes = apiShowtimes || genShowtimes(key);
+        S.showtimes = await fetchShowtimesFromAPI(key);
 
         save();
         renderDates();
@@ -836,9 +706,7 @@
         S.selected = []; S.timerStart = null; S.confirmed = false;
         stopTimer();
 
-        // Try backend API for real seat availability, fall back to mock
-        const apiSeats = await fetchSeatStatesFromAPI(id, exp);
-        S.seatStates = apiSeats || genSeatStates(id, exp);
+        S.seatStates = await fetchSeatStatesFromAPI(id, exp);
 
         save();
 
@@ -894,6 +762,17 @@
         if (backendBooking) {
             backendBookingId = backendBooking.id;
             toast('Booking saved to database!', 'success');
+        } else {
+            S.confirmed = false;
+            save();
+            renderBottomBar();
+            renderTimer();
+            toast('Could not reserve those seats. Please sign in or choose available seats again.', 'error');
+            S.seatStates = await fetchSeatStatesFromAPI(S.stId, S.stType);
+            S.selected = [];
+            renderSeatMap();
+            renderBottomBar();
+            return;
         }
 
         // Save booking summary for payment page (user info comes from localStorage)
@@ -968,10 +847,10 @@
         const restored = load();
         if (!restored) {
             S.dateKey = S.dates[0].key;
-            // Try backend API first for initial showtimes
-            const apiShowtimes = await fetchShowtimesFromAPI(S.dateKey);
-            S.showtimes = apiShowtimes || genShowtimes(S.dateKey);
+            S.showtimes = await fetchShowtimesFromAPI(S.dateKey);
             S.view = 'selection';
+        } else if (S.dateKey) {
+            S.showtimes = await fetchShowtimesFromAPI(S.dateKey);
         }
 
         renderMovieHeader();
@@ -979,9 +858,7 @@
         renderShowtimes();
 
         if (S.view === 'seatmap' && S.stId && S.stType) {
-            // Try refreshing seat states from API on page reload
-            const apiSeats = await fetchSeatStatesFromAPI(S.stId, S.stType);
-            if (apiSeats) S.seatStates = apiSeats;
+            S.seatStates = await fetchSeatStatesFromAPI(S.stId, S.stType);
             renderLegend();
             renderSeatMap();
             renderTimer();
@@ -990,6 +867,51 @@
             if (S.timerStart && !S.confirmed && S.selected.length > 0) startTimer();
         } else {
             showView('selection');
+        }
+
+        // ── Option B: Auto-select showtime from chatbot redirect ──
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoShowId = urlParams.get('showId');
+        if (autoShowId && !restored) {
+            console.log('[Booking] Auto-select showId from chatbot:', autoShowId);
+            // Search current date's showtimes first
+            let foundExp = null;
+            if (S.showtimes) {
+                for (const [exp, times] of Object.entries(S.showtimes)) {
+                    const match = times.find(t => String(t.id) === autoShowId || String(t.backendId) === autoShowId);
+                    if (match) { foundExp = exp; break; }
+                }
+            }
+
+            // If not found on current date, try all 7 dates
+            if (!foundExp) {
+                for (const dateObj of S.dates) {
+                    if (dateObj.key === S.dateKey) continue; // already checked
+                    const dateSt = await fetchShowtimesFromAPI(dateObj.key);
+                    for (const [exp, times] of Object.entries(dateSt)) {
+                        const match = times.find(t => String(t.id) === autoShowId || String(t.backendId) === autoShowId);
+                        if (match) {
+                            // Found: switch to this date
+                            S.dateKey = dateObj.key;
+                            S.showtimes = dateSt;
+                            renderDates();
+                            renderShowtimes();
+                            foundExp = exp;
+                            break;
+                        }
+                    }
+                    if (foundExp) break;
+                }
+            }
+
+            if (foundExp) {
+                // Auto-click the showtime → goes directly to seat map
+                await onShowtimeClick(autoShowId, foundExp);
+                toast('Showtime selected from assistant. Choose your seats!', 'info');
+            } else {
+                console.warn('[Booking] showId not found in any date:', autoShowId);
+                toast('Could not find that showtime. Please select manually.', 'warning');
+            }
         }
     }
 

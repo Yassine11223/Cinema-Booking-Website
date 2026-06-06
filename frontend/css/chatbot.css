@@ -564,6 +564,336 @@
     }
 }
 
+/* ============================================
+   BOOKING ASSISTANT — Quick Action Buttons
+   ============================================ */
+.chatbot-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    background: rgba(183, 28, 28, 0.06);
+    border: 1px solid rgba(183, 28, 28, 0.18);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-family: var(--font-body, 'Inter', sans-serif);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.chatbot-action-btn i {
+    font-size: 13px;
+    color: rgba(183, 28, 28, 0.7);
+    transition: color 0.2s ease;
+}
+
+.chatbot-action-btn:hover {
+    background: rgba(183, 28, 28, 0.15);
+    border-color: rgba(183, 28, 28, 0.35);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.chatbot-action-btn:hover i {
+    color: var(--primary, #b71c1c);
+}
+
+.chatbot-action-btn:active {
+    transform: translateY(0);
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Movie Options
+   ============================================ */
+.chatbot-movie-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.chatbot-movie-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(183, 28, 28, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    color: inherit;
+    width: 100%;
+}
+
+.chatbot-movie-btn:hover {
+    background: rgba(183, 28, 28, 0.1);
+    border-color: rgba(183, 28, 28, 0.3);
+    transform: translateX(3px);
+}
+
+.chatbot-movie-poster {
+    width: 36px;
+    height: 50px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: rgba(20, 20, 20, 0.8);
+}
+
+.chatbot-movie-poster--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(183, 28, 28, 0.4);
+    font-size: 16px;
+}
+
+.chatbot-movie-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.chatbot-movie-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chatbot-movie-meta {
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+}
+
+.chatbot-movie-arrow {
+    color: rgba(183, 28, 28, 0.4);
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.chatbot-movie-btn:hover .chatbot-movie-arrow {
+    color: var(--primary, #b71c1c);
+    transform: translateX(2px);
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Showtime Options
+   ============================================ */
+.chatbot-showtime-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.chatbot-showtime-btn {
+    padding: 8px 14px;
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(183, 28, 28, 0.15);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    color: inherit;
+    min-width: 110px;
+}
+
+.chatbot-showtime-btn:hover {
+    background: rgba(183, 28, 28, 0.12);
+    border-color: rgba(183, 28, 28, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(183, 28, 28, 0.15);
+}
+
+.chatbot-showtime-time {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.chatbot-showtime-date {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Continue Booking CTA
+   ============================================ */
+.chatbot-cta-wrap {
+    margin-top: 12px;
+}
+
+.chatbot-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    background: linear-gradient(135deg, var(--primary, #b71c1c) 0%, #8e1515 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: var(--font-body, 'Inter', sans-serif);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(183, 28, 28, 0.3);
+    animation: chatbot-cta-pulse 2s ease-in-out infinite;
+}
+
+.chatbot-cta-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 24px rgba(183, 28, 28, 0.4);
+}
+
+.chatbot-cta-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+@keyframes chatbot-cta-pulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(183, 28, 28, 0.3); }
+    50%      { box-shadow: 0 4px 24px rgba(183, 28, 28, 0.45); }
+}
+
+.chatbot-cta-btn--login {
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+    box-shadow: 0 4px 16px rgba(21, 101, 192, 0.3);
+    animation: none;
+}
+
+.chatbot-cta-btn--login:hover {
+    box-shadow: 0 6px 24px rgba(21, 101, 192, 0.4);
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Cancel chip
+   ============================================ */
+.chatbot-cancel-booking {
+    color: rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.chatbot-cancel-booking:hover {
+    color: #ef5350 !important;
+    border-color: rgba(239, 83, 80, 0.3) !important;
+    background: rgba(239, 83, 80, 0.08) !important;
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Entrance animations
+   ============================================ */
+.chatbot-movie-btn,
+.chatbot-showtime-btn {
+    animation: chatbot-option-in 0.3s ease forwards;
+    opacity: 0;
+}
+
+.chatbot-movie-btn:nth-child(1),
+.chatbot-showtime-btn:nth-child(1) { animation-delay: 0.05s; }
+.chatbot-movie-btn:nth-child(2),
+.chatbot-showtime-btn:nth-child(2) { animation-delay: 0.1s; }
+.chatbot-movie-btn:nth-child(3),
+.chatbot-showtime-btn:nth-child(3) { animation-delay: 0.15s; }
+.chatbot-movie-btn:nth-child(4),
+.chatbot-showtime-btn:nth-child(4) { animation-delay: 0.2s; }
+.chatbot-movie-btn:nth-child(5),
+.chatbot-showtime-btn:nth-child(5) { animation-delay: 0.25s; }
+.chatbot-movie-btn:nth-child(n+6),
+.chatbot-showtime-btn:nth-child(n+6) { animation-delay: 0.3s; }
+
+@keyframes chatbot-option-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chatbot-cta-btn {
+    animation: chatbot-cta-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards,
+               chatbot-cta-pulse 2s ease-in-out 0.6s infinite;
+    opacity: 0;
+}
+
+@keyframes chatbot-cta-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ============================================
+   BOOKING ASSISTANT — Mobile responsive
+   ============================================ */
+@media (max-width: 480px) {
+    .chatbot-action-btn {
+        font-size: 11px;
+        padding: 7px 11px;
+        gap: 6px;
+    }
+
+    .chatbot-action-btn i {
+        font-size: 12px;
+    }
+
+    .chatbot-movie-btn {
+        padding: 7px 8px;
+        gap: 8px;
+    }
+
+    .chatbot-movie-poster {
+        width: 30px;
+        height: 42px;
+    }
+
+    .chatbot-movie-title {
+        font-size: 12px;
+    }
+
+    .chatbot-movie-meta {
+        font-size: 10px;
+    }
+
+    .chatbot-showtime-btn {
+        padding: 7px 10px;
+        min-width: 95px;
+    }
+
+    .chatbot-showtime-time {
+        font-size: 11.5px;
+    }
+
+    .chatbot-showtime-date {
+        font-size: 9.5px;
+    }
+
+    .chatbot-cta-btn {
+        font-size: 12.5px;
+        padding: 10px 16px;
+        gap: 6px;
+    }
+}
+
 /* ── Print: hide chatbot ────────────────────────────────── */
 @media print {
     .chatbot-toggle,

@@ -57,13 +57,25 @@ const paymentController = {
             // Update booking status to confirmed
             await Booking.updateStatus(booking_id, 'confirmed');
 
+            let ticketData = null;
             try {
-                await sendBookingConfirmationEmail(booking_id);
+                ticketData = await sendBookingConfirmationEmail(booking_id);
             } catch (emailError) {
                 console.error('[PaymentController] Failed to send booking confirmation email:', emailError);
             }
 
-            res.status(201).json(payment);
+            res.status(201).json({
+                payment,
+                ticketData: ticketData ? {
+                    bookingId: ticketData.bookingId,
+                    purchaseTimestamp: ticketData.purchaseTimestamp,
+                    tickets: ticketData.tickets,
+                    emailSentTo: ticketData.recipient,
+                    emailSent: ticketData.emailSent,
+                    messageId: ticketData.messageId,
+                    emailError: ticketData.error,
+                } : null,
+            });
         } catch (error) {
             next(error);
         }
