@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const passport = require('passport');
-const User = require('../models/User');
+const User = require('../../models/User');
 
 const hasGoogleConfig =
     process.env.GOOGLE_CLIENT_ID &&

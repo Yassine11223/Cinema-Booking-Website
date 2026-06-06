@@ -1,26 +1,31 @@
 /**
  * User Controller - Handles auth and user management
  * Tracks login_count and last_login on every successful login
- * Supports customer, admin, and superadmin roles
+ * Supports customer, admin, and super_admin roles
  */
 
 const User = require('../models/User');
 const { generateToken } = require('../middleware/auth');
-const { generateOTP } = require('../utils/otp');
-const { sendOTPEmail } = require('../utils/email');
+const { generateOTP } = require('../backend/utils/otp');
+const { sendOTPEmail } = require('../backend/utils/email');
 
 function removeSensitiveUserFields(user) {
     if (!user) return null;
 
+    const plainUser = user.toJSON ? user.toJSON() : user;
     const {
         password,
         otp_code,
         otp_expires_at,
         google_id,
         ...safeUser
-    } = user;
+    } = plainUser;
 
     return safeUser;
+}
+
+function isAdminRole(role) {
+    return role === 'admin' || role === 'super_admin' || role === 'superadmin';
 }
 
 const userController = {
@@ -92,7 +97,7 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            if (user.role === 'admin' || user.role === 'superadmin') {
+            if (isAdminRole(user.role)) {
                 return res.status(403).json({
                     message: 'Please use the admin login portal to sign in.',
                 });
@@ -129,22 +134,18 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            if (user.role !== 'admin' && user.role !== 'superadmin') {
+            if (!isAdminRole(user.role)) {
                 return res.status(403).json({
                     message: 'Access denied. This portal is for administrators only.',
                 });
             }
 
-            const otpCode = generateOTP();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-            await User.setOTP(user.id, otpCode, expiresAt);
-            await sendOTPEmail(user.email, user.name, otpCode);
+            const freshUser = await User.recordLogin(user.id);
+            const token = generateToken(freshUser || user);
 
             res.json({
-                otpRequired: true,
-                email: user.email,
-                message: 'Verification code sent to your email.',
+                user: removeSensitiveUserFields(freshUser || user),
+                token,
             });
         } catch (error) {
             next(error);
@@ -181,13 +182,7 @@ const userController = {
                 });
             }
 
-            const { query } = require('../config/database');
-
-            await query(
-                'UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE id = $1',
-                [user.id]
-            );
-
+            await User.clearOTP(user.id);
             await User.recordLogin(user.id);
 
             const token = generateToken(user);
@@ -211,7 +206,7 @@ const userController = {
                 return res.redirect(`${frontendUrl}/login.html?google=failed`);
             }
 
-            if (user.role === 'admin' || user.role === 'superadmin') {
+            if (isAdminRole(user.role)) {
                 return res.redirect(`${frontendUrl}/login.html?google=admin_blocked`);
             }
 
@@ -279,6 +274,12 @@ const userController = {
                 return res.status(404).json({ message: 'User not found' });
             }
 
+            if (isAdminRole(user.role) && req.user.role !== 'super_admin') {
+                return res.status(403).json({
+                    message: 'Only Super Admins can delete admin accounts.',
+                });
+            }
+
             await User.delete(id);
 
             res.json({ message: 'User deleted successfully' });
@@ -293,17 +294,19 @@ const userController = {
             const { id } = req.params;
             const { role } = req.body;
 
-            if (!['customer', 'admin', 'superadmin'].includes(role)) {
+            if (!['customer', 'admin', 'super_admin', 'superadmin'].includes(role)) {
                 return res.status(400).json({ message: 'Invalid role' });
             }
 
-            if (role === 'superadmin' && req.user.role !== 'superadmin') {
+            const normalizedRole = role === 'superadmin' ? 'super_admin' : role;
+
+            if ((normalizedRole === 'super_admin' || normalizedRole === 'admin') && req.user.role !== 'super_admin') {
                 return res.status(403).json({
-                    message: 'Only super admins can assign the superadmin role.',
+                    message: 'Only Super Admins can manage admin roles.',
                 });
             }
 
-            const user = await User.update(id, { role });
+            const user = await User.update(id, { role: normalizedRole });
 
             res.json(removeSensitiveUserFields(user));
         } catch (error) {

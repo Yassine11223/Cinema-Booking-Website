@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
    CHECK IF DEMO MODE (token starts with demo_token_)
    ============================================ */
 function isDemoMode() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('userToken');
     return token && (token.startsWith('demo_token_') || token.startsWith('offline_token_'));
 }
 
@@ -25,14 +25,10 @@ function isDemoMode() {
    AUTH CHECK — redirect if not logged in
    ============================================ */
 function checkAuth() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('userToken');
     if (!token) {
         window.location.href = 'login.html?redirect=profile.html';
         return;
-    }
-    // Ensure userData is available from thehall_user if missing
-    if (!localStorage.getItem('userData') && localStorage.getItem('thehall_user')) {
-        localStorage.setItem('userData', localStorage.getItem('thehall_user'));
     }
 }
 
@@ -80,12 +76,12 @@ function populateProfile(user) {
    LOAD PROFILE DATA
    ============================================ */
 async function loadProfile() {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('userToken');
     if (!token) return;
 
     // Demo/offline mode: load from localStorage directly
     if (isDemoMode()) {
-        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+        const userData = localStorage.getItem('userData');
         if (userData) {
             try {
                 populateProfile(JSON.parse(userData));
@@ -109,7 +105,7 @@ async function loadProfile() {
         });
 
         if (response.status === 401) {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('userToken');
             localStorage.removeItem('userData');
             window.location.href = 'login.html?redirect=profile.html';
             return;
@@ -126,7 +122,7 @@ async function loadProfile() {
     } catch (error) {
         console.warn('Backend unavailable, trying localStorage:', error.message);
         // Fallback: try to load from localStorage
-        const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+        const userData = localStorage.getItem('userData');
         if (userData) {
             try {
                 populateProfile(JSON.parse(userData));
@@ -168,7 +164,7 @@ function initProfileForm() {
     editForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('userToken');
         if (!token) return;
 
         const name = document.getElementById('edit-name')?.value.trim();
@@ -280,10 +276,9 @@ function initProfileForm() {
 function initLogout() {
     const logoutBtn = document.getElementById('logout-btn');
     logoutBtn?.addEventListener('click', () => {
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('userToken');
         localStorage.removeItem('userData');
-        localStorage.removeItem('thehall_user');
-        localStorage.removeItem('admin_token');
+        localStorage.removeItem('isUserLoggedIn');
         window.location.href = 'index.html';
     });
 }

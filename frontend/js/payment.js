@@ -793,6 +793,26 @@
        ========================================================= */
     function saveBooking() {
         const backendBookingId = booking.backendBookingId;
+        if (backendBookingId) {
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                })
+                .then(res => {
+                    if (res.ok) {
+                        console.log('✅ Backend booking confirmed:', backendBookingId);
+                    } else {
+                        console.warn('⚠️ Backend booking confirm failed:', res.status);
+                    }
+                })
+                .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
+            }
+        }
 
         try {
             const bookings = JSON.parse(localStorage.getItem('thehall_bookings') || '[]');

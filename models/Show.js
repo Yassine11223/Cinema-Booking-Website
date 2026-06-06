@@ -1,73 +1,83 @@
 /**
- * Show Model - SQL Queries
+ * Show model - MongoDB/Mongoose.
  */
 
-const { query } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Show = {
-    async findAll(filters = {}) {
-        let sql = `
-            SELECT s.*, m.title AS movie_title, m.poster_url, t.name AS theater_name
-            FROM shows s
-            JOIN movies m ON s.movie_id = m.id
-            JOIN theaters t ON s.theater_id = t.id
-        `;
-        const params = [];
-        const conditions = [];
+const ShowSchema = new mongoose.Schema({
+    movie_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie', required: true },
+    theater_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Theater', required: true },
+    show_time: { type: Date, required: true },
+    price: { type: Number, required: true, min: 0 },
+    status: { type: String, enum: ['active', 'disabled'], default: 'active' },
+}, {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+});
 
-        if (filters.movieId) {
-            params.push(filters.movieId);
-            conditions.push(`s.movie_id = $${params.length}`);
-        }
+ShowSchema.virtual('id').get(function () {
+    return this._id.toString();
+});
 
-        if (filters.date) {
-            params.push(filters.date);
-            conditions.push(`DATE(s.show_time) = $${params.length}`);
-        }
-
-        if (conditions.length > 0) {
-            sql += ' WHERE ' + conditions.join(' AND ');
-        }
-
-        sql += ' ORDER BY s.show_time ASC';
-        const result = await query(sql, params);
-        return result.rows;
+ShowSchema.set('toJSON', {
+    virtuals: true,
+    transform: (_doc, ret) => {
+        ret.id = ret._id.toString();
+        ret.movie_id = ret.movie_id?.toString?.() || ret.movie_id;
+        ret.theater_id = ret.theater_id?.toString?.() || ret.theater_id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
     },
+});
 
-    async findById(id) {
-        const result = await query(
-            `SELECT s.*, m.title AS movie_title, m.duration, t.name AS theater_name, t.capacity
-             FROM shows s
-             JOIN movies m ON s.movie_id = m.id
-             JOIN theaters t ON s.theater_id = t.id
-             WHERE s.id = $1`,
-            [id]
-        );
-        return result.rows[0];
-    },
+function flattenShow(show) {
+    if (!show) return null;
+    const plain = typeof show.toJSON === 'function' ? show.toJSON() : { ...show };
+    const movie = show.movie_id && typeof show.movie_id === 'object' ? show.movie_id : null;
+    const theater = show.theater_id && typeof show.theater_id === 'object' ? show.theater_id : null;
 
-    async create({ movie_id, theater_id, show_time, price }) {
-        const result = await query(
-            'INSERT INTO shows (movie_id, theater_id, show_time, price) VALUES ($1, $2, $3, $4) RETURNING *',
-            [movie_id, theater_id, show_time, price]
-        );
-        return result.rows[0];
-    },
-
-    async update(id, fields) {
-        const keys = Object.keys(fields);
-        const values = Object.values(fields);
-        const setClause = keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
-        const result = await query(
-            `UPDATE shows SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
-            [...values, id]
-        );
-        return result.rows[0];
-    },
-
-    async delete(id) {
-        await query('DELETE FROM shows WHERE id = $1', [id]);
+    if (movie) {
+        plain.movie_id = movie.id || movie._id?.toString();
+        plain.movie_title = movie.title;
+        plain.poster_url = movie.poster_url;
+        plain.duration = movie.duration;
     }
+    if (theater) {
+        plain.theater_id = theater.id || theater._id?.toString();
+        plain.theater_name = theater.name;
+        plain.capacity = theater.capacity;
+    }
+    return plain;
+}
+
+ShowSchema.statics.findAll = async function (filters = {}) {
+    const query = {};
+    if (filters.movieId) query.movie_id = filters.movieId;
+    if (filters.date) {
+        const start = new Date(`${filters.date}T00:00:00.000Z`);
+        const end = new Date(`${filters.date}T23:59:59.999Z`);
+        query.show_time = { $gte: start, $lte: end };
+    }
+
+    const shows = await this.find(query)
+        .populate('movie_id')
+        .populate('theater_id')
+        .sort({ show_time: 1 });
+
+    return shows.map(flattenShow);
 };
 
-module.exports = Show;
+ShowSchema.statics.findDetailedById = async function (id) {
+    const show = await this.findById(id).populate('movie_id').populate('theater_id');
+    return flattenShow(show);
+};
+
+ShowSchema.statics.update = function (id, fields) {
+    return this.findByIdAndUpdate(id, fields, { new: true, runValidators: true });
+};
+
+ShowSchema.statics.delete = function (id) {
+    return this.findByIdAndDelete(id);
+};
+
+module.exports = mongoose.model('Show', ShowSchema);

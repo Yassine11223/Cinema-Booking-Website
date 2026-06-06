@@ -219,7 +219,9 @@
      */
     async function createBookingOnBackend(showId, seatLabels) {
         try {
-            const token = localStorage.getItem('authToken');
+            // showId must be numeric backend ID
+            if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
+            const token = localStorage.getItem('userToken');
             if (!token) return null;
 
             const seat_ids = seatLabels.map(label => S.seatStates?.seatIdMap?.[label]).filter(Boolean);

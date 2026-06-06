@@ -7,6 +7,10 @@ const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/env');
 const { ROLES } = require('../config/constants');
 
+function normalizeRole(role) {
+    return role === 'superadmin' ? ROLES.SUPERADMIN : role;
+}
+
 /**
  * Verify JWT token - protects routes that need login
  */
@@ -21,7 +25,7 @@ const authenticate = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
-        req.user = decoded; // { id, email, role }
+        req.user = { ...decoded, role: normalizeRole(decoded.role) }; // { id, email, role }
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Invalid or expired token.' });
@@ -53,7 +57,7 @@ const superAdminOnly = (req, res, next) => {
  */
 const generateToken = (user) => {
     return jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
+        { id: user.id, email: user.email, role: normalizeRole(user.role) },
         jwtSecret,
         { expiresIn: '7d' }
     );

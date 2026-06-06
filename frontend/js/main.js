@@ -34,8 +34,8 @@ function updateNavbarAuth() {
     const authNavLink = document.getElementById('auth-nav-link');
     if (!authNavLink) return;
 
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
+    const token = localStorage.getItem('userToken');
+    const userData = localStorage.getItem('userData');
 
     if (token && userData) {
         try {
