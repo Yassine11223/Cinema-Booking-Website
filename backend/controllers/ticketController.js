@@ -8,6 +8,10 @@ const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/env');
 const { sendEmail } = require('../utils/email');
 
+const QR_API_BASE = 'https://api.qrserver.com/v1/create-qr-code/';
+const QR_SIZE = '220x220';
+const INCLUDE_QR_ATTACHMENTS = String(process.env.QR_EMAIL_ATTACHMENTS || '').toLowerCase() === 'true';
+
 function generateBookingId() {
     const year = new Date().getFullYear();
     const random = Math.floor(10000 + Math.random() * 90000);
@@ -47,46 +51,47 @@ function formatMoney(value, currency) {
     return `${amount.toLocaleString('en-US')} ${currency || 'EGP'}`;
 }
 
-function dataUrlToAttachment(dataUrl, filename, cid) {
-    const match = /^data:(.+);base64,(.+)$/.exec(dataUrl || '');
-    if (!match) return null;
-
-    return {
-        filename,
-        content: Buffer.from(match[2], 'base64'),
-        contentType: match[1],
-        cid,
-    };
+function safeFileToken(value) {
+    return String(value || 'seat')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'seat';
 }
 
-const QR_OPTIONS = {
-    errorCorrectionLevel: 'M',
-    type: 'image/png',
-    margin: 2,
-    width: 280,
-    color: {
-        dark: '#000000',
-        light: '#FFFFFF',
-    },
-};
+function buildPublicQrImageUrl(payloadString) {
+    return `${QR_API_BASE}?size=${QR_SIZE}&data=${encodeURIComponent(payloadString)}`;
+}
+
+async function buildQrAttachment(ticket) {
+    if (!INCLUDE_QR_ATTACHMENTS) return null;
+
+    const content = await QRCode.toBuffer(ticket.qrPayloadString, {
+        errorCorrectionLevel: 'M',
+        type: 'png',
+        margin: 2,
+        width: 220,
+    });
+
+    return {
+        filename: `qr-seat-${safeFileToken(ticket.seatNumber)}.png`,
+        content,
+        contentType: 'image/png',
+        contentDisposition: 'attachment',
+    };
+}
 
 async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, tickets, movieTitle, date, time, experience, hall, currency, receipt }) {
     if (!to) return;
 
-    const attachments = [];
-    const ticketCards = tickets.map((ticket, index) => {
-        const cid = `qr-${index}-${bookingId}@thehall`;
-        const attachment = dataUrlToAttachment(ticket.qrCodeDataUrl, `ticket-${ticket.seatNumber}.png`, cid);
-        if (attachment) attachments.push(attachment);
-
-        return `
+    const attachments = (await Promise.all(tickets.map(buildQrAttachment))).filter(Boolean);
+    const ticketCards = tickets.map((ticket) => `
             <div style="display:inline-block;width:210px;margin:10px;padding:14px;border:1px solid #ddd;border-radius:8px;text-align:center;vertical-align:top;">
-                <img src="cid:${cid}" alt="QR code for seat ${escapeHtml(ticket.seatNumber)}" width="170" height="170" style="display:block;margin:0 auto 10px;" />
+                <img src="${ticket.qrImageUrl}" alt="QR code for seat ${escapeHtml(ticket.seatNumber)}" width="170" height="170" style="display:block;margin:0 auto 10px;" />
                 <div style="font-size:18px;font-weight:bold;color:#b71c1c;">Seat ${escapeHtml(ticket.seatNumber)}</div>
                 <div style="font-size:11px;color:#666;margin-top:4px;">${escapeHtml(ticket.ticketId)}</div>
             </div>
-        `;
-    }).join('');
+        `).join('');
 
     const foodRows = Array.isArray(receipt?.foodItems) && receipt.foodItems.length
         ? receipt.foodItems.map(item => `
@@ -102,10 +107,9 @@ async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, ticket
             </tr>
         `;
 
-    await sendEmail({
+    const mailOptions = {
         to,
         subject: `Your The Hall Cinema Tickets - ${movieTitle}`,
-        attachments,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
                 <h2 style="color:#b71c1c;text-align:center;">Your Tickets Are Ready</h2>
@@ -144,7 +148,10 @@ async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, ticket
                 <p style="color:#777;font-size:12px;margin-top:24px;">The Hall Cinema</p>
             </div>
         `,
-    });
+    };
+    if (attachments.length > 0) mailOptions.attachments = attachments;
+
+    await sendEmail(mailOptions);
 
     console.log(`[TicketController] Ticket email sent to ${to} for ${bookingId}`);
 }
@@ -187,22 +194,28 @@ async function generateTickets(req, res) {
         for (const seat of seats) {
             const ticketId = generateTicketId();
             const qrPayload = {
+                type: 'the-hall-ticket',
+                version: 1,
                 bookingId,
                 ticketId,
                 movie: movieTitle.trim(),
-                cinema: 'The Hall Cinema',
+                cinema: 'The Hall Cinemas',
                 experience: experience.trim(),
                 hall: (hall || 'Main Hall').trim(),
                 seat,
                 date: date.trim(),
                 time: time.trim(),
             };
+            const qrPayloadString = JSON.stringify(qrPayload);
+            const qrImageUrl = buildPublicQrImageUrl(qrPayloadString);
 
-            const qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), QR_OPTIONS);
             tickets.push({
                 ticketId,
                 seatNumber: seat,
-                qrCodeDataUrl,
+                qrPayload,
+                qrPayloadString,
+                qrImageUrl,
+                qrCodeDataUrl: qrImageUrl,
                 movieTitle: movieTitle.trim(),
                 experience: experience.trim(),
                 hall: (hall || 'Main Hall').trim(),
