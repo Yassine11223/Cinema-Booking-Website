@@ -185,10 +185,11 @@
         const name = $('new-admin-name')?.value.trim();
         const email = $('new-admin-email')?.value.trim();
         const password = $('new-admin-password')?.value;
+        const role = $('new-admin-role')?.value;
         const phone = $('new-admin-phone')?.value.trim();
 
-        if (!name || !email || !password || password.length < 6) {
-            toast('Name, valid email, and a 6+ character password are required.', 'error');
+        if (!name || !email || !password || password.length < 6 || !['admin', 'super_admin'].includes(role)) {
+            toast('Name, valid email, role, and a 6+ character password are required.', 'error');
             return;
         }
 
@@ -202,12 +203,12 @@
             const res = await fetch(`${API_BASE}/admins`, {
                 method: 'POST',
                 headers: requestHeaders(),
-                body: JSON.stringify({ name, email, password, phone }),
+                body: JSON.stringify({ name, email, password, phone, role }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.message || 'Failed to create admin.');
 
-            toast(`Admin "${name}" created successfully.`, 'success');
+            toast(`${role === 'super_admin' ? 'Super Admin' : 'Admin'} "${name}" created successfully.`, 'success');
             closeAddModal();
             await loadAdmins();
         } catch (err) {

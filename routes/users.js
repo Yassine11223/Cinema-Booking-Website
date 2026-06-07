@@ -12,6 +12,7 @@ const userController = require('../controllers/userController');
 
 const { authenticate, adminOnly, superAdminOnly } = require('../middleware/auth');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
+const uploadAvatar = require('../middleware/upload');
 
 // Google Login - Customer only
 router.get(
@@ -42,6 +43,7 @@ router.post('/verify-otp', userController.verifyOTP);
 // User profile routes
 router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, userController.updateProfile);
+router.post('/profile/avatar', authenticate, uploadAvatar.single('avatar'), userController.updateAvatar);
 
 // Admin-only routes
 router.get('/', authenticate, adminOnly, userController.getAll);

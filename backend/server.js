@@ -24,6 +24,7 @@ const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
 const chatbotBookingRoutes = require('./routes/chatbotBooking');
 const contactRoutes = require('./routes/contact');
+const adminsRoutes = require('./routes/admins');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -45,6 +46,7 @@ app.use(passport.initialize());
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/uploads/avatars', express.static(path.join(__dirname, 'public', 'uploads', 'avatars')));
 
 // Serve frontend files directly from the backend (handling both possible project structures)
 app.use(express.static(path.join(__dirname, '../frontend')));
@@ -54,6 +56,7 @@ app.use('/shared', express.static(path.join(__dirname, '../shared')));
 app.use('/api/movies', movieRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
+console.log('Users routes mounted at /api/users');
 app.use('/api/payments', paymentRoutes);
 app.use('/api/shows', showRoutes);
 app.use('/api/seats', seatRoutes);
@@ -62,6 +65,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chatbot', chatbotBookingRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/admins', adminsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

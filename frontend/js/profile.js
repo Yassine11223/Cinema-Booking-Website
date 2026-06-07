@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadProfile();
     initProfileForm();
+    initAvatarEdit();
     initLogout();
 });
 
@@ -41,7 +42,7 @@ function populateProfile(user) {
     const profilePhone = document.getElementById('profile-phone');
     const profileRole = document.getElementById('profile-role');
     const profileSince = document.getElementById('profile-since');
-    const profileAvatar = document.getElementById('profile-avatar-letter');
+    const profileAvatar = document.getElementById('profile-avatar-visual');
     const editName = document.getElementById('edit-name');
     const editPhone = document.getElementById('edit-phone');
     const profileLoading = document.getElementById('profile-loading');
@@ -60,7 +61,7 @@ function populateProfile(user) {
         });
     }
     if (profileAvatar) {
-        profileAvatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
+        if (typeof renderAvatar === 'function') renderAvatar(profileAvatar, user);
     }
 
     // Pre-fill edit form
@@ -70,6 +71,12 @@ function populateProfile(user) {
     // Show content, hide loading
     if (profileLoading) profileLoading.style.display = 'none';
     if (profileContent) profileContent.style.display = 'block';
+}
+
+function initAvatarEdit() {
+    document.getElementById('avatar-edit-btn')?.addEventListener('click', () => {
+        if (typeof window.openAvatarModal === 'function') window.openAvatarModal(false);
+    });
 }
 
 /* ============================================

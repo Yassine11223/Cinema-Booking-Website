@@ -24,6 +24,17 @@ function removeSensitiveUserFields(user) {
     return obj;
 }
 
+const PREDEFINED_AVATARS = new Set([
+    'popcorn',
+    'ticket',
+    'film-reel',
+    'clapperboard',
+    'glasses',
+    'camera',
+    'cinema-seat',
+    'star',
+]);
+
 const userController = {
     // POST /api/users/register
     async register(req, res, next) {
@@ -273,6 +284,41 @@ const userController = {
             );
 
             res.json(removeSensitiveUserFields(user));
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    // POST /api/users/profile/avatar
+    async updateAvatar(req, res, next) {
+        console.log('Avatar update route hit');
+
+        try {
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            if (user.role !== 'customer') {
+                return res.status(403).json({ message: 'Avatar setup is available to customers only.' });
+            }
+
+            let avatar;
+            if (req.file) {
+                avatar = `/uploads/avatars/${req.file.filename}`;
+            } else if (PREDEFINED_AVATARS.has(req.body.predefinedAvatar)) {
+                avatar = `predefined:${req.body.predefinedAvatar}`;
+            } else {
+                return res.status(400).json({ message: 'Choose a predefined avatar or upload an image.' });
+            }
+
+            const updatedUser = await User.findByIdAndUpdate(
+                req.user.id,
+                { avatar, profileSetupCompleted: true },
+                { new: true, runValidators: true }
+            );
+
+            return res.json(removeSensitiveUserFields(updatedUser));
         } catch (error) {
             next(error);
         }

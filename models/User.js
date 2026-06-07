@@ -24,6 +24,8 @@ const UserSchema = new mongoose.Schema({
     },
     status: { type: String, enum: ['active', 'disabled'], default: 'active' },
     google_id: { type: String },
+    avatar: { type: String, default: null },
+    profileSetupCompleted: { type: Boolean, default: false },
     otp_code: { type: String },
     otp_expires_at: { type: Date },
     last_login: { type: Date },

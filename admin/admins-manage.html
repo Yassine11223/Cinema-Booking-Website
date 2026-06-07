@@ -147,6 +147,13 @@
                         <span class="field-error" id="new-admin-password-error">Password must be at least 6 characters</span>
                     </div>
                     <div class="add-admin-field">
+                        <label for="new-admin-role">Account Role</label>
+                        <select id="new-admin-role" required>
+                            <option value="admin">Admin</option>
+                            <option value="super_admin">Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="add-admin-field">
                         <label for="new-admin-phone">Phone (Optional)</label>
                         <input type="tel" id="new-admin-phone" placeholder="+20 xxx xxx xxxx" autocomplete="tel">
                     </div>

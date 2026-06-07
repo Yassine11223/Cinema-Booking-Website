@@ -49,6 +49,14 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        avatar: {
+            type: String,
+            default: null,
+        },
+        profileSetupCompleted: {
+            type: Boolean,
+            default: false,
+        },
         otp_code: {
             type: String,
             default: null,

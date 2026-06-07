@@ -352,7 +352,8 @@
     color: var(--text-secondary, rgba(255,255,255,0.7));
 }
 
-.add-admin-field input {
+.add-admin-field input,
+.add-admin-field select {
     width: 100%;
     padding: 11px 14px;
     background: rgba(255,255,255,0.04);
@@ -369,7 +370,8 @@
     color: var(--text-muted, rgba(255,255,255,0.38));
 }
 
-.add-admin-field input:focus {
+.add-admin-field input:focus,
+.add-admin-field select:focus {
     outline: none;
     background: rgba(255,255,255,0.06);
     border-color: #e040fb;
