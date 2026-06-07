@@ -47,6 +47,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 app.use('/api/movies', movieRoutes);
 app.use('/api/bookings', bookingRoutes);

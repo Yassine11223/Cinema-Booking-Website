@@ -911,7 +911,9 @@
             filteredBookings = [...bookings];
             console.log('✅ Admin bookings loaded from backend:', bookings.length);
         } else {
-            console.log('⚠️ Using mock bookings data (backend offline or empty)');
+            console.log('⚠️ No bookings available from backend. Showing empty state.');
+            bookings = [];
+            filteredBookings = [];
         }
 
         // Compute initial stats

@@ -20,7 +20,7 @@
     const API_TIMEOUT = 3000;  // 3 seconds — fail fast when backend is down
 
     // TMDB import requires TMDB_API_KEY on the backend or an admin-entered key.
-    const TMDB_FALLBACK_KEY = '';
+    const TMDB_CLIENT_KEY = '';
 
     /* =========================================================
        STATE
@@ -590,7 +590,7 @@
 
             // Strategy 2: Direct TMDB API call (client-side)
             // Users need to have a TMDB API key set
-            const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_FALLBACK_KEY;
+            const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_CLIENT_KEY;
 
             if (tmdbKey) {
                 try {
@@ -666,7 +666,7 @@
         const resultsEl = $('tmdb-results');
         if (resultsEl) resultsEl.innerHTML = `<div class="tmdb-hint"><div class="spinner" style="margin:0 auto;"></div><p style="margin-top:14px;">Fetching Now Playing from TMDB…</p></div>`;
 
-        const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_FALLBACK_KEY;
+        const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_CLIENT_KEY;
         if (tmdbKey) {
             try {
                 const res = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${tmdbKey}&language=en-US&page=1`);
@@ -759,7 +759,7 @@
 
             // If no backend detail, try direct TMDB
             if (!detail) {
-                const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_FALLBACK_KEY;
+                const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_CLIENT_KEY;
                 if (tmdbKey) {
                     try {
                         const r = await fetch(`https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${tmdbKey}&language=en-US`);
@@ -915,109 +915,6 @@
     function debounce(fn, delay) {
         let t;
         return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
-    }
-
-    /* =========================================================
-       TMDB LIVE FETCH (replaces old static DEMO_MOVIES)
-       Fetches current "Now Playing" movies from TMDB API,
-       matching the same data shown on the user-facing homepage.
-       ========================================================= */
-    const TMDB_GENRE_MAP = {
-        28:'Action', 12:'Adventure', 16:'Animation', 35:'Comedy',
-        80:'Crime', 99:'Documentary', 18:'Drama', 10751:'Family',
-        14:'Fantasy', 36:'History', 27:'Horror', 10402:'Music',
-        9648:'Mystery', 10749:'Romance', 878:'Sci-Fi', 10770:'TV Movie',
-        53:'Thriller', 10752:'War', 37:'Western'
-    };
-
-    async function fetchTmdbNowPlaying() {
-        const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_FALLBACK_KEY;
-        if (!tmdbKey) {
-            console.warn('[Movies] No TMDB API key available');
-            return [];
-        }
-
-        try {
-            const res = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${tmdbKey}&language=en-US&page=1`);
-            if (!res.ok) throw new Error('TMDB API error ' + res.status);
-            const data = await res.json();
-            const movies = (data.results || []).slice(0, 20);
-
-            // Fetch full details (runtime, genres) in parallel for each movie
-            const detailPromises = movies.map(async (m) => {
-                try {
-                    const dRes = await fetch(`https://api.themoviedb.org/3/movie/${m.id}?api_key=${tmdbKey}&language=en-US`);
-                    if (dRes.ok) return await dRes.json();
-                } catch (_) {}
-                return null;
-            });
-            const details = await Promise.all(detailPromises);
-
-            return movies.map((m, i) => {
-                const detail = details[i];
-                const genre = detail?.genres?.[0]?.name
-                    || (m.genre_ids?.[0] ? (TMDB_GENRE_MAP[m.genre_ids[0]] || '') : '');
-                return {
-                    id:           m.id,
-                    title:        m.title,
-                    description:  m.overview || '',
-                    genre:        genre,
-                    duration:     detail?.runtime || 0,
-                    rating:       '',
-                    release_date: m.release_date || null,
-                    poster_url:   m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
-                    trailer_url:  null,
-                    status:       'now_showing',
-                    created_at:   new Date().toISOString(),
-                };
-            });
-        } catch (err) {
-            console.error('[Movies] TMDB Now Playing fetch failed:', err.message);
-            return [];
-        }
-    }
-
-    async function fetchTmdbUpcoming() {
-        const tmdbKey = localStorage.getItem('tmdb_api_key') || TMDB_FALLBACK_KEY;
-        if (!tmdbKey) return [];
-
-        try {
-            const res = await fetch(`https://api.themoviedb.org/3/movie/upcoming?api_key=${tmdbKey}&language=en-US&page=1`);
-            if (!res.ok) throw new Error('TMDB API error ' + res.status);
-            const data = await res.json();
-            const movies = (data.results || []).slice(0, 12);
-
-            const detailPromises = movies.map(async (m) => {
-                try {
-                    const dRes = await fetch(`https://api.themoviedb.org/3/movie/${m.id}?api_key=${tmdbKey}&language=en-US`);
-                    if (dRes.ok) return await dRes.json();
-                } catch (_) {}
-                return null;
-            });
-            const details = await Promise.all(detailPromises);
-
-            return movies.map((m, i) => {
-                const detail = details[i];
-                const genre = detail?.genres?.[0]?.name
-                    || (m.genre_ids?.[0] ? (TMDB_GENRE_MAP[m.genre_ids[0]] || '') : '');
-                return {
-                    id:           'upcoming_' + m.id,
-                    title:        m.title,
-                    description:  m.overview || '',
-                    genre:        genre,
-                    duration:     detail?.runtime || 0,
-                    rating:       '',
-                    release_date: m.release_date || null,
-                    poster_url:   m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
-                    trailer_url:  null,
-                    status:       'coming_soon',
-                    created_at:   new Date().toISOString(),
-                };
-            });
-        } catch (err) {
-            console.error('[Movies] TMDB Upcoming fetch failed:', err.message);
-            return [];
-        }
     }
 
 })();

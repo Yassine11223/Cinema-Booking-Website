@@ -11,55 +11,18 @@
 (function () {
     'use strict';
 
-    // ── Dummy Data ──────────────────────────────────────────────────────────────
+    // ── No mock data - all data from real backend API only ──
 
-    const MONTHLY_REVENUE = [
-        { month: 'OCT', amount: 32100 },
-        { month: 'NOV', amount: 38400 },
-        { month: 'DEC', amount: 51200 },
-        { month: 'JAN', amount: 29800 },
-        { month: 'FEB', amount: 43600 },
-        { month: 'MAR', amount: 39900 },
-        { month: 'APR', amount: 48320, current: true },
-    ];
-
-    const RECENT_BOOKINGS = [
-        { id: '#BK-00842', customer: 'Yassine K.',    movie: 'Dune: Part Three',   seats: 3, amount: '960 EGP', status: 'confirmed' },
-        { id: '#BK-00841', customer: 'Sarah M.',       movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'confirmed' },
-        { id: '#BK-00840', customer: 'Omar F.',        movie: 'The Dark Knight II', seats: 4, amount: '1300 EGP', status: 'pending'   },
-        { id: '#BK-00839', customer: 'Lina B.',        movie: 'Interstellar 2',     seats: 1, amount: '340 EGP', status: 'confirmed' },
-        { id: '#BK-00838', customer: 'Hamza R.',       movie: 'Dune: Part Three',   seats: 2, amount: '625 EGP', status: 'cancelled' },
-        { id: '#BK-00837', customer: 'Nour A.',        movie: 'Black Panther III',  seats: 3, amount: '1015 EGP', status: 'confirmed' },
-        { id: '#BK-00836', customer: 'Khaled S.',      movie: 'Avengers: Doomsday', seats: 2, amount: '675 EGP', status: 'pending'   },
-    ];
-
-    const TOP_MOVIES = [
-        { rank: 1, title: 'Avengers: Doomsday',  bookings: 342, pct: 100 },
-        { rank: 2, title: 'Dune: Part Three',     bookings: 287, pct: 84  },
-        { rank: 3, title: 'Black Panther III',    bookings: 214, pct: 63  },
-        { rank: 4, title: 'The Dark Knight II',   bookings: 198, pct: 58  },
-        { rank: 5, title: 'Interstellar 2',       bookings: 143, pct: 42  },
-    ];
-
-    const SPARKLINE_DATA = {
-        revenue:  [40, 55, 70, 50, 65, 80, 95],
-        bookings: [60, 50, 75, 65, 80, 70, 90],
-        users:    [50, 65, 55, 70, 60, 85, 75],
-        shows:    [80, 70, 60, 75, 65, 55, 70],
-    };
-
-    const OCCUPANCY_PCT = 73;
-
-    // ── Init ────────────────────────────────────────────────────────────────────
+    // ── Dashboard data - populated from real API only ──
 
     let dashboardData = {
         revenue: 0,
         bookings: 0,
         usersCnt: 0,
         showsCnt: 0,
-        topMovies: TOP_MOVIES,
-        recentBookings: RECENT_BOOKINGS,
-        monthlyRev: MONTHLY_REVENUE
+        topMovies: [],
+        recentBookings: [],
+        monthlyRev: []
     };
 
     async function fetchRealData() {
@@ -161,41 +124,10 @@
 
                 console.log('✅ Dashboard stats computed from real bookings');
             } else {
-                // Fallback: Use TMDB movies for top movies & recent bookings
-                if (tmdbMovies.length > 0) {
-                    const sorted = [...tmdbMovies].sort((a, b) => b.popularity - a.popularity).slice(0, 5);
-                    dashboardData.topMovies = sorted.map((m, i) => ({
-                        rank: i + 1,
-                        title: m.title,
-                        bookings: Math.floor(350 - (i * 45) + Math.random() * 30),
-                        pct: Math.max(100 - (i * 16), 20)
-                    }));
-
-                    const customers = [
-                        'Yassine K.', 'Sarah M.', 'Omar F.', 'Lina B.',
-                        'Hamza R.', 'Nour A.', 'Khaled S.'
-                    ];
-                    const statuses = ['confirmed', 'confirmed', 'confirmed', 'pending', 'confirmed', 'cancelled', 'pending'];
-                    const bookingMovies = tmdbMovies.slice(0, 7);
-                    dashboardData.recentBookings = customers.map((c, i) => ({
-                        id: `#BK-00${842 - i}`,
-                        customer: c,
-                        movie: bookingMovies[i % bookingMovies.length].title,
-                        seats: Math.floor(Math.random() * 4) + 1,
-                        amount: `${((Math.floor(Math.random() * 4) + 1) * 250 + Math.floor(Math.random() * 100))} EGP`,
-                        status: statuses[i]
-                    }));
-                } else if (movies.length > 0) {
-                    const shows = movies.filter(m => m.status === 'Now Showing' || m.status === 'now_showing').slice(0, 5);
-                    if (shows.length > 0) {
-                        dashboardData.topMovies = shows.map((m, i) => ({
-                            rank: i + 1,
-                            title: m.title,
-                            bookings: Math.floor(Math.random() * 200) + 100,
-                            pct: 100 - (i * 15)
-                        }));
-                    }
-                }
+                console.warn('⚠️ No bookings available from backend. Showing empty state.');
+                dashboardData.topMovies = [];
+                dashboardData.recentBookings = [];
+                dashboardData.monthlyRev = [];
             }
         } catch (_) {
             console.warn('Dashboard using offline or simulated data');
@@ -490,15 +422,9 @@
         const dot = document.getElementById('notif-dot');
         if (!btn || !panel || !list) return;
 
-        // Notification data
-        const notifications = [
-            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Yassine K.</strong> booked 3 seats for the 7:30 PM show', time: '2 min ago', unread: true },
-            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Sarah M. registered an account', time: '15 min ago', unread: true },
-            { type: 'alert',   icon: 'fa-exclamation-triangle', text: 'Hall 2 (IMAX) is at <strong>95% capacity</strong> for tonight', time: '32 min ago', unread: true },
-            { type: 'booking', icon: 'fa-ticket-alt', text: '<strong>Omar F.</strong> cancelled booking #BK-00840', time: '1 hour ago', unread: false },
-            { type: 'system',  icon: 'fa-cog',        text: 'System backup completed <strong>successfully</strong>', time: '2 hours ago', unread: false },
-            { type: 'user',    icon: 'fa-user-plus',  text: '<strong>New user</strong> Khaled S. registered an account', time: '3 hours ago', unread: false },
-        ];
+        // Notification data - must be from real backend API if available
+        // Currently empty - real notifications would come from backend events/API
+        const notifications = [];
 
         // Render notifications
         function renderNotifications() {

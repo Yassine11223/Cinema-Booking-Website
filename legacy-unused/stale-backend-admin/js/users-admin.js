@@ -342,9 +342,7 @@
             buckets.push({ date: d, label: d.toLocaleDateString('en-US', { weekday:'short' }), count: 0 });
         }
 
-        const simData = [42, 38, 55, 67, 49, 72, 61, 45, 58, 76, 84, 63, 71, 52];
-        buckets.forEach((b, i) => { b.count = simData[i] || 40; });
-
+        // Use only real user data - compute chart from actual last_login dates
         allUsers.forEach(user => {
             if (!user.last_login) return;
             const loginDate = new Date(user.last_login);
