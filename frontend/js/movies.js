@@ -169,6 +169,38 @@ let nowShowingMovies = [];
 let comingSoonMovies = [];
 let useTMDB = true;
 
+function toDateKey(value) {
+    if (!value) return null;
+    if (typeof value === 'string') {
+        const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+        if (match) return match[1];
+    }
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function isComingSoonMovie(movie) {
+    const releaseKey = toDateKey(movie && movie.release_date);
+    return Boolean(releaseKey && releaseKey > toDateKey(new Date()));
+}
+
+function splitMoviesByReleaseDate(movies) {
+    const unique = new Map();
+    (movies || []).forEach(movie => {
+        if (movie && movie.id && !unique.has(movie.id)) unique.set(movie.id, movie);
+    });
+
+    const allMovies = Array.from(unique.values());
+    return {
+        nowShowing: allMovies.filter(movie => !isComingSoonMovie(movie)),
+        comingSoon: allMovies.filter(isComingSoonMovie),
+    };
+}
+
 // ============================================
 // INITIALIZATION
 // ============================================
@@ -234,12 +266,13 @@ async function loadTMDBMovies() {
         tmdbMoviesFetch('/movie/upcoming', { page: 1 })
     ]);
 
-    nowShowingMovies = (nowPlayingData.results || []).slice(0, 12);
-    comingSoonMovies = (upcomingData.results || []).slice(0, 12);
+    const categorized = splitMoviesByReleaseDate([
+        ...(nowPlayingData.results || []),
+        ...(upcomingData.results || []),
+    ]);
 
-    // Filter out coming soon movies that are already in now showing
-    const nowShowingIds = new Set(nowShowingMovies.map(m => m.id));
-    comingSoonMovies = comingSoonMovies.filter(m => !nowShowingIds.has(m.id));
+    nowShowingMovies = categorized.nowShowing.slice(0, 12);
+    comingSoonMovies = categorized.comingSoon.slice(0, 12);
 
     console.log('✅ TMDB loaded:', nowShowingMovies.length, 'now showing,', comingSoonMovies.length, 'coming soon');
 
@@ -253,8 +286,9 @@ async function loadTMDBMovies() {
 function loadMockMovies() {
     console.log('📚 Loading mock movies...');
 
-    nowShowingMovies = MOCK_NOW_SHOWING;
-    comingSoonMovies = MOCK_COMING_SOON;
+    const categorized = splitMoviesByReleaseDate([...MOCK_NOW_SHOWING, ...MOCK_COMING_SOON]);
+    nowShowingMovies = categorized.nowShowing;
+    comingSoonMovies = categorized.comingSoon;
 
     renderNowShowing(nowShowingMovies);
     renderComingSoon(comingSoonMovies);
@@ -387,9 +421,6 @@ function createMovieCardElement(movie, section) {
                      class="movie-card-image"
                      loading="lazy"
                      onerror="this.src='https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster'">
-                <div class="movie-card-overlay">
-                    <span class="btn btn-outline btn-notify"><i class="fas fa-bell"></i> NOTIFY ME</span>
-                </div>
             </div>
             <div class="movie-card-info">
                 <h3 class="movie-card-title">${escapeHtml(movie.title)}</h3>
@@ -397,16 +428,6 @@ function createMovieCardElement(movie, section) {
                 <p class="movie-card-release">${releaseDate}</p>
             </div>
         `;
-
-        // Prevent navigation for "Notify Me" — show confirmation instead
-        card.addEventListener('click', (e) => {
-            const notifyBtn = e.target.closest('.btn-notify');
-            if (notifyBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleNotifyMe(movie, notifyBtn);
-            }
-        });
     }
 
 
@@ -428,32 +449,6 @@ function filterNowShowingByGenre(genre) {
             return genreStr.includes(genreLower);
         });
         renderNowShowing(filtered);
-    }
-}
-
-// ============================================
-// NOTIFY ME HANDLER
-// ============================================
-
-function handleNotifyMe(movie, btnElement) {
-    // Store notification preference
-    const notifications = JSON.parse(localStorage.getItem('movieNotifications') || '[]');
-    const alreadyNotified = notifications.includes(movie.id);
-
-    if (alreadyNotified) {
-        // Remove notification
-        const updated = notifications.filter(id => id !== movie.id);
-        localStorage.setItem('movieNotifications', JSON.stringify(updated));
-        btnElement.innerHTML = '<i class="fas fa-bell"></i> NOTIFY ME';
-        btnElement.classList.remove('btn-primary');
-        btnElement.classList.add('btn-outline');
-    } else {
-        // Add notification
-        notifications.push(movie.id);
-        localStorage.setItem('movieNotifications', JSON.stringify(notifications));
-        btnElement.innerHTML = '<i class="fas fa-bell"></i> NOTIFIED ✓';
-        btnElement.classList.remove('btn-outline');
-        btnElement.classList.add('btn-primary');
     }
 }
 
@@ -600,6 +595,7 @@ function renderHeroSection(movie) {
     const releaseDate = movie.release_date
         ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
         : 'N/A';
+    const comingSoon = isComingSoonMovie(movie);
 
     // Genre tags
     const genreTags = movie.genres
@@ -652,9 +648,15 @@ function renderHeroSection(movie) {
                             <i class="fas fa-play"></i> WATCH TRAILER
                         </button>
                     ` : ''}
-                    <button class="btn btn-primary" onclick="goToBookingFromDetail()">
-                        <i class="fas fa-ticket-alt"></i> BOOK NOW
-                    </button>
+                    ${comingSoon ? `
+                        <button class="btn btn-outline" disabled>
+                            <i class="fas fa-clock"></i> COMING SOON
+                        </button>
+                    ` : `
+                        <button class="btn btn-primary" onclick="goToBookingFromDetail()">
+                            <i class="fas fa-ticket-alt"></i> BOOK NOW
+                        </button>
+                    `}
                 </div>
             </div>
         </div>
@@ -743,9 +745,14 @@ function renderBookingSection(movie) {
     const bookingSection = document.getElementById('booking-section');
     if (!bookingSection) return;
 
+    if (isComingSoonMovie(movie)) {
+        bookingSection.style.display = 'none';
+        return;
+    }
+
     bookingSection.style.display = 'block';
 
-    // Generate dates (next 7 days)
+    // Generate dates (next 4 days)
     renderDateSelector();
 
     // Auto-select today
@@ -754,7 +761,7 @@ function renderBookingSection(movie) {
 }
 
 /**
- * Render the horizontal date selector (7 days from today)
+ * Render the horizontal date selector (4 days from today)
  */
 function renderDateSelector() {
     const dateSelector = document.getElementById('date-selector');
@@ -765,11 +772,11 @@ function renderDateSelector() {
 
     dateSelector.innerHTML = '';
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 4; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
 
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = toDateKey(date);
         const dayName = i === 0 ? 'TODAY' : days[date.getDay()];
 
         const btn = document.createElement('button');
@@ -868,6 +875,28 @@ function formatBackendShows(backendShows) {
     });
 }
 
+function getShowDateTime(show) {
+    if (!show || !show.date || !show.time) return null;
+
+    const timeMatch = String(show.time).trim().match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/i);
+    if (!timeMatch) return null;
+
+    let hours = Number(timeMatch[1]);
+    const minutes = Number(timeMatch[2]);
+    const meridiem = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+
+    const [year, month, day] = String(show.date).split('-').map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
+}
+
+function isFutureShow(show) {
+    const showDateTime = getShowDateTime(show);
+    return Boolean(showDateTime && showDateTime > new Date());
+}
+
 /**
  * Generate mock showtimes for a given date — multiple times PER format
  * FALLBACK: used when backend is offline or has no data for this movie/date
@@ -922,18 +951,20 @@ function renderShowTimes(shows) {
     const grid = document.getElementById('show-times-grid');
     if (!grid) return;
 
-    if (!shows || shows.length === 0) {
+    const upcomingShows = (shows || []).filter(isFutureShow);
+
+    if (upcomingShows.length === 0) {
         grid.innerHTML = '<div class="no-shows-message">No shows available for this date</div>';
         return;
     }
 
     // Store all shows for selection lookup
-    grid._showsData = shows;
+    grid._showsData = upcomingShows;
 
     // Group shows by format
     const grouped = {};
     SHOW_FORMATS.forEach(format => { grouped[format] = []; });
-    shows.forEach(show => {
+    upcomingShows.forEach(show => {
         if (!grouped[show.format]) grouped[show.format] = [];
         grouped[show.format].push(show);
     });
@@ -1042,6 +1073,10 @@ function updateBookingSummary() {
  */
 function handleBookNow() {
     if (!selectedShow) return;
+    if (isComingSoonMovie(currentMovieData)) {
+        showMovieError('error-message', 'This movie is coming soon and cannot be booked yet.');
+        return;
+    }
 
     // Store selected show in session
     sessionStorage.setItem('selectedShow', JSON.stringify(selectedShow));
@@ -1073,7 +1108,8 @@ function handleBookNow() {
             title: currentMovieData.title,
             genre: genre,
             duration: duration,
-            rating: rating
+            rating: rating,
+            release_date: currentMovieData.release_date || null,
         }));
     }
 
@@ -1100,6 +1136,7 @@ function renderMovieDetailPageMock(movie) {
     const releaseDate = movie.release_date
         ? new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
         : 'N/A';
+    const comingSoon = isComingSoonMovie(movie);
 
     const genreTags = movie.genre_ids
         ? movie.genre_ids.map(id => `<span class="genre-tag">${escapeHtml(MOVIES_GENRE_MAP[id] || 'Drama')}</span>`).join('')
@@ -1123,9 +1160,15 @@ function renderMovieDetailPageMock(movie) {
                     </div>
                 </div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="goToBookingFromDetail()">
-                        <i class="fas fa-ticket-alt"></i> BOOK NOW
-                    </button>
+                    ${comingSoon ? `
+                        <button class="btn btn-outline" disabled>
+                            <i class="fas fa-clock"></i> COMING SOON
+                        </button>
+                    ` : `
+                        <button class="btn btn-primary" onclick="goToBookingFromDetail()">
+                            <i class="fas fa-ticket-alt"></i> BOOK NOW
+                        </button>
+                    `}
                 </div>
             </div>
         </div>
@@ -1210,13 +1253,18 @@ function showMovieError(elementId, message) {
 
 function goToBookingFromDetail() {
     if (!currentMovieData) return;
+    if (isComingSoonMovie(currentMovieData)) {
+        showMovieError('error-message', 'This movie is coming soon and cannot be booked yet.');
+        return;
+    }
     const genreStr = currentMovieData.genres ? currentMovieData.genres.map(g => g.name).join(', ') : buildMovieGenreString(currentMovieData.genre_ids);
     sessionStorage.setItem('selectedMovie', JSON.stringify({
         id: currentMovieData.id,
         title: currentMovieData.title,
         genre: genreStr,
         rating: currentMovieData.vote_average ? parseFloat(currentMovieData.vote_average).toFixed(1) : 'NR',
-        duration: currentMovieData.runtime ? formatDuration(currentMovieData.runtime) : 'N/A'
+        duration: currentMovieData.runtime ? formatDuration(currentMovieData.runtime) : 'N/A',
+        release_date: currentMovieData.release_date || null,
     }));
     window.location.href = 'booking.html?movieId=' + currentMovieData.id;
 }

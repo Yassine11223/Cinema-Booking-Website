@@ -5,6 +5,7 @@
 const Booking = require('../models/Booking');
 const Show = require('../models/Show');
 const { sendTicketEmail } = require('../utils/emailService');
+const { COMING_SOON_BOOKING_MESSAGE, isComingSoonRelease } = require('../utils/movieAvailability');
 
 async function sendBookingConfirmationEmail(bookingId) {
     const populatedBooking = await Booking.findByIdPopulated(bookingId);
@@ -56,10 +57,14 @@ const bookingController = {
         try {
             const { show_id, seat_ids } = req.body;
 
-            // Get show to calculate price
-            const show = await Show.findById(show_id);
+            // Get the populated show so movie release_date is available for booking validation.
+            const show = await Show.findByIdPopulated(show_id);
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
+            }
+
+            if (isComingSoonRelease(show.release_date)) {
+                return res.status(403).json({ message: COMING_SOON_BOOKING_MESSAGE });
             }
 
             const conflicts = await Booking.findActiveSeatConflicts(show_id, seat_ids);

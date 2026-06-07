@@ -60,7 +60,7 @@ showSchema.statics.findAll = async function (filters = {}) {
     const Seat = mongoose.model('Seat');
 
     const shows = await this.find(query)
-        .populate('movie_id', 'title poster_url tmdb_id')
+        .populate('movie_id', 'title poster_url tmdb_id release_date')
         .populate('theater_id', 'name capacity screen_type')
         .sort({ show_time: 1 })
 
@@ -69,6 +69,7 @@ showSchema.statics.findAll = async function (filters = {}) {
         const availableSeats = await Seat.findAvailableByShow(s._id);
         obj.movie_title = obj.movie_id?.title || null;
         obj.tmdb_id = obj.movie_id?.tmdb_id || null;
+        obj.release_date = obj.movie_id?.release_date || null;
         obj.poster_url = obj.movie_id?.poster_url || null;
         obj.theater_name = obj.theater_id?.name || null;
         obj.theater_type = obj.theater_id?.screen_type || null;
@@ -81,7 +82,7 @@ showSchema.statics.findAll = async function (filters = {}) {
 
 showSchema.statics.findByIdPopulated = async function (id) {
     const show = await this.findById(id)
-        .populate('movie_id', 'title duration tmdb_id')
+        .populate('movie_id', 'title duration tmdb_id release_date')
         .populate('theater_id', 'name capacity screen_type');
 
     if (!show) return null;
@@ -89,6 +90,7 @@ showSchema.statics.findByIdPopulated = async function (id) {
     const obj = show.toObject();
     obj.movie_title = obj.movie_id?.title || null;
     obj.tmdb_id = obj.movie_id?.tmdb_id || null;
+    obj.release_date = obj.movie_id?.release_date || null;
     obj.duration = obj.movie_id?.duration || null;
     obj.theater_name = obj.theater_id?.name || null;
     obj.capacity = obj.theater_id?.capacity || null;

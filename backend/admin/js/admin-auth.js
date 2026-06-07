@@ -68,16 +68,20 @@ function hideGlobalError() {
 // ============================================
 function seedDemoAdmins() {
     try {
-        const localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        let localUsers = JSON.parse(localStorage.getItem('scene_users_local')) || [];
+        localUsers = localUsers.filter(user => ![
+            'admin@scene.com',
+            'superadmin@scene.com'
+        ].includes(String(user.email || '').toLowerCase()));
 
         // Demo admin
         const adminData = {
             id: 1005,
-            name: 'Admin User',
-            email: 'admin@scene.com',
-            phone: '+20 100 000 0000',
+            name: 'Cinema Admin',
+            email: 'admin@thehallcinema.com',
+            phone: '+20 100 333 4444',
             role: 'admin',
-            password: 'admin112',
+            password: 'Admin2026!',
             created_at: '2026-01-01T00:00:00Z',
             last_login: new Date().toISOString(),
             login_count: 1
@@ -86,11 +90,11 @@ function seedDemoAdmins() {
         // Demo superadmin
         const superAdminData = {
             id: 1006,
-            name: 'Super Admin',
-            email: 'superadmin@scene.com',
-            phone: '+20 100 000 0001',
+            name: 'Cinema Super Admin',
+            email: 'superadmin@thehallcinema.com',
+            phone: '+20 100 555 6666',
             role: 'superadmin',
-            password: 'superadmin112',
+            password: 'SuperAdmin2026!',
             created_at: '2026-01-01T00:00:00Z',
             last_login: new Date().toISOString(),
             login_count: 1

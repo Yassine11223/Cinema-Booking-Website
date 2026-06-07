@@ -3,6 +3,7 @@
  */
 
 const mongoose = require('mongoose');
+const { startOfTomorrow, statusFromReleaseDate } = require('../utils/movieAvailability');
 
 const movieSchema = new mongoose.Schema(
     {
@@ -72,9 +73,25 @@ movieSchema.virtual('id').get(function () {
 
 movieSchema.statics.findAll = async function (filters = {}) {
     const query = {};
-    if (filters.status) query.status = filters.status;
+    const tomorrow = startOfTomorrow();
+    if (filters.status === 'coming_soon') {
+        query.release_date = { $gte: tomorrow };
+    } else if (filters.status === 'now_showing') {
+        query.$or = [
+            { release_date: { $lt: tomorrow } },
+            { release_date: null },
+            { release_date: { $exists: false } },
+        ];
+    } else if (filters.status) {
+        query.status = filters.status;
+    }
     if (filters.genre) query.genre = filters.genre;
-    return this.find(query).sort({ release_date: -1 });
+    const movies = await this.find(query).sort({ release_date: -1 });
+    return movies.map((movie) => {
+        const obj = movie.toObject();
+        obj.status = statusFromReleaseDate(obj.release_date);
+        return obj;
+    });
 };
 
 movieSchema.statics.upsertFromTmdb = async function (movie) {

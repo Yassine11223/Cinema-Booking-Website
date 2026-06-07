@@ -64,16 +64,13 @@ const userController = {
                 return res.status(401).json({ message: 'Invalid email or password' });
             }
 
-            const otpCode = generateOTP();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-            await User.setOTP(user._id, otpCode, expiresAt);
-            await sendOTPEmail(user.email, user.name, otpCode);
+            await User.recordLogin(user._id);
+            const freshUser = await User.findById(user._id);
+            const token = generateToken(freshUser || user);
 
             res.json({
-                otpRequired: true,
-                email: user.email,
-                message: 'Verification code sent to your email.',
+                user: removeSensitiveUserFields(freshUser || user),
+                token,
             });
         } catch (error) {
             next(error);
@@ -101,16 +98,13 @@ const userController = {
                 });
             }
 
-            const otpCode = generateOTP();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-            await User.setOTP(user._id, otpCode, expiresAt);
-            await sendOTPEmail(user.email, user.name, otpCode);
+            await User.recordLogin(user._id);
+            const freshUser = await User.findById(user._id);
+            const token = generateToken(freshUser || user);
 
             res.json({
-                otpRequired: true,
-                email: user.email,
-                message: 'Verification code sent to your email.',
+                user: removeSensitiveUserFields(freshUser || user),
+                token,
             });
         } catch (error) {
             next(error);
@@ -138,16 +132,13 @@ const userController = {
                 });
             }
 
-            const otpCode = generateOTP();
-            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-            await User.setOTP(user._id, otpCode, expiresAt);
-            await sendOTPEmail(user.email, user.name, otpCode);
+            await User.recordLogin(user._id);
+            const freshUser = await User.findById(user._id);
+            const token = generateToken(freshUser || user);
 
             res.json({
-                otpRequired: true,
-                email: user.email,
-                message: 'Verification code sent to your email.',
+                user: removeSensitiveUserFields(freshUser || user),
+                token,
             });
         } catch (error) {
             next(error);

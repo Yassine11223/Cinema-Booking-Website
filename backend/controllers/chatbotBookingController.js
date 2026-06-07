@@ -7,6 +7,7 @@ const Movie = require('../models/Movie');
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
 const Theater = require('../models/Theater');
+const { COMING_SOON_BOOKING_MESSAGE, isComingSoonRelease } = require('../utils/movieAvailability');
 
 // Maps theater screen_type to customer-facing experience name
 const SCREEN_TO_EXP = {
@@ -26,6 +27,15 @@ const { getHomepageNowPlayingMovies, getMovieDetails, posterUrl, genreFromDetail
 
 const NO_SHOWTIMES_MESSAGE = 'This movie is showing on the site, but I cannot see available showtimes for it right now.';
 const MOVIE_LIMIT = 12;
+
+function comingSoonResponse(res) {
+    return res.json({
+        reply: COMING_SOON_BOOKING_MESSAGE,
+        type: 'coming_soon',
+        data: [],
+        buttons: [],
+    });
+}
 
 async function resolveOrCreateLocalMovie(tmdbId) {
     let movie = await Movie.findOne({
@@ -181,6 +191,10 @@ async function handleGetShows(res, movieId, date) {
         });
     }
 
+    if (isComingSoonRelease(movie.release_date)) {
+        return comingSoonResponse(res);
+    }
+
     const resolvedMovieId = movie._id.toString();
     const filters = { movieId: resolvedMovieId };
     if (date) filters.date = date;
@@ -262,6 +276,10 @@ async function handleGetSeats(res, showId) {
         });
     }
 
+    if (isComingSoonRelease(show.release_date)) {
+        return comingSoonResponse(res);
+    }
+
     const availableSeats = await Seat.findAvailableByShow(showId);
     const totalSeats = show.capacity || 0;
     const availableCount = availableSeats.length;
@@ -315,6 +333,14 @@ async function handleGetSeats(res, showId) {
 
 async function getShowtimesReplyForTmdbMovie(tmdbId) {
     const movie = await resolveOrCreateLocalMovie(tmdbId);
+    if (isComingSoonRelease(movie.release_date)) {
+        return {
+            reply: COMING_SOON_BOOKING_MESSAGE,
+            type: 'coming_soon',
+            data: [],
+            buttons: [],
+        };
+    }
     let shows = await Show.findAll({ movieId: movie._id.toString() });
     const now = new Date();
     shows = shows.filter((s) => new Date(s.show_time) > now);
@@ -346,12 +372,13 @@ async function getShowtimesReplyForTmdbMovie(tmdbId) {
 async function getGeneralShowtimesReply() {
     const now = new Date();
     const shows = await Show.find({ show_time: { $gt: now } })
-        .populate('movie_id', 'title tmdb_id')
+        .populate('movie_id', 'title tmdb_id release_date')
         .populate('theater_id', 'name screen_type')
         .sort({ show_time: 1 })
         .limit(10);
+    const bookableShows = shows.filter((show) => !isComingSoonRelease(show.movie_id?.release_date));
 
-    if (!shows.length) {
+    if (!bookableShows.length) {
         return {
             reply: 'I cannot see any upcoming showtimes in the database right now. Please check back later or try another date.',
             type: 'no_shows',
@@ -361,7 +388,7 @@ async function getGeneralShowtimesReply() {
         };
     }
 
-    const buttons = shows.map((s) => {
+    const buttons = bookableShows.map((s) => {
         const dt = new Date(s.show_time);
         const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -412,6 +439,11 @@ async function handleGetExperiences(res, movieId) {
         return res.json({ reply: 'Movie not found in our system.', type: 'error', buttons: [] });
     }
 
+    const movie = await Movie.findById(resolvedId);
+    if (isComingSoonRelease(movie?.release_date)) {
+        return comingSoonResponse(res);
+    }
+
     const now = new Date();
     const shows = await Show.find({ movie_id: resolvedId, show_time: { $gt: now } })
         .populate('theater_id', 'screen_type name');
@@ -440,7 +472,6 @@ async function handleGetExperiences(res, movieId) {
         experience: exp,
     }));
 
-    const movie = await Movie.findById(resolvedId);
     return res.json({
         reply: `Great choice! **${movie?.title || 'This movie'}** is available in the following experiences:\n\n${experiences.map(e => `• **${e}**`).join('\n')}\n\nWhich experience would you like?`,
         type: 'experiences_list',
@@ -455,6 +486,11 @@ async function handleGetDates(res, movieId, experience) {
     const resolvedId = await resolveMovieId(movieId);
     if (!resolvedId) {
         return res.json({ reply: 'Movie not found.', type: 'error', buttons: [] });
+    }
+
+    const movie = await Movie.findById(resolvedId);
+    if (isComingSoonRelease(movie?.release_date)) {
+        return comingSoonResponse(res);
     }
 
     const screenTypes = EXP_TO_SCREENS[experience] || ['standard'];
@@ -507,6 +543,11 @@ async function handleGetShowsFiltered(res, movieId, experience, date) {
         return res.json({ reply: 'Movie not found.', type: 'error', buttons: [] });
     }
 
+    const movie = await Movie.findById(resolvedId);
+    if (isComingSoonRelease(movie?.release_date)) {
+        return comingSoonResponse(res);
+    }
+
     const screenTypes = EXP_TO_SCREENS[experience] || ['standard'];
     const theaters = await Theater.find({ screen_type: { $in: screenTypes } });
     const theaterIds = theaters.map(t => t._id);
@@ -529,7 +570,6 @@ async function handleGetShowsFiltered(res, movieId, experience, date) {
         });
     }
 
-    const movie = await Movie.findById(resolvedId);
     const buttons = shows.map(s => {
         const dt = new Date(s.show_time);
         const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });

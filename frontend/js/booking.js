@@ -39,6 +39,7 @@
                     genre: parsed.genre || 'Movie',
                     rating: parsed.rating || 'NR',
                     duration: parsed.duration || 'N/A',
+                    release_date: parsed.release_date || null,
                 };
             }
         } catch (_) { }
@@ -51,6 +52,63 @@
         };
     }
     const MOVIE = loadMovieData();
+    const COMING_SOON_MESSAGE = 'This movie is coming soon and cannot be booked yet.';
+    let bookingBlockedMessage = null;
+
+    function toDateKey(value) {
+        if (!value) return null;
+        if (typeof value === 'string') {
+            const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+            if (match) return match[1];
+        }
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return null;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function isComingSoonMovie(movie) {
+        const releaseKey = toDateKey(movie && movie.release_date);
+        return Boolean(releaseKey && releaseKey > toDateKey(new Date()));
+    }
+
+    function isBookingBlocked() {
+        return Boolean(bookingBlockedMessage || isComingSoonMovie(MOVIE));
+    }
+
+    function getBookingBlockedMessage() {
+        return bookingBlockedMessage || COMING_SOON_MESSAGE;
+    }
+
+    function applyShowMovieData(show) {
+        if (!show) return;
+        MOVIE.backendMovieId = show.movie_id?._id || show.movie_id || MOVIE.backendMovieId || null;
+        MOVIE.tmdb_id = show.tmdb_id || show.movie_id?.tmdb_id || MOVIE.tmdb_id || MOVIE.id || null;
+        MOVIE.release_date = show.release_date || show.movie_id?.release_date || MOVIE.release_date || null;
+        MOVIE.title = show.movie_title || show.movie_id?.title || MOVIE.title;
+        MOVIE.duration = show.duration ? `${Math.floor(show.duration / 60)}h ${show.duration % 60}m` : MOVIE.duration;
+    }
+
+    async function hydrateMovieFromDirectShow() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const showId = urlParams.get('showId');
+        if (!showId) return;
+
+        try {
+            const res = await fetch(`${CFG.API_BASE}/shows/${showId}`);
+            const data = await res.json().catch(() => ({}));
+            if (res.status === 403) {
+                bookingBlockedMessage = data.message || COMING_SOON_MESSAGE;
+                return;
+            }
+            if (!res.ok) return;
+            applyShowMovieData(data);
+        } catch (err) {
+            console.warn('⚠️ Could not validate direct show link:', err.message);
+        }
+    }
 
     const PRICING = {
         IMAX: 320,
@@ -66,10 +124,10 @@
         const out = [];
         const dn = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
         const mn = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 4; i++) {
             const d = new Date(); d.setDate(d.getDate() + i);
             out.push({
-                key: d.toISOString().split('T')[0],
+                key: toDateKey(d),
                 dayName: i === 0 ? 'TODAY' : dn[d.getDay()],
                 dayNum: d.getDate(),
                 month: mn[d.getMonth()],
@@ -97,6 +155,8 @@
      */
     async function fetchShowtimesFromAPI(dateKey) {
         try {
+            if (isBookingBlocked()) return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
+
             // Get movieId from URL or sessionStorage
             const urlParams = new URLSearchParams(window.location.search);
             let movieId = urlParams.get('movieId');
@@ -106,6 +166,9 @@
                     const sm = JSON.parse(sessionStorage.getItem('selectedMovie'));
                     movieId = sm?.backendMovieId || sm?.tmdb_id || sm?.id || null;
                 } catch(_) {}
+            }
+            if (!movieId) {
+                movieId = MOVIE.backendMovieId || MOVIE.tmdb_id || MOVIE.id || null;
             }
 
             if (!movieId) return { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
@@ -219,6 +282,12 @@
      */
     async function createBookingOnBackend(showId, seatLabels) {
         try {
+            createBookingOnBackend.lastError = null;
+            if (isBookingBlocked()) {
+                createBookingOnBackend.lastError = getBookingBlockedMessage();
+                return null;
+            }
+
             // showId must be numeric backend ID
             if (typeof showId === 'string' && showId.match(/^[a-z]/)) return null;
             const token = localStorage.getItem('userToken');
@@ -237,6 +306,7 @@
             });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
+                createBookingOnBackend.lastError = err.message || 'Booking failed.';
                 console.warn('⚠️ Booking API error:', err.message || res.status);
                 return null;
             }
@@ -245,9 +315,11 @@
             return booking;
         } catch (err) {
             console.warn('⚠️ Backend booking creation failed:', err.message);
+            createBookingOnBackend.lastError = err.message;
             return null;
         }
     }
+    createBookingOnBackend.lastError = null;
 
     // ============================================
     // STATE
@@ -357,12 +429,14 @@
     // RENDER — Movie header
     // ============================================
     function renderMovieHeader() {
+        const releaseKey = toDateKey(MOVIE.release_date);
         D.movieHeader.innerHTML = `
             <h1 class="selection-movie__title">${MOVIE.title}</h1>
             <div class="selection-movie__meta">
                 <span class="selection-movie__badge"><i class="fas fa-star"></i> ${MOVIE.rating}</span>
                 <span class="selection-movie__badge"><i class="far fa-clock"></i> ${MOVIE.duration}</span>
                 <span class="selection-movie__badge"><i class="fas fa-tags"></i> ${MOVIE.genre}</span>
+                ${releaseKey ? `<span class="selection-movie__badge"><i class="far fa-calendar"></i> ${releaseKey}</span>` : ''}
             </div>
         `;
     }
@@ -386,6 +460,12 @@
     // RENDER — Showtime selector
     // ============================================
     function renderShowtimes() {
+        if (isBookingBlocked()) {
+            D.timeSel.innerHTML = `<div class="showtime-placeholder">
+                <i class="far fa-clock"></i>${getBookingBlockedMessage()}</div>`;
+            return;
+        }
+
         if (!S.dateKey) {
             D.timeSel.innerHTML = `<div class="showtime-placeholder">
                 <i class="far fa-calendar-alt"></i>Please select a date first</div>`;
@@ -687,6 +767,10 @@
     // EVENT HANDLERS
     // ============================================
     async function onDateClick(key) {
+        if (isBookingBlocked()) {
+            toast(getBookingBlockedMessage(), 'warning');
+            return;
+        }
         if (key === S.dateKey) return;
         S.dateKey = key;
         S.stId = null; S.stType = null; S.seatStates = null;
@@ -701,6 +785,10 @@
     }
 
     async function onShowtimeClick(id, exp) {
+        if (isBookingBlocked()) {
+            toast(getBookingBlockedMessage(), 'warning');
+            return;
+        }
         if (id === S.stId) return;
         S.stId = id; S.stType = exp;
         S.selected = []; S.timerStart = null; S.confirmed = false;
@@ -748,6 +836,7 @@
     }
 
     async function onCheckout() {
+        if (isBookingBlocked()) { toast(getBookingBlockedMessage(), 'warning'); return; }
         if (!S.stId) { toast('Select a showtime first.', 'warning'); return; }
         if (S.selected.length === 0) { toast('Select at least one seat.', 'warning'); return; }
         S.confirmed = true;
@@ -767,7 +856,7 @@
             save();
             renderBottomBar();
             renderTimer();
-            toast('Could not reserve those seats. Please sign in or choose available seats again.', 'error');
+            toast(createBookingOnBackend.lastError || 'Could not reserve those seats. Please sign in or choose available seats again.', 'error');
             S.seatStates = await fetchSeatStatesFromAPI(S.stId, S.stType);
             S.selected = [];
             renderSeatMap();
@@ -843,9 +932,14 @@
     async function init() {
         cacheDom();
         bind();
+        await hydrateMovieFromDirectShow();
 
         const restored = load();
-        if (!restored) {
+        if (isBookingBlocked()) {
+            S.dateKey = S.dates[0].key;
+            S.showtimes = { IMAX: [], Dolby: [], Standard: [], Deluxe: [] };
+            S.view = 'selection';
+        } else if (!restored) {
             S.dateKey = S.dates[0].key;
             S.showtimes = await fetchShowtimesFromAPI(S.dateKey);
             S.view = 'selection';
@@ -872,7 +966,7 @@
         // ── Option B: Auto-select showtime from chatbot redirect ──
         const urlParams = new URLSearchParams(window.location.search);
         const autoShowId = urlParams.get('showId');
-        if (autoShowId && !restored) {
+        if (autoShowId && !restored && !isBookingBlocked()) {
             console.log('[Booking] Auto-select showId from chatbot:', autoShowId);
             // Search current date's showtimes first
             let foundExp = null;

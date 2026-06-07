@@ -120,31 +120,37 @@
     <!-- =============================================
          MODAL: ADD NEW ADMIN
          ============================================= -->
-    <div class="modal-overlay" id="modal-add-admin" role="dialog" aria-modal="true" aria-labelledby="modal-add-admin-title">
+    <div class="modal-overlay" id="modal-add-admin" role="dialog" aria-modal="true"
+        aria-labelledby="modal-add-admin-title">
         <div class="modal-panel modal-panel-sm">
             <div class="modal-header">
                 <h2 class="modal-title" id="modal-add-admin-title" style="color:#e040fb;">
                     <i class="fas fa-user-plus"></i>
                     Create Admin Account
                 </h2>
-                <button class="modal-close" id="modal-add-admin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+                <button class="modal-close" id="modal-add-admin-close" aria-label="Close"><i
+                        class="fas fa-times"></i></button>
             </div>
             <form id="add-admin-form" novalidate>
                 <div class="add-admin-form">
                     <div class="add-admin-field">
                         <label for="new-admin-name">Full Name</label>
-                        <input type="text" id="new-admin-name" placeholder="Enter full name" required autocomplete="name">
+                        <input type="text" id="new-admin-name" placeholder="Enter full name" required
+                            autocomplete="name">
                         <span class="field-error" id="new-admin-name-error">Name is required</span>
                     </div>
                     <div class="add-admin-field">
                         <label for="new-admin-email">Email Address</label>
-                        <input type="email" id="new-admin-email" placeholder="admin@scene.com" required autocomplete="email">
+                        <input type="email" id="new-admin-email" placeholder="admin@scene.com" required
+                            autocomplete="email">
                         <span class="field-error" id="new-admin-email-error">Valid email is required</span>
                     </div>
                     <div class="add-admin-field">
                         <label for="new-admin-password">Password</label>
-                        <input type="password" id="new-admin-password" placeholder="Minimum 6 characters" required autocomplete="new-password">
-                        <span class="field-error" id="new-admin-password-error">Password must be at least 6 characters</span>
+                        <input type="password" id="new-admin-password" placeholder="Minimum 6 characters" required
+                            autocomplete="new-password">
+                        <span class="field-error" id="new-admin-password-error">Password must be at least 6
+                            characters</span>
                     </div>
                     <div class="add-admin-field">
                         <label for="new-admin-phone">Phone (Optional)</label>
@@ -161,14 +167,16 @@
     <!-- =============================================
          MODAL: DELETE ADMIN CONFIRM
          ============================================= -->
-    <div class="modal-overlay" id="modal-del-admin" role="dialog" aria-modal="true" aria-labelledby="modal-del-admin-title">
+    <div class="modal-overlay" id="modal-del-admin" role="dialog" aria-modal="true"
+        aria-labelledby="modal-del-admin-title">
         <div class="modal-panel modal-panel-sm">
             <div class="modal-header">
                 <h2 class="modal-title modal-title-danger" id="modal-del-admin-title">
                     <i class="fas fa-user-times"></i>
                     Remove Admin
                 </h2>
-                <button class="modal-close" id="modal-del-admin-close" aria-label="Close"><i class="fas fa-times"></i></button>
+                <button class="modal-close" id="modal-del-admin-close" aria-label="Close"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="modal-body-text">
                 <p>Remove admin privileges from <strong id="del-admin-name">this admin</strong>?</p>
@@ -186,14 +194,16 @@
     <!-- =============================================
          MODAL: ADMIN DETAIL / PROFILE
          ============================================= -->
-    <div class="modal-overlay" id="modal-admin-detail" role="dialog" aria-modal="true" aria-labelledby="modal-admin-detail-title">
+    <div class="modal-overlay" id="modal-admin-detail" role="dialog" aria-modal="true"
+        aria-labelledby="modal-admin-detail-title">
         <div class="modal-panel modal-panel-wide">
             <div class="modal-header">
                 <h2 class="modal-title" id="modal-admin-detail-title" style="color:#e040fb;">
                     <i class="fas fa-id-card"></i>
                     Admin Profile
                 </h2>
-                <button class="modal-close" id="modal-admin-detail-close" aria-label="Close"><i class="fas fa-times"></i></button>
+                <button class="modal-close" id="modal-admin-detail-close" aria-label="Close"><i
+                        class="fas fa-times"></i></button>
             </div>
             <div class="user-detail-body" id="admin-detail-body">
                 <!-- JS fills this -->
@@ -209,4 +219,5 @@
     <script src="js/admins-manage.js"></script>
 
 </body>
+
 </html>

@@ -5,6 +5,7 @@
 const Show = require('../models/Show');
 const Seat = require('../models/Seat');
 const Movie = require('../models/Movie');
+const { COMING_SOON_BOOKING_MESSAGE, isComingSoonRelease } = require('../utils/movieAvailability');
 
 const showController = {
     // GET /api/shows
@@ -30,8 +31,12 @@ const showController = {
                 movieId = movie._id.toString();
             }
 
+            const now = new Date();
             const shows = await Show.findAll({ movieId, date });
-            res.json(shows);
+            res.json(shows.filter((show) => (
+                !isComingSoonRelease(show.release_date)
+                && new Date(show.show_time) > now
+            )));
         } catch (error) {
             next(error);
         }
@@ -43,6 +48,9 @@ const showController = {
             if (!show) {
                 return res.status(404).json({ message: 'Show not found' });
             }
+            if (isComingSoonRelease(show.release_date)) {
+                return res.status(403).json({ message: COMING_SOON_BOOKING_MESSAGE });
+            }
             res.json(show);
         } catch (error) {
             next(error);
@@ -52,6 +60,14 @@ const showController = {
     // GET /api/shows/:id/seats (available seats for a show)
     async getAvailableSeats(req, res, next) {
         try {
+            const show = await Show.findByIdPopulated(req.params.id);
+            if (!show) {
+                return res.status(404).json({ message: 'Show not found' });
+            }
+            if (isComingSoonRelease(show.release_date)) {
+                return res.status(403).json({ message: COMING_SOON_BOOKING_MESSAGE });
+            }
+
             const seats = await Seat.findAvailableByShow(req.params.id);
             res.json(seats);
         } catch (error) {

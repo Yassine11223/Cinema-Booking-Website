@@ -8,10 +8,6 @@ const jwt = require('jsonwebtoken');
 const { jwtSecret } = require('../config/env');
 const { sendEmail } = require('../utils/email');
 
-const QR_API_BASE = 'https://api.qrserver.com/v1/create-qr-code/';
-const QR_SIZE = '220x220';
-const INCLUDE_QR_ATTACHMENTS = String(process.env.QR_EMAIL_ATTACHMENTS || '').toLowerCase() === 'true';
-
 function generateBookingId() {
     const year = new Date().getFullYear();
     const random = Math.floor(10000 + Math.random() * 90000);
@@ -59,35 +55,36 @@ function safeFileToken(value) {
         .replace(/^-+|-+$/g, '') || 'seat';
 }
 
-function buildPublicQrImageUrl(payloadString) {
-    return `${QR_API_BASE}?size=${QR_SIZE}&data=${encodeURIComponent(payloadString)}`;
-}
-
-async function buildQrAttachment(ticket) {
-    if (!INCLUDE_QR_ATTACHMENTS) return null;
-
-    const content = await QRCode.toBuffer(ticket.qrPayloadString, {
+async function buildQrDataUrl(payloadString) {
+    return QRCode.toDataURL(payloadString, {
         errorCorrectionLevel: 'M',
         type: 'png',
         margin: 2,
         width: 220,
     });
+}
 
-    return {
-        filename: `qr-seat-${safeFileToken(ticket.seatNumber)}.png`,
-        content,
-        contentType: 'image/png',
-        contentDisposition: 'attachment',
-    };
+function buildPublicQrImageUrl(payloadString) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(payloadString)}`;
 }
 
 async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, tickets, movieTitle, date, time, experience, hall, currency, receipt }) {
     if (!to) return;
 
-    const attachments = (await Promise.all(tickets.map(buildQrAttachment))).filter(Boolean);
+    const qrAttachments = tickets.map((ticket, index) => {
+        const base64Data = ticket.qrCodeDataUrl.split(',')[1];
+        return {
+            filename: `seat-${safeFileToken(ticket.seatNumber)}.png`,
+            content: Buffer.from(base64Data, 'base64'),
+            cid: ticket.qrCid,
+            contentType: 'image/png',
+            contentDisposition: 'inline'
+        };
+    });
+
     const ticketCards = tickets.map((ticket) => `
             <div style="display:inline-block;width:210px;margin:10px;padding:14px;border:1px solid #ddd;border-radius:8px;text-align:center;vertical-align:top;">
-                <img src="${ticket.qrImageUrl}" alt="QR code for seat ${escapeHtml(ticket.seatNumber)}" width="170" height="170" style="display:block;margin:0 auto 10px;" />
+                <img src="cid:${ticket.qrCid}" alt="QR code for seat ${escapeHtml(ticket.seatNumber)}" width="170" height="170" style="display:block;margin:0 auto 10px;object-fit:contain;" />
                 <div style="font-size:18px;font-weight:bold;color:#b71c1c;">Seat ${escapeHtml(ticket.seatNumber)}</div>
                 <div style="font-size:11px;color:#666;margin-top:4px;">${escapeHtml(ticket.ticketId)}</div>
             </div>
@@ -148,8 +145,8 @@ async function sendTicketsEmail({ to, name, bookingId, purchaseTimestamp, ticket
                 <p style="color:#777;font-size:12px;margin-top:24px;">The Hall Cinema</p>
             </div>
         `,
+        attachments: qrAttachments,
     };
-    if (attachments.length > 0) mailOptions.attachments = attachments;
 
     await sendEmail(mailOptions);
 
@@ -191,7 +188,7 @@ async function generateTickets(req, res) {
         const purchaseTimestamp = new Date().toISOString();
         const tickets = [];
 
-        for (const seat of seats) {
+        for (const [index, seat] of seats.entries()) {
             const ticketId = generateTicketId();
             const qrPayload = {
                 type: 'the-hall-ticket',
@@ -208,6 +205,8 @@ async function generateTickets(req, res) {
             };
             const qrPayloadString = JSON.stringify(qrPayload);
             const qrImageUrl = buildPublicQrImageUrl(qrPayloadString);
+            const qrCodeDataUrl = await buildQrDataUrl(qrPayloadString);
+            const cid = `qr${index}@cinema.ticket`;
 
             tickets.push({
                 ticketId,
@@ -215,7 +214,8 @@ async function generateTickets(req, res) {
                 qrPayload,
                 qrPayloadString,
                 qrImageUrl,
-                qrCodeDataUrl: qrImageUrl,
+                qrCodeDataUrl,
+                qrCid: cid,
                 movieTitle: movieTitle.trim(),
                 experience: experience.trim(),
                 hall: (hall || 'Main Hall').trim(),
