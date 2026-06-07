@@ -1,19 +1,9 @@
 const nodemailer = require('nodemailer');
 const QRCode = require('qrcode');
 
-const QR_OPTIONS = {
-    errorCorrectionLevel: 'M',
-    type: 'image/png',
-    margin: 2,
-    width: 240,
-    color: {
-        dark: '#000000',
-        light: '#FFFFFF',
-    },
-};
-
-// Public QR code generation API — Gmail can load these images since they're HTTPS URLs
 const QR_API_BASE = 'https://api.qrserver.com/v1/create-qr-code/';
+const QR_SIZE = '220x220';
+const INCLUDE_QR_ATTACHMENTS = String(process.env.QR_EMAIL_ATTACHMENTS || '').toLowerCase() === 'true';
 
 function createTransporter() {
     return nodemailer.createTransport({
@@ -36,13 +26,7 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function getSeatLabel(seat) {
-    if (seat.label) return seat.label;
-    if (seat.row_label && seat.seat_number) return `${seat.row_label}${seat.seat_number}`;
-    return String(seat.seat_number || seat._id || 'Seat');
-}
-
-function safeCidToken(value) {
+function safeFileToken(value) {
     return String(value || 'seat')
         .trim()
         .toLowerCase()
@@ -50,16 +34,14 @@ function safeCidToken(value) {
         .replace(/^-+|-+$/g, '') || 'seat';
 }
 
-function getSeatQrFilename(seatLabel) {
-    return `qr-seat-${safeCidToken(seatLabel)}.png`;
+function getSeatLabel(seat) {
+    if (seat.label) return seat.label;
+    if (seat.row_label && seat.seat_number) return `${seat.row_label}${seat.seat_number}`;
+    return String(seat.seat_number || seat._id || 'Seat');
 }
 
-/**
- * Build a publicly accessible QR image URL using api.qrserver.com.
- * Gmail will fetch this over HTTPS and display it inline — no CID needed.
- */
-function buildPublicQrImageUrl(qrPayloadString) {
-    return `${QR_API_BASE}?size=220x220&data=${encodeURIComponent(qrPayloadString)}`;
+function getSeatId(seat) {
+    return String(seat.id || seat._id || '');
 }
 
 function screenTypeToExperience(screenType, hall) {
@@ -71,14 +53,36 @@ function screenTypeToExperience(screenType, hall) {
     return 'Standard';
 }
 
+function buildPublicQrImageUrl(payloadString) {
+    return `${QR_API_BASE}?size=${QR_SIZE}&data=${encodeURIComponent(payloadString)}`;
+}
+
+async function buildQrAttachment(ticket) {
+    if (!INCLUDE_QR_ATTACHMENTS) return null;
+
+    const content = await QRCode.toBuffer(ticket.qrPayloadString, {
+        errorCorrectionLevel: 'M',
+        type: 'png',
+        margin: 2,
+        width: 220,
+    });
+
+    return {
+        filename: `qr-seat-${safeFileToken(ticket.seatLabel)}.png`,
+        content,
+        contentType: 'image/png',
+        contentDisposition: 'attachment',
+    };
+}
+
 function publicTicket(ticket) {
     return {
         ticketId: ticket.ticketId,
         seatId: ticket.seatId,
         seatNumber: ticket.seatLabel,
-        qrCodeDataUrl: ticket.qrCodeDataUrl,
         qrPayload: ticket.qrPayload,
         qrImageUrl: ticket.qrImageUrl,
+        qrCodeDataUrl: ticket.qrImageUrl,
         movieTitle: ticket.movieTitle,
         experience: ticket.experience,
         hall: ticket.hall,
@@ -97,14 +101,13 @@ async function buildQrTickets(booking, ticketMeta) {
 
     return Promise.all(seats.map(async (seat, index) => {
         const seatLabel = getSeatLabel(seat);
-        const seatId = String(seat.id || seat._id || '');
         const ticketId = `TKT-${bookingId.slice(-6).toUpperCase()}-${String(index + 1).padStart(2, '0')}`;
         const qrPayload = {
             type: 'the-hall-ticket',
             version: 1,
             bookingId,
             ticketId,
-            seatId,
+            seatId: getSeatId(seat),
             showId: ticketMeta.showId,
             movieId: ticketMeta.movieId,
             movie: ticketMeta.movieTitle,
@@ -118,28 +121,15 @@ async function buildQrTickets(booking, ticketMeta) {
             totalPrice: Number(booking.total_price || 0),
             currency: ticketMeta.currency,
         };
-
         const qrPayloadString = JSON.stringify(qrPayload);
-
-        // Generate base64 data URL for frontend ticket display
-        const qrCodeDataUrl = await QRCode.toDataURL(qrPayloadString, QR_OPTIONS);
-
-        // Generate raw PNG buffer for email attachment (downloadable backup)
-        const base64Data = qrCodeDataUrl.replace(/^data:image\/png;base64,/, '');
-        const qrBuffer = Buffer.from(base64Data, 'base64');
-
-        // Build public QR image URL for inline email display (Gmail-compatible)
-        const qrImageUrl = buildPublicQrImageUrl(qrPayloadString);
 
         return {
             ticketId,
-            seatId,
+            seatId: getSeatId(seat),
             seatLabel,
             qrPayload,
             qrPayloadString,
-            qrCodeDataUrl,
-            qrBuffer,
-            qrImageUrl,
+            qrImageUrl: buildPublicQrImageUrl(qrPayloadString),
             movieTitle: ticketMeta.movieTitle,
             experience: ticketMeta.experience,
             hall: ticketMeta.hall,
@@ -199,18 +189,9 @@ async function sendTicketEmail(booking, user) {
         const seatList = booking.seats && booking.seats.length > 0
             ? booking.seats.map(getSeatLabel).join(', ')
             : 'Unassigned';
-
         const location = 'Misr International University (MIU), KM 28 Cairo - Ismailia Road, Cairo Governorate, Egypt';
+        const attachments = (await Promise.all(tickets.map(buildQrAttachment))).filter(Boolean);
 
-        // Keep QR PNGs as downloadable attachments (backup), but NOT as CID inline
-        const attachments = tickets.map(ticket => ({
-            filename: getSeatQrFilename(ticket.seatLabel),
-            content: ticket.qrBuffer,
-            contentType: 'image/png',
-            contentDisposition: 'attachment',
-        }));
-
-        // Use public QR image URLs for inline display — Gmail loads these over HTTPS
         const ticketHtml = tickets.map(ticket => `
             <div style="display:inline-block;width:220px;margin:10px;padding:16px;border:1px solid #ddd;border-radius:8px;text-align:center;vertical-align:top;background-color:#ffffff;">
                 <img src="${ticket.qrImageUrl}" alt="QR code for seat ${escapeHtml(ticket.seatLabel)}" width="180" height="180" style="display:block;border:1px solid #eee;border-radius:6px;margin:0 auto 10px;width:180px;height:180px;" />
@@ -227,7 +208,7 @@ async function sendTicketEmail(booking, user) {
                 <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
                     <h3 style="margin-top: 0; color: #333;">Booking Details</h3>
                     <ul style="list-style: none; padding: 0; line-height: 1.6;">
-                        <li><strong>Booking Reference:</strong> ${escapeHtml(booking.id || booking._id)}</li>
+                        <li><strong>Booking Reference:</strong> ${escapeHtml(bookingId)}</li>
                         <li><strong>Movie:</strong> ${escapeHtml(movieTitle)}</li>
                         <li><strong>Date:</strong> ${escapeHtml(displayDate)}</li>
                         <li><strong>Time:</strong> ${escapeHtml(displayTime)}</li>
@@ -239,7 +220,7 @@ async function sendTicketEmail(booking, user) {
                     </ul>
                 </div>
                 <h3 style="color:#333;">QR Tickets</h3>
-                <p style="color:#666;font-size:13px;">Scan the QR code below at the cinema entrance. QR images are also attached as downloadable files.</p>
+                <p style="color:#666;font-size:13px;">Scan the QR code below at the cinema entrance.</p>
                 <div style="text-align:center;">${ticketHtml || '<p>No seat QR codes were generated.</p>'}</div>
                 <p>Please present your booking reference at the counter or scan your QR code on arrival.</p>
                 <p>Enjoy the movie!</p>
@@ -255,16 +236,8 @@ async function sendTicketEmail(booking, user) {
             to: user.email,
             subject: 'The Hall Booking Confirmation',
             html: htmlContent,
-            attachments,
         };
-
-        console.log('[EmailService] QR strategy: public URL (api.qrserver.com)');
-        console.log('[EmailService] Ticket count:', tickets.length);
-        tickets.forEach((t, i) => {
-            console.log(`[EmailService] Ticket ${i + 1}: seat=${t.seatLabel}, ticketId=${t.ticketId}`);
-            console.log(`[EmailService]   QR URL: ${t.qrImageUrl.substring(0, 120)}...`);
-        });
-        console.log('[EmailService] Attachments (backup):', mailOptions.attachments.map(a => a.filename));
+        if (attachments.length > 0) mailOptions.attachments = attachments;
 
         const info = await transporter.sendMail(mailOptions);
         console.log(`[EmailService] Ticket confirmation sent to ${user.email}. MessageId: ${info.messageId}`);
