@@ -1,83 +1,91 @@
 /**
  * Shows Admin – CRUD management for showtimes
- * Uses demo data with localStorage persistence
+ * Fetches real data from backend API
+ * Falls back to localStorage when backend is offline
  */
 (function () {
     'use strict';
 
     // ============================================
-    // DEMO DATA
+    // CONFIG
     // ============================================
-    const MOVIES = [
-        { id: 1, title: 'Interstellar', genre: 'Sci-Fi', duration: '2h 49m' },
-        { id: 2, title: 'The Dark Knight', genre: 'Action', duration: '2h 32m' },
-        { id: 3, title: 'Inception', genre: 'Sci-Fi', duration: '2h 28m' },
-        { id: 4, title: 'Oppenheimer', genre: 'Drama', duration: '3h 00m' },
-        { id: 5, title: 'Dune: Part Two', genre: 'Sci-Fi', duration: '2h 46m' },
-        { id: 6, title: 'Spider-Man: No Way Home', genre: 'Action', duration: '2h 28m' },
-        { id: 7, title: 'The Batman', genre: 'Action', duration: '2h 56m' },
-        { id: 8, title: 'Avatar: The Way of Water', genre: 'Sci-Fi', duration: '3h 12m' },
-    ];
+    const API_BASE = 'http://localhost:5000/api';
+    const API_TIMEOUT = 4000;
+    const STORAGE_KEY = 'cinema_shows_admin_v2';
 
-    const THEATERS = [
-        { id: 1, name: 'Hall 1', type: 'standard', capacity: 150 },
-        { id: 2, name: 'Hall 2', type: 'standard', capacity: 120 },
-        { id: 3, name: 'IMAX Theater', type: 'imax', capacity: 300 },
-        { id: 4, name: 'VIP Lounge', type: 'vip', capacity: 40 },
-        { id: 5, name: '3D Theater', type: '3d', capacity: 180 },
-        { id: 6, name: '4DX Experience', type: '4dx', capacity: 80 },
-    ];
-
-    const STORAGE_KEY = 'cinema_shows_admin_v1';
-
-    function generateDemoShows() {
-        const shows = [];
-        const today = new Date();
-        let id = 1;
-
-        for (let d = -2; d < 7; d++) {
-            const date = new Date(today);
-            date.setDate(date.getDate() + d);
-            const dateStr = date.toISOString().split('T')[0];
-
-            const showCount = 3 + Math.floor(Math.random() * 3);
-            for (let s = 0; s < showCount; s++) {
-                const movie = MOVIES[Math.floor(Math.random() * MOVIES.length)];
-                const theater = THEATERS[Math.floor(Math.random() * THEATERS.length)];
-                const hours = [10, 13, 16, 19, 21, 23][Math.floor(Math.random() * 6)];
-                const minutes = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
-                const booked = Math.floor(Math.random() * theater.capacity);
-
-                const priceMap = { vip: 250, imax: 180, '4dx': 200, '3d': 150, standard: 120 };
-
-                shows.push({
-                    id: id++,
-                    movie_id: movie.id,
-                    movie_title: movie.title,
-                    movie_genre: movie.genre,
-                    theater_id: theater.id,
-                    theater_name: theater.name,
-                    screen_type: theater.type,
-                    capacity: theater.capacity,
-                    booked: booked,
-                    show_date: dateStr,
-                    show_time: String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0'),
-                    price: priceMap[theater.type] || 120,
-                    status: d < 0 ? 'ended' : booked >= theater.capacity ? 'sold-out' : 'active',
-                });
-            }
+    // ============================================
+    // API FUNCTIONS
+    // ============================================
+    async function fetchMovies() {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            
+            const res = await fetch(`${API_BASE}/movies`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error');
+            return await res.json();
+        } catch (err) {
+            console.log('[Shows] Movies API offline, using cached data');
+            return JSON.parse(localStorage.getItem('shows_movies_cache') || '[]');
         }
-        return shows;
     }
 
-    function loadShows() {
+    async function fetchTheaters() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (_) { }
-        const shows = generateDemoShows();
-        saveShows(shows);
-        return shows;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            
+            const res = await fetch(`${API_BASE}/theaters`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error');
+            return await res.json();
+        } catch (err) {
+            console.log('[Shows] Theaters API offline, using cached data');
+            return JSON.parse(localStorage.getItem('shows_theaters_cache') || '[]');
+        }
+    }
+
+    async function fetchShows() {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            
+            const res = await fetch(`${API_BASE}/shows`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error');
+            const shows = await res.json();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(shows));
+            return shows;
+        } catch (err) {
+            console.log('[Shows] Backend offline, using cached shows');
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        }
+    }
+
+    let MOVIES = [];
+    let THEATERS = [];
+
+    async function loadData() {
+        MOVIES = await fetchMovies();
+        THEATERS = await fetchTheaters();
+        localStorage.setItem('shows_movies_cache', JSON.stringify(MOVIES));
+        localStorage.setItem('shows_theaters_cache', JSON.stringify(THEATERS));
     }
 
     function saveShows(shows) {
@@ -435,8 +443,9 @@
     // ============================================
     // INIT
     // ============================================
-    function init() {
-        allShows = loadShows();
+    async function init() {
+        await loadData();
+        allShows = await fetchShows();
         bind();
         applyFilters();
         renderStats();

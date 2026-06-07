@@ -1,7 +1,6 @@
 /* ============================================
    BOOKING MANAGEMENT — Admin Logic
-   Full booking list CRUD, filtering, pagination,
-   detail drawer, actions, and toast notifications
+   Fetches real booking data from backend API
    ============================================ */
 
 (function () {
@@ -9,14 +8,9 @@
 
     const API_BASE = 'http://localhost:5000/api';
     const API_TIMEOUT = 4000;
+    const STORAGE_KEY = 'cinema_bookings_admin_v2';
 
-    /* =======================================
-       SAMPLE BOOKING DATA
-       ======================================= */
-    /* Theater-type pricing — matches frontend/js/booking.js PRICING */
-    const PRICING = { imax: 320, dolby: 280, standard: 180, deluxe: 250 };
-
-    /* Theater type metadata — matches admin Theater Management */
+    /* Theater type metadata */
     const THEATER_TYPE_MAP = {
         imax:     { label: 'IMAX',     icon: 'fa-expand',      cls: 'imax' },
         dolby:    { label: 'Dolby',    icon: 'fa-volume-high', cls: 'dolby' },
@@ -33,260 +27,35 @@
         'Vodafone Cash': 'fa-mobile-screen-button'
     };
 
-    let bookings = [
-        {
-            id: 'BK-1024',
-            customerName: 'Ahmed Ali',
-            email: 'ahmed.ali@email.com',
-            phone: '0101-234-5678',
-            movie: 'Thunderbolts*',
-            theater: 'IMAX Theatre',
-            theaterType: 'imax',
-            branch: 'Nasr City',
-            showtime: '2026-04-20T19:30',
-            seats: ['C5', 'C6'],
-            tickets: 2,
-            totalAmount: 640,
-            pricePerTicket: 320,
-            paymentStatus: 'paid',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Visa Card',
-            transactionId: 'TX-987654',
-            createdAt: '2026-04-18T14:23:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1025',
-            customerName: 'Sara Mohamed',
-            email: 'sara.m@email.com',
-            phone: '0112-345-6789',
-            movie: 'Sinners',
-            theater: 'Dolby Atmos',
-            theaterType: 'dolby',
-            branch: 'New Cairo',
-            showtime: '2026-04-20T21:00',
-            seats: ['F7'],
-            tickets: 1,
-            totalAmount: 280,
-            pricePerTicket: 280,
-            paymentStatus: 'paid',
-            bookingStatus: 'checkedin',
-            paymentMethod: 'MasterCard',
-            transactionId: 'TX-987655',
-            createdAt: '2026-04-19T09:10:00',
-            notes: 'VIP customer'
-        },
-        {
-            id: 'BK-1026',
-            customerName: 'Omar Hassan',
-            email: 'omar.h@email.com',
-            phone: '0123-456-7890',
-            movie: 'A Minecraft Movie',
-            theater: 'Hall 1',
-            theaterType: 'standard',
-            branch: 'New Cairo',
-            showtime: '2026-04-21T18:00',
-            seats: ['B3', 'B4', 'B5'],
-            tickets: 3,
-            totalAmount: 540,
-            pricePerTicket: 180,
-            paymentStatus: 'pending',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Fawry',
-            transactionId: 'TX-987656',
-            createdAt: '2026-04-19T16:45:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1027',
-            customerName: 'Mariam Ashraf',
-            email: 'mariam.a@email.com',
-            phone: '0100-987-6543',
-            movie: 'Mission: Impossible - The Final Reckoning',
-            theater: 'Deluxe Suite',
-            theaterType: 'deluxe',
-            branch: 'Sheikh Zayed',
-            showtime: '2026-04-21T22:30',
-            seats: ['A1', 'A2'],
-            tickets: 2,
-            totalAmount: 500,
-            pricePerTicket: 250,
-            paymentStatus: 'refunded',
-            bookingStatus: 'cancelled',
-            paymentMethod: 'Visa Card',
-            transactionId: 'TX-987657',
-            createdAt: '2026-04-17T11:30:00',
-            notes: 'Customer requested cancellation'
-        },
-        {
-            id: 'BK-1028',
-            customerName: 'Youssef Tarek',
-            email: 'youssef.t@email.com',
-            phone: '0155-678-1234',
-            movie: 'The Amateur',
-            theater: 'IMAX Theatre',
-            theaterType: 'imax',
-            branch: 'Sheikh Zayed',
-            showtime: '2026-04-22T17:00',
-            seats: ['D10', 'D11', 'D12', 'D13'],
-            tickets: 4,
-            totalAmount: 1280,
-            pricePerTicket: 320,
-            paymentStatus: 'paid',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Apple Pay',
-            transactionId: 'TX-987658',
-            createdAt: '2026-04-20T08:15:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1029',
-            customerName: 'Nour El-Din',
-            email: 'nour.e@email.com',
-            phone: '0109-876-5432',
-            movie: 'Lilo & Stitch',
-            theater: 'Dolby Atmos',
-            theaterType: 'dolby',
-            branch: 'Nasr City',
-            showtime: '2026-04-22T20:00',
-            seats: ['E1', 'E2'],
-            tickets: 2,
-            totalAmount: 560,
-            pricePerTicket: 280,
-            paymentStatus: 'failed',
-            bookingStatus: 'cancelled',
-            paymentMethod: 'Visa Card',
-            transactionId: 'TX-987659',
-            createdAt: '2026-04-20T10:02:00',
-            notes: 'Payment gateway error'
-        },
-        {
-            id: 'BK-1030',
-            customerName: 'Layla Ibrahim',
-            email: 'layla.i@email.com',
-            phone: '0122-111-2233',
-            movie: 'Thunderbolts*',
-            theater: 'IMAX Theatre',
-            theaterType: 'imax',
-            branch: 'Nasr City',
-            showtime: '2026-04-20T19:30',
-            seats: ['C8'],
-            tickets: 1,
-            totalAmount: 320,
-            pricePerTicket: 320,
-            paymentStatus: 'paid',
-            bookingStatus: 'checkedin',
-            paymentMethod: 'MasterCard',
-            transactionId: 'TX-987660',
-            createdAt: '2026-04-18T20:01:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1031',
-            customerName: 'Khaled Mansour',
-            email: 'khaled.m@email.com',
-            phone: '0100-222-3344',
-            movie: 'A Minecraft Movie',
-            theater: 'Hall 1',
-            theaterType: 'standard',
-            branch: 'New Cairo',
-            showtime: '2026-04-23T15:30',
-            seats: ['G1', 'G2', 'G3'],
-            tickets: 3,
-            totalAmount: 540,
-            pricePerTicket: 180,
-            paymentStatus: 'paid',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Fawry',
-            transactionId: 'TX-987661',
-            createdAt: '2026-04-20T12:30:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1032',
-            customerName: 'Hana Sayed',
-            email: 'hana.s@email.com',
-            phone: '0115-444-5566',
-            movie: 'Sinners',
-            theater: 'Dolby Atmos',
-            theaterType: 'dolby',
-            branch: 'New Cairo',
-            showtime: '2026-04-23T21:00',
-            seats: ['H5', 'H6'],
-            tickets: 2,
-            totalAmount: 560,
-            pricePerTicket: 280,
-            paymentStatus: 'pending',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Vodafone Cash',
-            transactionId: 'TX-987662',
-            createdAt: '2026-04-21T07:45:00',
-            notes: 'Awaiting payment confirmation'
-        },
-        {
-            id: 'BK-1033',
-            customerName: 'Ali Mostafa',
-            email: 'ali.m@email.com',
-            phone: '0128-999-0011',
-            movie: 'Mission: Impossible - The Final Reckoning',
-            theater: 'Deluxe Suite',
-            theaterType: 'deluxe',
-            branch: 'Sheikh Zayed',
-            showtime: '2026-04-24T19:00',
-            seats: ['A5'],
-            tickets: 1,
-            totalAmount: 250,
-            pricePerTicket: 250,
-            paymentStatus: 'paid',
-            bookingStatus: 'expired',
-            paymentMethod: 'Visa Card',
-            transactionId: 'TX-987663',
-            createdAt: '2026-04-15T09:00:00',
-            notes: 'Showtime passed, customer did not attend'
-        },
-        {
-            id: 'BK-1034',
-            customerName: 'Fatma Adel',
-            email: 'fatma.a@email.com',
-            phone: '0106-777-8899',
-            movie: 'The Amateur',
-            theater: 'IMAX Theatre',
-            theaterType: 'imax',
-            branch: 'Nasr City',
-            showtime: '2026-04-24T22:00',
-            seats: ['D1', 'D2'],
-            tickets: 2,
-            totalAmount: 640,
-            pricePerTicket: 320,
-            paymentStatus: 'paid',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'MasterCard',
-            transactionId: 'TX-987664',
-            createdAt: '2026-04-21T11:20:00',
-            notes: ''
-        },
-        {
-            id: 'BK-1035',
-            customerName: 'Mohamed Nabil',
-            email: 'mohamed.n@email.com',
-            phone: '0111-333-4455',
-            movie: 'Lilo & Stitch',
-            theater: 'Hall 1',
-            theaterType: 'standard',
-            branch: 'New Cairo',
-            showtime: '2026-04-25T16:00',
-            seats: ['E8', 'E9', 'E10'],
-            tickets: 3,
-            totalAmount: 540,
-            pricePerTicket: 180,
-            paymentStatus: 'paid',
-            bookingStatus: 'confirmed',
-            paymentMethod: 'Apple Pay',
-            transactionId: 'TX-987665',
-            createdAt: '2026-04-21T15:40:00',
-            notes: ''
+    /* Theater-type pricing — matches frontend/js/booking.js PRICING */
+    const PRICING = { imax: 320, dolby: 280, standard: 180, deluxe: 250 };
+
+    // Fetch bookings from API
+    async function fetchBookingsFromAPI() {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            
+            const res = await fetch(`${API_BASE}/bookings`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error ' + res.status);
+            const data = await res.json();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            console.log('[Bookings] Loaded', data.length, 'bookings from API');
+            return data;
+        } catch (err) {
+            console.log('[Bookings] API offline, using cached data');
+            const cached = localStorage.getItem(STORAGE_KEY);
+            return cached ? JSON.parse(cached) : [];
         }
-    ];
+    }
+
+    let bookings = [];
 
     /* =======================================
        PAGINATION STATE

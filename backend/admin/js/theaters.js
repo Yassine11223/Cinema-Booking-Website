@@ -1,89 +1,51 @@
 /* ============================================
    THEATER MANAGEMENT — Admin JavaScript
-   Full CRUD, filtering, sorting, seat preview
+   Fetches real theater data from backend API
    ============================================ */
 
 (function () {
     'use strict';
 
     // =========================================
-    //  SAMPLE DATA
+    //  API CONFIG
     // =========================================
-    const THEATERS_DATA = [
-        {
-            id: 1,
-            name: 'IMAX Theatre',
-            type: 'imax',
-            branch: 'Nasr City',
-            rows: 14,
-            seatsPerRow: 27,
-            status: 'active',
-            notes: 'Flagship IMAX auditorium with laser projection, 12-channel immersive sound, and the largest screen in the region. ~310 seats.',
-            createdAt: '2024-06-15',
-            updatedAt: '2026-04-18',
-            showtimesCount: 8,
-            disabledSeats: [[3, 5], [3, 6], [10, 1], [10, 14]]
-        },
-        {
-            id: 2,
-            name: 'Dolby Atmos',
-            type: 'dolby',
-            branch: 'Nasr City',
-            rows: 12,
-            seatsPerRow: 24,
-            status: 'active',
-            notes: 'Dolby Atmos certified hall with Dolby Vision HDR projection, object-based audio, and reclining seats. ~256 seats.',
-            createdAt: '2024-08-22',
-            updatedAt: '2026-04-17',
-            showtimesCount: 6,
-            disabledSeats: [[5, 6], [5, 7]]
-        },
-        {
-            id: 3,
-            name: 'Hall 1',
-            type: 'standard',
-            branch: 'Nasr City',
-            rows: 11,
-            seatsPerRow: 21,
-            status: 'active',
-            notes: 'Standard digital 4K projection auditorium with stadium seating. ~200 seats.',
-            createdAt: '2024-03-10',
-            updatedAt: '2026-04-15',
-            showtimesCount: 5,
-            disabledSeats: [[2, 3], [7, 8]]
-        },
-        {
-            id: 4,
-            name: 'Hall 3',
-            type: 'standard',
-            branch: 'Nasr City',
-            rows: 11,
-            seatsPerRow: 21,
-            status: 'active',
-            notes: 'Standard digital projection hall with comfortable seating. ~200 seats.',
-            createdAt: '2025-01-05',
-            updatedAt: '2026-04-16',
-            showtimesCount: 4,
-            disabledSeats: [[4, 6]]
-        },
-        {
-            id: 5,
-            name: 'Deluxe Suite',
-            type: 'deluxe',
-            branch: 'Nasr City',
-            rows: 8,
-            seatsPerRow: 17,
-            status: 'active',
-            notes: 'Premium boutique screening room with leather recliners, in-seat service, and intimate atmosphere. ~116 seats.',
-            createdAt: '2025-03-20',
-            updatedAt: '2026-04-19',
-            showtimesCount: 6,
-            disabledSeats: []
-        }
-    ];
+    const API_BASE = 'http://localhost:5000/api';
+    const API_TIMEOUT = 4000;
+    const STORAGE_KEY = 'cinema_theaters_admin_v2';
 
-    let theaters = JSON.parse(JSON.stringify(THEATERS_DATA));
-    let nextId = 6;
+    let theaters = [];
+    let nextId = 1;
+
+    // =========================================
+    // FETCH THEATERS FROM API
+    // =========================================
+    async function fetchTheatersFromAPI() {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+            const token = localStorage.getItem('admin_token') || localStorage.getItem('authToken') || '';
+            
+            const res = await fetch(`${API_BASE}/theaters`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
+            if (!res.ok) throw new Error('API error ' + res.status);
+            const data = await res.json();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            console.log('[Theaters] Loaded', data.length, 'theaters from API');
+            return data;
+        } catch (err) {
+            console.log('[Theaters] API offline, using cached data');
+            const cached = localStorage.getItem(STORAGE_KEY);
+            return cached ? JSON.parse(cached) : [];
+        }
+    }
+
+    function saveTheatersLocal(data) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) { }
+    }
 
     // Current state
     let currentSort = { col: null, dir: 'asc' };
@@ -740,7 +702,11 @@
     // =========================================
     //  INIT
     // =========================================
-    function init() {
+    async function init() {
+        theaters = await fetchTheatersFromAPI();
+        if (theaters.length > 0) {
+            nextId = Math.max(...theaters.map(t => t.id || 0)) + 1;
+        }
         renderStats();
         renderTable();
         bindEvents();
