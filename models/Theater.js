@@ -1,46 +1,44 @@
 /**
- * Theater model - MongoDB/Mongoose.
+ * Theater Model - Mongoose Schema
  */
 
 const mongoose = require('mongoose');
 
-const TheaterSchema = new mongoose.Schema({
-    name: { type: String, required: true, trim: true },
-    capacity: { type: Number, required: true, min: 1 },
-    screen_type: { type: String, default: 'standard' },
-    branch: { type: String, default: '' },
-    rows: { type: Number, default: 0 },
-    seats_per_row: { type: Number, default: 0 },
-    status: { type: String, enum: ['active', 'maintenance', 'inactive'], default: 'active' },
-    notes: { type: String, default: '' },
-}, {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-});
-
-TheaterSchema.virtual('id').get(function () {
-    return this._id.toString();
-});
-
-TheaterSchema.set('toJSON', {
-    virtuals: true,
-    transform: (_doc, ret) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
+const theaterSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 100,
+        },
+        capacity: {
+            type: Number,
+            required: true,
+        },
+        screen_type: {
+            type: String,
+            enum: ['standard', 'imax', '3d', '4dx', 'vip'],
+            default: 'standard',
+        },
     },
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: false },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
+
+theaterSchema.virtual('id').get(function () {
+    return this._id.toHexString();
 });
 
-TheaterSchema.statics.findAll = function () {
-    return this.find({}).sort({ name: 1 });
+// ---- Static Methods ----
+
+theaterSchema.statics.findAll = async function () {
+    return this.find().sort({ name: 1 });
 };
 
-TheaterSchema.statics.update = function (id, fields) {
-    return this.findByIdAndUpdate(id, fields, { new: true, runValidators: true });
-};
+const Theater = mongoose.model('Theater', theaterSchema);
 
-TheaterSchema.statics.delete = function (id) {
-    return this.findByIdAndDelete(id);
-};
-
-module.exports = mongoose.model('Theater', TheaterSchema);
+module.exports = Theater;

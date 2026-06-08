@@ -1,55 +1,119 @@
 /**
- * Movie model - MongoDB/Mongoose.
+ * Movie Model - Mongoose Schema
  */
 
 const mongoose = require('mongoose');
+const { startOfTomorrow, statusFromReleaseDate } = require('../utils/movieAvailability');
 
-const MovieSchema = new mongoose.Schema({
-    title: { type: String, required: true, trim: true },
-    description: { type: String, default: '' },
-    genre: { type: String, default: '' },
-    duration: { type: Number, required: true },
-    rating: { type: String, default: '' },
-    release_date: { type: Date },
-    poster_url: { type: String, default: '' },
-    trailer_url: { type: String, default: '' },
-    status: {
-        type: String,
-        enum: ['now_showing', 'coming_soon', 'ended', 'Now Showing', 'Coming Soon', 'Ended'],
-        default: 'now_showing',
+const movieSchema = new mongoose.Schema(
+    {
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 255,
+        },
+        tmdb_id: {
+            type: Number,
+            unique: true,
+            sparse: true,
+            index: true,
+            default: null,
+        },
+        description: {
+            type: String,
+            default: null,
+        },
+        genre: {
+            type: String,
+            default: null,
+            maxlength: 50,
+        },
+        duration: {
+            type: Number,
+            required: true,
+        },
+        rating: {
+            type: String,
+            default: null,
+            maxlength: 10,
+        },
+        release_date: {
+            type: Date,
+            default: null,
+        },
+        poster_url: {
+            type: String,
+            default: null,
+            maxlength: 500,
+        },
+        trailer_url: {
+            type: String,
+            default: null,
+            maxlength: 500,
+        },
+        status: {
+            type: String,
+            enum: ['now_showing', 'coming_soon', 'ended'],
+            default: 'now_showing',
+        },
     },
-    tmdb_id: { type: Number },
-}, {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
+
+movieSchema.virtual('id').get(function () {
+    return this._id.toHexString();
 });
 
-MovieSchema.virtual('id').get(function () {
-    return this._id.toString();
-});
+// ---- Static Methods ----
 
-MovieSchema.set('toJSON', {
-    virtuals: true,
-    transform: (_doc, ret) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-    },
-});
-
-MovieSchema.statics.findAll = function (filters = {}) {
+movieSchema.statics.findAll = async function (filters = {}) {
     const query = {};
-    if (filters.status) query.status = filters.status;
+    const tomorrow = startOfTomorrow();
+    if (filters.status === 'coming_soon') {
+        query.release_date = { $gte: tomorrow };
+    } else if (filters.status === 'now_showing') {
+        query.$or = [
+            { release_date: { $lt: tomorrow } },
+            { release_date: null },
+            { release_date: { $exists: false } },
+        ];
+    } else if (filters.status) {
+        query.status = filters.status;
+    }
     if (filters.genre) query.genre = filters.genre;
-    return this.find(query).sort({ release_date: -1, created_at: -1 });
+    const movies = await this.find(query).sort({ release_date: -1 });
+    return movies.map((movie) => {
+        const obj = movie.toObject();
+        obj.status = statusFromReleaseDate(obj.release_date);
+        return obj;
+    });
 };
 
-MovieSchema.statics.update = function (id, fields) {
-    return this.findByIdAndUpdate(id, fields, { new: true, runValidators: true });
+movieSchema.statics.upsertFromTmdb = async function (movie) {
+    return this.findOneAndUpdate(
+        { tmdb_id: Number(movie.tmdb_id) },
+        {
+            $set: {
+                tmdb_id: Number(movie.tmdb_id),
+                title: movie.title,
+                description: movie.description || '',
+                genre: movie.genre || 'Movie',
+                duration: movie.duration || movie.runtime || 0,
+                rating: movie.rating || 'NR',
+                release_date: movie.release_date || null,
+                poster_url: movie.poster_url || movie.poster || null,
+                status: 'now_showing',
+            },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 };
 
-MovieSchema.statics.delete = function (id) {
-    return this.findByIdAndDelete(id);
-};
+const Movie = mongoose.model('Movie', movieSchema);
 
-module.exports = mongoose.model('Movie', MovieSchema);
+module.exports = Movie;

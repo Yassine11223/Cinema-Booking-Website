@@ -6,17 +6,27 @@
 const errorHandler = (err, req, res, next) => {
     console.error('❌ Error:', err.message);
 
-    // PostgreSQL unique constraint violation
-    if (err.code === '23505') {
+    // Mongoose duplicate key error (unique constraint violation)
+    if (err.code === 11000 || err.name === 'MongoServerError' && err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0] || 'field';
         return res.status(409).json({
-            message: 'A record with this data already exists.',
+            message: `A record with this ${field} already exists.`,
         });
     }
 
-    // PostgreSQL foreign key violation
-    if (err.code === '23503') {
+    // Mongoose validation error
+    if (err.name === 'ValidationError') {
+        const messages = Object.values(err.errors).map((e) => e.message);
         return res.status(400).json({
-            message: 'Referenced record does not exist.',
+            message: 'Validation failed',
+            errors: messages,
+        });
+    }
+
+    // Mongoose CastError (invalid ObjectId format)
+    if (err.name === 'CastError' && err.kind === 'ObjectId') {
+        return res.status(400).json({
+            message: 'Invalid ID format.',
         });
     }
 

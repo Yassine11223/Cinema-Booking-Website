@@ -24,6 +24,7 @@ const ticketRoutes = require('./routes/tickets');
 const chatbotRoutes = require('./routes/chatbot');
 const chatbotBookingRoutes = require('./routes/chatbotBooking');
 const contactRoutes = require('./routes/contact');
+const adminsRoutes = require('./routes/admins');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -62,7 +63,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chatbot', chatbotBookingRoutes);
 app.use('/api/contact', contactRoutes);
-
+app.use('/api/admins', adminsRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

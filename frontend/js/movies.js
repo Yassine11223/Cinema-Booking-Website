@@ -259,27 +259,28 @@ async function initMoviesPage() {
  * Load movies from TMDB API
  */
 async function loadTMDBMovies() {
-    console.log('🌐 Loading movies from TMDB...');
-
+    console.log('🌐 Loading movies from backend...');
+    try {
+        const res = await fetch('http://localhost:5000/api/movies');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                nowShowingMovies = data.filter(m => !m.release_date || m.release_date <= today).slice(0, 12);
+                comingSoonMovies = data.filter(m => m.release_date && m.release_date > today).slice(0, 12);
+                renderNowShowing(nowShowingMovies);
+                renderComingSoon(comingSoonMovies);
+                return;
+            }
+        }
+    } catch (err) {
+        console.warn('⚠️ Backend unavailable, falling back to TMDB:', err.message);
+    }
     const [nowPlayingData, upcomingData] = await Promise.all([
         tmdbMoviesFetch('/movie/now_playing', { page: 1 }),
         tmdbMoviesFetch('/movie/upcoming', { page: 1 })
     ]);
-
-    const categorized = splitMoviesByReleaseDate([
-        ...(nowPlayingData.results || []),
-        ...(upcomingData.results || []),
-    ]);
-
-    nowShowingMovies = categorized.nowShowing.slice(0, 12);
-    comingSoonMovies = categorized.comingSoon.slice(0, 12);
-
-    console.log('✅ TMDB loaded:', nowShowingMovies.length, 'now showing,', comingSoonMovies.length, 'coming soon');
-
-    renderNowShowing(nowShowingMovies);
-    renderComingSoon(comingSoonMovies);
 }
-
 /**
  * Fallback: Load mock data
  */
@@ -1202,12 +1203,14 @@ function formatDuration(minutes) {
  * Get poster URL for a movie
  */
 function getMoviePoster(movie) {
+    if (movie.poster_url) {
+        return movie.poster_url;
+    }
     if (movie.poster_path) {
         return `${MOVIES_TMDB.IMAGE_BASE}${MOVIES_TMDB.POSTER_SIZE}${movie.poster_path}`;
     }
     return 'https://placehold.co/300x450/1a1a1a/b71c1c?text=' + encodeURIComponent(movie.title || 'No Poster');
 }
-
 /**
  * Build genre string from genre_ids array
  */

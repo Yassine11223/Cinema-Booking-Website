@@ -29,10 +29,6 @@ function genreFromDetails(details, fallbackIds) {
 }
 
 async function tmdbFetch(endpoint, params = {}) {
-    if (!TMDB_API_KEY) {
-        throw new Error('TMDB_API_KEY is not configured');
-    }
-
     const response = await axios.get(`${TMDB_BASE_URL}${endpoint}`, {
         params: {
             api_key: TMDB_API_KEY,
@@ -41,7 +37,6 @@ async function tmdbFetch(endpoint, params = {}) {
         },
         timeout: 12000,
     });
-
     return response.data;
 }
 
@@ -65,9 +60,7 @@ async function getHomepageNowPlayingMovies() {
 
     return homepageMovies.map((movie, index) => {
         const detail = details[index];
-        const releaseDate = detail?.release_date || movie.release_date || null;
         const runtime = detail?.runtime || null;
-
         return {
             tmdb_id: movie.id,
             title: movie.title,
@@ -78,7 +71,7 @@ async function getHomepageNowPlayingMovies() {
             duration: runtime,
             runtime,
             rating: movie.vote_average ? String(Number(movie.vote_average).toFixed(1)) : 'NR',
-            release_date: releaseDate,
+            release_date: detail?.release_date || movie.release_date || null,
             status: 'now_showing',
         };
     });

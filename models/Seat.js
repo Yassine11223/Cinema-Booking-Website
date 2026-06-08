@@ -1,71 +1,85 @@
 /**
- * Seat model - MongoDB/Mongoose.
+ * Seat Model - Mongoose Schema
  */
 
 const mongoose = require('mongoose');
 
-const SeatSchema = new mongoose.Schema({
-    theater_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Theater', required: true },
-    row_label: { type: String, required: true, trim: true },
-    seat_number: { type: Number, required: true },
-    seat_type: { type: String, default: 'standard' },
-    status: { type: String, enum: ['available', 'blocked'], default: 'available' },
-}, {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-});
-
-SeatSchema.virtual('id').get(function () {
-    return this._id.toString();
-});
-
-SeatSchema.set('toJSON', {
-    virtuals: true,
-    transform: (_doc, ret) => {
-        ret.id = ret._id.toString();
-        ret.theater_id = ret.theater_id?.toString?.() || ret.theater_id;
-        delete ret._id;
-        delete ret.__v;
-        return ret;
+const seatSchema = new mongoose.Schema(
+    {
+        theater_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Theater',
+            required: true,
+        },
+        row_label: {
+            type: String,
+            required: true,
+            maxlength: 5,
+        },
+        seat_number: {
+            type: Number,
+            required: true,
+        },
+        seat_type: {
+            type: String,
+            enum: ['standard', 'premium', 'vip'],
+            default: 'standard',
+        },
     },
+    {
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
+
+seatSchema.virtual('id').get(function () {
+    return this._id.toHexString();
 });
 
-SeatSchema.statics.findByTheater = function (theaterId) {
+// Compound unique index
+seatSchema.index({ theater_id: 1, row_label: 1, seat_number: 1 }, { unique: true });
+
+// ---- Static Methods ----
+
+seatSchema.statics.findByTheater = async function (theaterId) {
     return this.find({ theater_id: theaterId }).sort({ row_label: 1, seat_number: 1 });
 };
 
-SeatSchema.statics.findAvailableByShow = async function (showId) {
-    const Show = require('./Show');
-    const Booking = require('./Booking');
+seatSchema.statics.findAvailableByShow = async function (showId) {
+    const Show = mongoose.model('Show');
+    const Booking = mongoose.model('Booking');
 
+    // Get the show to find its theater
     const show = await Show.findById(showId);
     if (!show) return [];
 
+    // Get all booked seat IDs for this show (non-cancelled bookings)
     const bookings = await Booking.find({
         show_id: showId,
         status: { $ne: 'cancelled' },
-    }).select('seat_ids');
+    }).select('seats');
 
-    const bookedSeatIds = bookings.flatMap((booking) => booking.seat_ids.map((seatId) => seatId.toString()));
+    const bookedSeatIds = bookings.flatMap((b) => b.seats.map((s) => s.toString()));
 
-    return this.find({
-        theater_id: show.theater_id,
-        status: { $ne: 'blocked' },
-        _id: { $nin: bookedSeatIds },
-    }).sort({ row_label: 1, seat_number: 1 });
+    // Get all seats for the theater, excluding booked ones
+    const query = { theater_id: show.theater_id };
+    if (bookedSeatIds.length > 0) {
+        query._id = { $nin: bookedSeatIds };
+    }
+
+    return this.find(query).sort({ row_label: 1, seat_number: 1 });
 };
 
-SeatSchema.statics.createBulk = function (theaterId, seats) {
-    return this.insertMany(seats.map((seat) => ({
+seatSchema.statics.createBulk = async function (theaterId, seats) {
+    const docs = seats.map((seat) => ({
         theater_id: theaterId,
         row_label: seat.row_label,
         seat_number: seat.seat_number,
         seat_type: seat.seat_type || 'standard',
-        status: seat.status || 'available',
-    })));
+    }));
+    return this.insertMany(docs, { ordered: false });
 };
 
-SeatSchema.statics.delete = function (id) {
-    return this.findByIdAndDelete(id);
-};
+const Seat = mongoose.model('Seat', seatSchema);
 
-module.exports = mongoose.model('Seat', SeatSchema);
+module.exports = Seat;

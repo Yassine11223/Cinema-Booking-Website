@@ -7,7 +7,7 @@ module.exports = {
     ROLES: {
         CUSTOMER: 'customer',
         ADMIN: 'admin',
-        SUPERADMIN: 'super_admin',
+        SUPERADMIN: 'superadmin',
     },
 
     // Booking statuses

@@ -1,8 +1,8 @@
 /**
- * Reset all login accounts and create one account per login role.
+ * Reset all login accounts for the duplicated backend app.
  */
 
-const { connectDatabase, mongoose } = require('../config/database');
+const { connectDB, mongoose } = require('../config/database');
 const User = require('../models/User');
 
 const LOGIN_ACCOUNTS = [
@@ -12,7 +12,6 @@ const LOGIN_ACCOUNTS = [
         password: 'Customer2026!',
         phone: '+20 100 111 2222',
         role: 'customer',
-        status: 'active',
     },
     {
         name: 'Cinema Admin',
@@ -20,23 +19,21 @@ const LOGIN_ACCOUNTS = [
         password: 'Admin2026!',
         phone: '+20 100 333 4444',
         role: 'admin',
-        status: 'active',
     },
     {
         name: 'Cinema Super Admin',
         email: 'superadmin@thehallcinema.com',
         password: 'SuperAdmin2026!',
         phone: '+20 100 555 6666',
-        role: 'super_admin',
-        status: 'active',
+        role: 'superadmin',
     },
 ];
 
 async function resetLoginAccounts() {
-    await connectDatabase();
+    await connectDB();
 
     const deleteResult = await User.deleteMany({
-        role: { $in: ['customer', 'admin', 'super_admin', 'superadmin'] },
+        role: { $in: ['customer', 'admin', 'superadmin'] },
     });
 
     await Promise.all(LOGIN_ACCOUNTS.map((account) => User.create(account)));

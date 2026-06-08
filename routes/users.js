@@ -6,10 +6,8 @@
 
 const express = require('express');
 const router = express.Router();
-
-const passport = require('../backend/config/passport');
+const passport = require('../config/passport');
 const userController = require('../controllers/userController');
-
 const { authenticate, adminOnly, superAdminOnly } = require('../middleware/auth');
 const { validateRegistration, validateLogin } = require('../middleware/validation');
 
@@ -43,7 +41,7 @@ router.post('/verify-otp', userController.verifyOTP);
 router.get('/profile', authenticate, userController.getProfile);
 router.put('/profile', authenticate, userController.updateProfile);
 
-// Admin-only routes
+// Admin-only routes: admin + superadmin
 router.get('/', authenticate, adminOnly, userController.getAll);
 router.delete('/:id', authenticate, adminOnly, userController.deleteUser);
 router.put('/:id/role', authenticate, adminOnly, userController.updateRole);

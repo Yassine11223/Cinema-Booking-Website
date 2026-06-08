@@ -1,153 +1,161 @@
 /**
- * Booking model - MongoDB/Mongoose.
+ * Booking Model - Mongoose Schema
  */
 
 const mongoose = require('mongoose');
 
-const BookingSchema = new mongoose.Schema({
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    show_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Show', required: true },
-    seat_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Seat', required: true }],
-    total_price: { type: Number, required: true, min: 0 },
-    status: { type: String, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: 'pending' },
-}, {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-});
-
-BookingSchema.virtual('id').get(function () {
-    return this._id.toString();
-});
-
-BookingSchema.set('toJSON', {
-    virtuals: true,
-    transform: (_doc, ret) => {
-        ret.id = ret._id.toString();
-        ret.user_id = ret.user_id?.toString?.() || ret.user_id;
-        ret.show_id = ret.show_id?.toString?.() || ret.show_id;
-        ret.seat_ids = (ret.seat_ids || []).map((seatId) => seatId?.toString?.() || seatId);
-        delete ret._id;
-        delete ret.__v;
-        return ret;
+const bookingSchema = new mongoose.Schema(
+    {
+        user_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        show_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Show',
+            required: true,
+        },
+        seats: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Seat',
+            },
+        ],
+        total_price: {
+            type: Number,
+            required: true,
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+            default: 'pending',
+        },
     },
+    {
+        timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
+);
+
+bookingSchema.virtual('id').get(function () {
+    return this._id.toHexString();
 });
 
-function seatLabel(seat) {
-    if (!seat) return '';
-    return `${seat.row_label}${seat.seat_number}`;
-}
+// Indexes
+bookingSchema.index({ user_id: 1 });
+bookingSchema.index({ show_id: 1 });
+bookingSchema.index({ status: 1 });
 
-function flattenBooking(booking) {
-    if (!booking) return null;
-    const plain = typeof booking.toJSON === 'function' ? booking.toJSON() : { ...booking };
-    const user = booking.user_id && typeof booking.user_id === 'object' ? booking.user_id : null;
-    const show = booking.show_id && typeof booking.show_id === 'object' ? booking.show_id : null;
-    const movie = show?.movie_id && typeof show.movie_id === 'object' ? show.movie_id : null;
-    const theater = show?.theater_id && typeof show.theater_id === 'object' ? show.theater_id : null;
-    const seats = Array.isArray(booking.seat_ids) ? booking.seat_ids : [];
+// ---- Static Methods ----
 
-    if (user) {
-        plain.user_id = user.id || user._id?.toString();
-        plain.user_name = user.name;
-        plain.user_email = user.email;
-    }
-    if (show) {
-        plain.show_id = show.id || show._id?.toString();
-        plain.show_time = show.show_time;
-        plain.price = show.price;
-    }
-    if (movie) {
-        plain.movie_title = movie.title;
-        plain.poster_url = movie.poster_url;
-    }
-    if (theater) {
-        plain.theater_name = theater.name;
-    }
-
-    plain.seats = seats
-        .filter((seat) => seat && typeof seat === 'object')
-        .map((seat) => ({
-            id: seat.id || seat._id?.toString(),
-            row_label: seat.row_label,
-            seat_number: seat.seat_number,
-            seat_type: seat.seat_type,
-            label: seatLabel(seat),
-        }));
-    plain.seat_labels = plain.seats.map((seat) => seat.label);
-
-    return plain;
-}
-
-BookingSchema.statics.findAll = async function () {
-    const bookings = await this.find({})
-        .populate('user_id')
+bookingSchema.statics.findAll = async function () {
+    const bookings = await this.find()
+        .populate('user_id', 'name email')
         .populate({
             path: 'show_id',
-            populate: [{ path: 'movie_id' }, { path: 'theater_id' }],
+            populate: [
+                { path: 'movie_id', select: 'title' },
+                { path: 'theater_id', select: 'name screen_type' },
+            ],
         })
-        .populate('seat_ids')
         .sort({ created_at: -1 });
 
-    return bookings.map(flattenBooking);
+    return bookings.map((b) => {
+        const obj = b.toObject();
+        obj.user_name = obj.user_id?.name || null;
+        obj.user_email = obj.user_id?.email || null;
+        obj.movie_title = obj.show_id?.movie_id?.title || null;
+        obj.show_time = obj.show_id?.show_time || null;
+        obj.theater_name = obj.show_id?.theater_id?.name || null;
+        return obj;
+    });
 };
 
-BookingSchema.statics.findDetailedById = async function (id) {
+bookingSchema.statics.findByIdPopulated = async function (id) {
     const booking = await this.findById(id)
-        .populate('user_id')
+        .populate('user_id', 'name email')
         .populate({
             path: 'show_id',
-            populate: [{ path: 'movie_id' }, { path: 'theater_id' }],
-        })
-        .populate('seat_ids');
+            populate: [
+                { path: 'movie_id', select: 'title' },
+                { path: 'theater_id', select: 'name screen_type' },
+            ],
+        });
 
-    return flattenBooking(booking);
+    if (!booking) return null;
+
+    const obj = booking.toObject();
+    obj.user_name = obj.user_id?.name || null;
+    obj.user_email = obj.user_id?.email || null;
+    obj.movie_title = obj.show_id?.movie_id?.title || null;
+    obj.show_time = obj.show_id?.show_time || null;
+    obj.theater_name = obj.show_id?.theater_id?.name || null;
+    return obj;
 };
 
-BookingSchema.statics.findByUser = async function (userId) {
+bookingSchema.statics.findByUser = async function (userId) {
     const bookings = await this.find({ user_id: userId })
         .populate({
             path: 'show_id',
-            populate: [{ path: 'movie_id' }, { path: 'theater_id' }],
+            populate: [
+                { path: 'movie_id', select: 'title poster_url' },
+                { path: 'theater_id', select: 'name' },
+            ],
         })
-        .populate('seat_ids')
         .sort({ created_at: -1 });
 
-    return bookings.map(flattenBooking);
+    return bookings.map((b) => {
+        const obj = b.toObject();
+        obj.movie_title = obj.show_id?.movie_id?.title || null;
+        obj.poster_url = obj.show_id?.movie_id?.poster_url || null;
+        obj.show_time = obj.show_id?.show_time || null;
+        obj.theater_name = obj.show_id?.theater_id?.name || null;
+        return obj;
+    });
 };
 
-BookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
-    const existing = await this.findOne({
+bookingSchema.statics.createBooking = async function ({ user_id, show_id, seat_ids, total_price }) {
+    const booking = new this({
+        user_id,
         show_id,
-        status: { $ne: 'cancelled' },
-        seat_ids: { $in: seat_ids },
+        seats: seat_ids,
+        total_price,
+        status: 'pending',
     });
 
-    if (existing) {
-        const error = new Error('One or more selected seats are no longer available.');
-        error.statusCode = 409;
-        throw error;
-    }
-
-    return this.create({ user_id, show_id, seat_ids, total_price, status: 'pending' });
+    await booking.save();
+    return booking;
 };
 
-BookingSchema.statics.updateStatus = function (id, status) {
-    return this.findByIdAndUpdate(id, { status }, { new: true, runValidators: true });
+bookingSchema.statics.findActiveSeatConflicts = async function (showId, seatIds) {
+    if (!Array.isArray(seatIds) || seatIds.length === 0) return [];
+
+    return this.find({
+        show_id: showId,
+        status: { $ne: 'cancelled' },
+        seats: { $in: seatIds },
+    }).select('seats');
 };
 
-BookingSchema.statics.getBookingSeats = async function (bookingId) {
-    const booking = await this.findById(bookingId).populate('seat_ids');
+bookingSchema.statics.updateStatus = async function (id, status) {
+    return this.findByIdAndUpdate(id, { status }, { new: true });
+};
+
+bookingSchema.statics.getBookingSeats = async function (bookingId) {
+    const booking = await this.findById(bookingId).populate('seats');
     if (!booking) return [];
-    return booking.seat_ids.map((seat) => ({
-        id: seat.id || seat._id?.toString(),
-        row_label: seat.row_label,
-        seat_number: seat.seat_number,
-        seat_type: seat.seat_type,
-        label: seatLabel(seat),
+
+    return booking.seats.map((s) => ({
+        id: s._id.toString(),
+        _id: s._id,
+        row_label: s.row_label,
+        seat_number: s.seat_number,
+        seat_type: s.seat_type,
     }));
 };
 
-BookingSchema.statics.delete = function (id) {
-    return this.findByIdAndDelete(id);
-};
+const Booking = mongoose.model('Booking', bookingSchema);
 
-module.exports = mongoose.model('Booking', BookingSchema);
+module.exports = Booking;

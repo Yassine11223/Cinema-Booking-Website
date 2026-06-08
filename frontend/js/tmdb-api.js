@@ -324,7 +324,23 @@ async function populateNowShowing(movies) {
     if (!grid) return;
 
     // Take up to 12 movies for the grid
-    const gridMovies = movies.slice(0, 12);
+    // Filter out movies deleted from backend
+    let allowedTmdbIds = null;
+    try {
+        const res = await fetch('http://localhost:5000/api/movies');
+        if (res.ok) {
+            const backendMovies = await res.json();
+            const nowShowingBackend = backendMovies.filter(m => m.status !== 'coming_soon');
+allowedTmdbIds = new Set([
+    ...nowShowingBackend.filter(m => m.tmdb_id).map(m => String(m.tmdb_id)),
+    ...nowShowingBackend.map(m => String(m._id))
+]);
+        }
+    } catch (e) {}
+    const filtered = allowedTmdbIds
+        ? movies.filter(m => allowedTmdbIds.has(String(m.id)) || allowedTmdbIds.has(String(m.tmdb_id)))
+        : movies;
+    const gridMovies = filtered.slice(0, 12);
     if (gridMovies.length === 0) return;
 
     // Fetch details in parallel to get certifications
@@ -557,6 +573,25 @@ async function initTMDB() {
             showError('No movies found. Please try again later.');
             return;
         }
+
+        // Populate both sections
+        // Merge backend-only movies not in TMDB now_playing
+        try {
+            const res = await fetch('http://localhost:5000/api/movies');
+            if (res.ok) {
+                const backendMovies = await res.json();
+                const tmdbIds = new Set(movies.map(m => String(m.id)));
+                const extraMovies = backendMovies
+                    .filter(m => !m.tmdb_id || !tmdbIds.has(String(m.tmdb_id)))
+                    .map(m => ({
+                        ...m,
+                        id: m.tmdb_id || m._id,
+                        genre_ids: m.genre_ids || [],
+                        poster_path: m.poster_path || m.poster_url || null,
+                    }));
+                movies = [...movies, ...extraMovies];
+            }
+        } catch (e) {}
 
         // Populate both sections
         await Promise.all([

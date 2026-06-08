@@ -357,7 +357,7 @@
         const backendBookingId = booking?.backendBookingId;
         if (!backendBookingId) return false;
 
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('authToken') || localStorage.getItem('userToken');
         if (!token) {
             console.warn('[Payment] Cannot confirm backend booking without auth token.');
             return false;
