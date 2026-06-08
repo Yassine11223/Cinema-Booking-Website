@@ -1,0 +1,104 @@
+/* ============================================
+   PRELOADER — THE HALL Cinemas
+   Animated Curtain Opening & Zoom Sequence
+   ============================================ */
+
+.th-preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: transparent;
+    pointer-events: none;
+    overflow: hidden;
+    transition: opacity 0.8s ease-out;
+}
+
+.th-preloader.fade-out {
+    opacity: 0;
+}
+
+.th-preloader * {
+    pointer-events: none;
+}
+
+/* 
+ * The zoom wrapper is centered on the screen.
+ * It will scale up massively to "zoom through" the archway.
+ */
+.th-zoom-wrapper {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    /* Zoom animation */
+    transition: transform 1.2s cubic-bezier(0.65, 0, 0.15, 1);
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.th-zoom-wrapper.th-zoom-in {
+    /* Scale by 60 to ensure the 100px arch hole fills the entire 4K screen */
+    transform: translate(-50%, -50%) scale(60);
+}
+
+/* 
+ * Arch container: positioned so the arch hole center (x=100, y=210) 
+ * aligns perfectly with the center of the zoom-wrapper (50% 50%).
+ */
+.th-arch-container {
+    position: absolute;
+    left: -50px;  /* 100px left from center (since width=100) -> wait, width is 200, so we need left: -100px? Let's check: wrapper is 100x100. center is 50,50. We want arch (100, 210) to be at 50,50. So arch left = 50 - 100 = -50px. arch top = 50 - 210 = -160px. */
+    top: -160px;
+    width: 200px;
+    height: 300px;
+}
+
+.th-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible; /* CRITICAL: The black mask goes way beyond the SVG bounds! */
+}
+
+/* 
+ * Logo layout and typography
+ */
+.th-logo-container {
+    position: absolute;
+    top: 180px; /* 340px down from arch top -> 340 - 160 = 180px down from wrapper center */
+    left: -100px; /* Centered relative to wrapper */
+    width: 300px;
+    text-align: center;
+    transition: opacity 0.4s ease-out;
+}
+
+.th-logo-container.th-fade-out {
+    opacity: 0;
+}
+
+.th-logo-subtitle {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 20px;
+    letter-spacing: 12px;
+    color: #e60000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    margin-left: 12px; /* offset for letter-spacing */
+}
+
+.th-line {
+    width: 30px;
+    height: 2px;
+    background-color: #e60000;
+    margin: 0 15px;
+}
+
+.th-logo-title {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 80px;
+    letter-spacing: 15px;
+    color: #e60000;
+    margin-left: 15px; /* offset for letter-spacing */
+    line-height: 1;
+}
