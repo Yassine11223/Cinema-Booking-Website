@@ -16,7 +16,7 @@
     /* =========================================================
        CONFIG
        ========================================================= */
-    const API_BASE    = 'http://localhost:5000/api';
+    const API_BASE    = 'https://cinema-booking-website-production.up.railway.app/api';
     const API_TIMEOUT = 3000;  // 3 seconds — fail fast when backend is down
 
     // TMDB import requires TMDB_API_KEY on the backend or an admin-entered key.
@@ -1021,3 +1021,4 @@
     }
 
 })();
+

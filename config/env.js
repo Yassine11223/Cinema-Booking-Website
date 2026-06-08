@@ -20,5 +20,6 @@ module.exports = {
     stripe: {
         secretKey: process.env.STRIPE_SECRET_KEY,
     },
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5000',
+    frontendUrl: process.env.FRONTEND_URL || 'https://cinema-booking-website-production.up.railway.app',
 };
+

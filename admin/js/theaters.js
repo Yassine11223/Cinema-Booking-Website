@@ -5,7 +5,7 @@
 (function () {
     'use strict';
 
-    const API_BASE = 'http://localhost:5000/api';
+    const API_BASE = 'https://cinema-booking-website-production.up.railway.app/api';
     const $ = id => document.getElementById(id);
 
     let theaters = [];
@@ -268,3 +268,4 @@
         loadTheaters();
     });
 })();
+

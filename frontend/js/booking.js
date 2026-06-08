@@ -20,7 +20,7 @@
         TOAST_MS: 4000,
         STORAGE_KEY: 'cinema_bk_v3',
         CURRENCY: 'EGP',
-        API_BASE: 'http://localhost:5000/api',
+        API_BASE: 'https://cinema-booking-website-production.up.railway.app/api',
     };
 
     // ============================================
@@ -1014,3 +1014,4 @@
         : init();
 
 })();
+
