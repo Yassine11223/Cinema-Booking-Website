@@ -1,3 +1,2 @@
-*.mp4 filter=lfs diff=lfs merge=lfs -text
-*.webm filter=lfs diff=lfs merge=lfs -text
-frontend/assets/images/imax_2.png filter=lfs diff=lfs merge=lfs -text
+# Git LFS disabled temporarily because GitHub LFS budget is exceeded.
+# Do not run git lfs pull.
