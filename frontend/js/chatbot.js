@@ -21,8 +21,8 @@
 
     // ── Config ─────────────────────────────────────────
     const CFG = {
-        API_URL: 'https://cinema-booking-website-production.up.railway.app/api/chatbot',
-        BOOKING_API_URL: 'https://cinema-booking-website-production.up.railway.app/api/chatbot/booking',
+        API_URL: 'http://localhost:5000/api/chatbot',
+        BOOKING_API_URL: 'http://localhost:5000/api/chatbot/booking',
         HISTORY_KEY: 'thehall_chatbot_history',
         BOOKING_STATE_KEY: 'thehall_chatbot_booking',
         MAX_HISTORY: 20,       // max messages in sessionStorage

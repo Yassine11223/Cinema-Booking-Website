@@ -4,7 +4,7 @@
  * Supports demo mode when backend is unavailable
  */
 
-const PROFILE_API_BASE = 'https://cinema-booking-website-production.up.railway.app';
+const PROFILE_API_BASE = 'http://localhost:5000';
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();

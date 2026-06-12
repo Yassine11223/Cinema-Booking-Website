@@ -11,7 +11,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const session = require('express-session');
 const passport = require('./backend/config/passport');
 const authRoutes = require('./routes/auth');
-const { connectDatabase } = require('./config/database');
+const { connectDB } = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
 
 const movieRoutes = require('./routes/movies');
@@ -68,7 +68,7 @@ app.get('/api/health', (_req, res) => {
 app.use(errorHandler);
 
 if (require.main === module) {
-    connectDatabase()
+    connectDB()
         .then(() => {
             app.listen(PORT, () => {
                 console.log(`\nCinema Booking API running on http://localhost:${PORT}`);

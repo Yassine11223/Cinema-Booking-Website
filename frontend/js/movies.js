@@ -261,7 +261,7 @@ async function initMoviesPage() {
 async function loadTMDBMovies() {
     console.log('🌐 Loading movies from backend...');
     try {
-        const res = await fetch('https://cinema-booking-website-production.up.railway.app/api/movies');
+        const res = await fetch('http://localhost:5000/api/movies');
         if (res.ok) {
             const data = await res.json();
             if (data && data.length > 0) {
@@ -814,7 +814,7 @@ async function selectDate(dateStr) {
     try {
         const movieId = new URLSearchParams(window.location.search).get('id');
         if (movieId) {
-            const res = await fetch(`https://cinema-booking-website-production.up.railway.app/api/shows?movieId=${movieId}&date=${dateStr}`);
+            const res = await fetch(`http://localhost:5000/api/shows?movieId=${movieId}&date=${dateStr}`);
             if (res.ok) {
                 const backendShows = await res.json();
                 if (backendShows && backendShows.length > 0) {

@@ -24,7 +24,7 @@
      * Backend API base URL.
      * FUTURE: Read from environment config or window.__CONFIG__
      */
-    const BACKEND_URL = 'https://cinema-booking-website-production.up.railway.app';
+    const BACKEND_URL = 'http://localhost:5000';
 
     /* =========================================================
        FOOD MENU DATA (matching food-drinks.html)

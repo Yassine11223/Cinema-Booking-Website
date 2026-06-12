@@ -16,8 +16,8 @@
     /* =========================================================
        CONFIG
        ========================================================= */
-    const API_BASE    = 'https://cinema-booking-website-production.up.railway.app/api';
-    const API_TIMEOUT = 3000;  // 3 seconds — fail fast when backend is down
+    const API_BASE    = 'http://localhost:5000/api';
+    const API_TIMEOUT = 15000;  // 15 seconds — allow time for TMDB API calls
 
     // TMDB import requires TMDB_API_KEY on the backend or an admin-entered key.
     const TMDB_FALLBACK_KEY = '';
@@ -769,7 +769,7 @@
                                 title:        m.title,
                                 description:  m.overview,
                                 genre:        m.genres?.[0]?.name || '',
-                                duration:     m.runtime || 0,
+                                duration:     m.runtime || 120,
                                 rating:       '',
                                 release_date: m.release_date,
                                 poster_url:   m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : null,
@@ -785,13 +785,18 @@
                 title:        movie.title,
                 description:  movie.overview || '',
                 genre:        '',
-                duration:     0,
+                duration:     120,
                 rating:       '',
                 release_date: movie.release_date || null,
                 poster_url:   movie.poster_url,
                 trailer_url:  null,
                 status:       'now_showing',
             };
+
+            // Ensure duration is always valid (TMDB may return 0)
+            if (!payload.duration || payload.duration < 1) payload.duration = 120;
+
+            payload.tmdb_id = movie.tmdb_id;
 
             const newMovie = await apiPost('/movies', payload);
             allMovies.unshift(newMovie);

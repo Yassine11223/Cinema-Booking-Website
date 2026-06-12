@@ -3,7 +3,7 @@
  * Shared API communication layer used by both Frontend and Admin
  */
 
-const API_BASE_URL = 'https://cinema-booking-website-production.up.railway.app/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = {
     /**

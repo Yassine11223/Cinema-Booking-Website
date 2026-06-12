@@ -327,7 +327,7 @@ async function populateNowShowing(movies) {
     // Filter out movies deleted from backend
     let allowedTmdbIds = null;
     try {
-        const res = await fetch('https://cinema-booking-website-production.up.railway.app/api/movies');
+        const res = await fetch('http://localhost:5000/api/movies');
         if (res.ok) {
             const backendMovies = await res.json();
             const nowShowingBackend = backendMovies.filter(m => m.status !== 'coming_soon');
@@ -577,7 +577,7 @@ async function initTMDB() {
         // Populate both sections
         // Merge backend-only movies not in TMDB now_playing
         try {
-            const res = await fetch('https://cinema-booking-website-production.up.railway.app/api/movies');
+            const res = await fetch('http://localhost:5000/api/movies');
             if (res.ok) {
                 const backendMovies = await res.json();
                 const tmdbIds = new Set(movies.map(m => String(m.id)));

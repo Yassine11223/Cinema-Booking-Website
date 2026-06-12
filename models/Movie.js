@@ -18,7 +18,6 @@ const movieSchema = new mongoose.Schema(
             unique: true,
             sparse: true,
             index: true,
-            default: null,
         },
         description: {
             type: String,

@@ -1,10 +1,10 @@
 /**
  * auth.js — Login & Registration logic
- * Connects to real backend API at https://cinema-booking-website-production.up.railway.app
+ * Connects to local backend API at http://localhost:5000
  */
 
-const API_BASE = 'https://cinema-booking-website-production.up.railway.app/api';
-const BACKEND_BASE = 'https://cinema-booking-website-production.up.railway.app';
+const API_BASE = 'http://localhost:5000/api';
+const BACKEND_BASE = 'http://localhost:5000';
 // ============================================
 // REGEX PATTERNS
 // ============================================
