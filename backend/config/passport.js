@@ -1,4 +1,4 @@
-require('dotenv').config();
+// NOTE: dotenv is loaded by server.js before this module is imported
 
 const passport = require('passport');
 const User = require('../models/User');

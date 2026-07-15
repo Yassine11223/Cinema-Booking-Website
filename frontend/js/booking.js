@@ -178,7 +178,7 @@
                 : `${CFG.API_BASE}/shows?date=${dateKey}`;
             
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 1000);
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
             

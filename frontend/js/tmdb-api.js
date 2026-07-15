@@ -117,13 +117,19 @@ function buildGenreString(genreIds) {
 /* ============================================
    IMAGE HELPERS
    ============================================ */
-function posterUrl(path) {
+function posterUrl(path, movie) {
+    // Try poster_url from backend first if movie object is provided
+    if (!path && movie && movie.poster_url) return movie.poster_url;
     if (!path) return 'https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster';
+    // If it's already a full URL (from backend), return as-is
+    if (path.startsWith('http')) return path;
     return `${TMDB_CONFIG.IMAGE_BASE}${TMDB_CONFIG.POSTER_SIZE}${path}`;
 }
 
 function backdropUrl(path) {
     if (!path) return null;
+    // If it's already a full URL (from backend), return as-is
+    if (path.startsWith('http')) return path;
     return `${TMDB_CONFIG.IMAGE_BASE}${TMDB_CONFIG.BACKDROP_SIZE}${path}`;
 }
 
@@ -134,8 +140,8 @@ async function populateHeroSlider(movies) {
     const slider = document.getElementById('hero-slider');
     if (!slider) return;
 
-    // Take top 5 movies with backdrops for the hero slider
-    const heroMovies = movies.filter(m => m.backdrop_path).slice(0, 5);
+    // Take top 5 movies with backdrops (or poster_url fallback) for the hero slider
+    const heroMovies = movies.filter(m => m.backdrop_path || m.poster_url).slice(0, 5);
     if (heroMovies.length === 0) return;
 
     // Hide loading state
@@ -165,7 +171,7 @@ async function populateHeroSlider(movies) {
         slide.setAttribute('data-index', index);
 
         slide.innerHTML = `
-            <img src="${backdropUrl(movie.backdrop_path)}" 
+            <img src="${backdropUrl(movie.backdrop_path) || movie.poster_url || posterUrl(movie.poster_path, movie)}" 
                  alt="${movie.title}" 
                  class="slide-bg"
                  loading="${index === 0 ? 'eager' : 'lazy'}">
@@ -365,10 +371,63 @@ allowedTmdbIds = new Set([
         card.innerHTML = `
             <div class="movie-card-image-wrapper">
                 <div class="movie-card-rating">${ratingBadge}</div>
-                <img src="${posterUrl(movie.poster_path)}" 
+                <img src="${posterUrl(movie.poster_path, movie)}" 
                      alt="${movie.title}" 
                      class="movie-card-image"
-                     loading="lazy">
+                     loading="lazy"
+                     onerror="this.src='https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster'">
+                <div class="movie-card-overlay">
+                    <span class="btn btn-primary">BOOK NOW</span>
+                </div>
+            </div>
+            <div class="movie-card-info">
+                <h3 class="movie-card-title">${movie.title}</h3>
+                <p class="movie-card-genre">${genreStr.split(' / ').map(g => g.charAt(0) + g.slice(1).toLowerCase()).join(' / ')}</p>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+}
+
+/**
+ * Populate Now Showing grid with pre-filtered movies (no redundant backend fetch).
+ * Called from initTMDB() with movies already filtered by backend DB.
+ */
+async function populateNowShowingFiltered(movies) {
+    const grid = document.querySelector('#now-showing .movies-grid');
+    if (!grid) return;
+
+    const gridMovies = movies.slice(0, 12);
+    if (gridMovies.length === 0) return;
+
+    // Fetch details in parallel to get certifications
+    const detailsPromises = gridMovies.map(m => getMovieDetails(m.id).catch(() => null));
+    const details = await Promise.all(detailsPromises);
+
+    // Clear existing content
+    grid.innerHTML = '';
+
+    // Create movie cards
+    gridMovies.forEach((movie, index) => {
+        const detail = details[index];
+        const certification = detail ? getUSCertification(detail.release_dates) : null;
+        const ratingBadge = certification || mapCertification(movie.vote_average);
+        const genreStr = buildGenreString(movie.genre_ids);
+
+        const card = document.createElement('a');
+        card.href = `movie-detail.html?id=${movie.id}`;
+        card.className = 'movie-card';
+        card.setAttribute('data-tmdb-id', movie.id);
+
+        card.innerHTML = `
+            <div class="movie-card-image-wrapper">
+                <div class="movie-card-rating">${ratingBadge}</div>
+                <img src="${posterUrl(movie.poster_path, movie)}" 
+                     alt="${movie.title}" 
+                     class="movie-card-image"
+                     loading="lazy"
+                     onerror="this.src='https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster'">
                 <div class="movie-card-overlay">
                     <span class="btn btn-primary">BOOK NOW</span>
                 </div>
@@ -574,12 +633,20 @@ async function initTMDB() {
             return;
         }
 
-        // Populate both sections
-        // Merge backend-only movies not in TMDB now_playing
+        // Fetch backend movies ONCE — used to filter BOTH slider and grid
+        let backendMovies = [];
+        let allowedTmdbIds = null;
         try {
             const res = await fetch('http://localhost:5000/api/movies');
             if (res.ok) {
-                const backendMovies = await res.json();
+                backendMovies = await res.json();
+                const nowShowingBackend = backendMovies.filter(m => m.status !== 'coming_soon');
+                allowedTmdbIds = new Set([
+                    ...nowShowingBackend.filter(m => m.tmdb_id).map(m => String(m.tmdb_id)),
+                    ...nowShowingBackend.map(m => String(m._id))
+                ]);
+
+                // Merge backend-only movies not in TMDB now_playing
                 const tmdbIds = new Set(movies.map(m => String(m.id)));
                 const extraMovies = backendMovies
                     .filter(m => !m.tmdb_id || !tmdbIds.has(String(m.tmdb_id)))
@@ -591,12 +658,19 @@ async function initTMDB() {
                     }));
                 movies = [...movies, ...extraMovies];
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('⚠️ Backend unavailable for movie filtering');
+        }
 
-        // Populate both sections
+        // Filter movies to only those in the backend database (for BOTH slider and grid)
+        const filteredMovies = allowedTmdbIds
+            ? movies.filter(m => allowedTmdbIds.has(String(m.id)) || allowedTmdbIds.has(String(m.tmdb_id)))
+            : movies;
+
+        // Populate both sections with the SAME filtered list
         await Promise.all([
-            populateHeroSlider(movies),
-            populateNowShowing(movies)
+            populateHeroSlider(filteredMovies),
+            populateNowShowingFiltered(filteredMovies)
         ]);
 
         console.log('✅ TMDB movies loaded successfully');

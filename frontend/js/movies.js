@@ -265,9 +265,15 @@ async function loadTMDBMovies() {
         if (res.ok) {
             const data = await res.json();
             if (data && data.length > 0) {
-                const today = new Date().toISOString().split('T')[0];
-                nowShowingMovies = data.filter(m => !m.release_date || m.release_date <= today).slice(0, 12);
-                comingSoonMovies = data.filter(m => m.release_date && m.release_date > today).slice(0, 12);
+                const today = toDateKey(new Date());
+                nowShowingMovies = data.filter(m => {
+                    const rd = toDateKey(m.release_date);
+                    return !rd || rd <= today;
+                }).slice(0, 12);
+                comingSoonMovies = data.filter(m => {
+                    const rd = toDateKey(m.release_date);
+                    return rd && rd > today;
+                }).slice(0, 12);
                 renderNowShowing(nowShowingMovies);
                 renderComingSoon(comingSoonMovies);
                 return;
@@ -528,22 +534,89 @@ async function initMovieDetail() {
         return;
     }
 
-    try {
-        // Try TMDB first
-        const movie = await tmdbGetMovieDetails(movieId);
-        currentMovieData = movie;
-        renderMovieDetailPage(movie);
-    } catch (error) {
-        console.warn('⚠️ TMDB detail failed, using mock:', error.message);
-        // Fallback to mock data
-        const allMockMovies = [...MOCK_NOW_SHOWING, ...MOCK_COMING_SOON];
-        const movie = allMockMovies.find(m => m.id == movieId);
+    // Check if this is a MongoDB ObjectId (24 hex chars) — try backend first
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(movieId);
 
-        if (movie) {
-            currentMovieData = movie;
-            renderMovieDetailPageMock(movie);
+    try {
+        if (isMongoId) {
+            // This is a backend-only movie — fetch from our API
+            const backendRes = await fetch(`http://localhost:5000/api/movies/${movieId}`);
+            if (backendRes.ok) {
+                const backendMovie = await backendRes.json();
+                currentMovieData = {
+                    id: backendMovie.tmdb_id || backendMovie._id || backendMovie.id,
+                    title: backendMovie.title,
+                    overview: backendMovie.description || '',
+                    poster_path: null,
+                    poster_url: backendMovie.poster_url,
+                    backdrop_path: null,
+                    genres: backendMovie.genre ? [{ name: backendMovie.genre }] : [],
+                    genre_ids: [],
+                    vote_average: backendMovie.rating ? parseFloat(backendMovie.rating) : 0,
+                    runtime: backendMovie.duration || 0,
+                    release_date: backendMovie.release_date ? new Date(backendMovie.release_date).toISOString().split('T')[0] : null,
+                    original_language: 'en',
+                    _backendId: backendMovie._id || backendMovie.id,
+                };
+                renderMovieDetailPage(currentMovieData);
+            } else {
+                throw new Error('Backend movie not found');
+            }
         } else {
-            showMovieError('error-message', 'Movie not found.');
+            // Try TMDB first for numeric IDs
+            const movie = await tmdbGetMovieDetails(movieId);
+            currentMovieData = movie;
+            renderMovieDetailPage(movie);
+        }
+    } catch (error) {
+        console.warn('⚠️ Primary detail source failed, trying fallback:', error.message);
+        
+        // Fallback: try the other source
+        try {
+            if (!isMongoId) {
+                // TMDB failed, try backend by tmdb_id
+                const backendRes = await fetch(`http://localhost:5000/api/movies`);
+                if (backendRes.ok) {
+                    const allMovies = await backendRes.json();
+                    const match = allMovies.find(m => String(m.tmdb_id) === String(movieId));
+                    if (match) {
+                        currentMovieData = {
+                            id: match.tmdb_id || match._id || match.id,
+                            title: match.title,
+                            overview: match.description || '',
+                            poster_path: null,
+                            poster_url: match.poster_url,
+                            backdrop_path: null,
+                            genres: match.genre ? [{ name: match.genre }] : [],
+                            genre_ids: [],
+                            vote_average: match.rating ? parseFloat(match.rating) : 0,
+                            runtime: match.duration || 0,
+                            release_date: match.release_date ? new Date(match.release_date).toISOString().split('T')[0] : null,
+                            original_language: 'en',
+                            _backendId: match._id || match.id,
+                        };
+                        renderMovieDetailPage(currentMovieData);
+                    } else {
+                        throw new Error('Not found in backend either');
+                    }
+                } else {
+                    throw new Error('Backend unavailable');
+                }
+            } else {
+                throw error;
+            }
+        } catch (fallbackErr) {
+            // Final fallback: use mock data
+            console.warn('⚠️ All sources failed, using mock:', fallbackErr.message);
+            const allMockMovies = [...MOCK_NOW_SHOWING, ...MOCK_COMING_SOON];
+            const movie = allMockMovies.find(m => m.id == movieId);
+
+            if (movie) {
+                currentMovieData = movie;
+                renderMovieDetailPageMock(movie);
+            } else {
+                showMovieError('error-message', 'Movie not found.');
+            }
         }
     }
 
@@ -583,9 +656,11 @@ function renderHeroSection(movie) {
     const movieHero = document.getElementById('movie-hero');
     if (!movieHero) return;
 
-    const poster = movie.poster_path
-        ? `${MOVIES_TMDB.IMAGE_BASE}${MOVIES_TMDB.POSTER_SIZE}${movie.poster_path}`
-        : 'https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster';
+    const poster = movie.poster_url
+        ? movie.poster_url
+        : (movie.poster_path
+            ? `${MOVIES_TMDB.IMAGE_BASE}${MOVIES_TMDB.POSTER_SIZE}${movie.poster_path}`
+            : 'https://placehold.co/300x450/1a1a1a/b71c1c?text=No+Poster');
 
     const backdrop = movie.backdrop_path
         ? `${MOVIES_TMDB.IMAGE_BASE}/original${movie.backdrop_path}`
@@ -1106,6 +1181,8 @@ function handleBookNow() {
 
         sessionStorage.setItem('selectedMovie', JSON.stringify({
             id: currentMovieData.id,
+            tmdb_id: currentMovieData.id,
+            backendMovieId: currentMovieData._backendId || null,
             title: currentMovieData.title,
             genre: genre,
             duration: duration,
@@ -1263,6 +1340,8 @@ function goToBookingFromDetail() {
     const genreStr = currentMovieData.genres ? currentMovieData.genres.map(g => g.name).join(', ') : buildMovieGenreString(currentMovieData.genre_ids);
     sessionStorage.setItem('selectedMovie', JSON.stringify({
         id: currentMovieData.id,
+        tmdb_id: currentMovieData.id,
+        backendMovieId: currentMovieData._backendId || null,
         title: currentMovieData.title,
         genre: genreStr,
         rating: currentMovieData.vote_average ? parseFloat(currentMovieData.vote_average).toFixed(1) : 'NR',
