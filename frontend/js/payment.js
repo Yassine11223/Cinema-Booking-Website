@@ -30,20 +30,20 @@
        FOOD MENU DATA (matching food-drinks.html)
        ========================================================= */
     const FOOD_MENU = [
-        { id:'popcorn-butter',   cat:'Popcorn',   emoji:'🧈', name:'Classic Butter Popcorn',   price:160 },
-        { id:'popcorn-caramel',  cat:'Popcorn',   emoji:'🍯', name:'Caramel Drizzle Popcorn',  price:170 },
-        { id:'popcorn-cheese',   cat:'Popcorn',   emoji:'🧀', name:'Cheddar Cheese Popcorn',   price:170 },
-        { id:'popcorn-spicy',    cat:'Popcorn',   emoji:'🌶️', name:'Spicy Jalapeño Popcorn',   price:170 },
-        { id:'nachos',           cat:'Snacks',    emoji:'🫕', name:'Loaded Nachos',            price:180 },
-        { id:'hotdog',           cat:'Snacks',    emoji:'🌭', name:'Classic Hot Dog',          price:140 },
-        { id:'pretzel',          cat:'Snacks',    emoji:'🥨', name:'Soft Pretzel',             price:120 },
-        { id:'mozz-sticks',      cat:'Snacks',    emoji:'🧀', name:'Mozzarella Sticks',        price:150 },
-        { id:'candy',            cat:'Snacks',    emoji:'🍬', name:'Candy Box',                price:100 },
-        { id:'soft-drink',       cat:'Drinks',    emoji:'🥤', name:'Soft Drink (Medium)',      price:120 },
-        { id:'iced-tea',         cat:'Drinks',    emoji:'🍵', name:'Iced Tea (Medium)',        price:130 },
-        { id:'water',            cat:'Drinks',    emoji:'💧', name:'Bottled Water',            price:60 },
-        { id:'slushie',          cat:'Drinks',    emoji:'🧊', name:'Frozen Slushie',           price:140 },
-        { id:'coffee',           cat:'Drinks',    emoji:'☕', name:'Hot Coffee',               price:100 },
+        { id: 'popcorn-butter', cat: 'Popcorn', emoji: '🧈', name: 'Classic Butter Popcorn', price: 160 },
+        { id: 'popcorn-caramel', cat: 'Popcorn', emoji: '🍯', name: 'Caramel Drizzle Popcorn', price: 170 },
+        { id: 'popcorn-cheese', cat: 'Popcorn', emoji: '🧀', name: 'Cheddar Cheese Popcorn', price: 170 },
+        { id: 'popcorn-spicy', cat: 'Popcorn', emoji: '🌶️', name: 'Spicy Jalapeño Popcorn', price: 170 },
+        { id: 'nachos', cat: 'Snacks', emoji: '🫕', name: 'Loaded Nachos', price: 180 },
+        { id: 'hotdog', cat: 'Snacks', emoji: '🌭', name: 'Classic Hot Dog', price: 140 },
+        { id: 'pretzel', cat: 'Snacks', emoji: '🥨', name: 'Soft Pretzel', price: 120 },
+        { id: 'mozz-sticks', cat: 'Snacks', emoji: '🧀', name: 'Mozzarella Sticks', price: 150 },
+        { id: 'candy', cat: 'Snacks', emoji: '🍬', name: 'Candy Box', price: 100 },
+        { id: 'soft-drink', cat: 'Drinks', emoji: '🥤', name: 'Soft Drink (Medium)', price: 120 },
+        { id: 'iced-tea', cat: 'Drinks', emoji: '🍵', name: 'Iced Tea (Medium)', price: 130 },
+        { id: 'water', cat: 'Drinks', emoji: '💧', name: 'Bottled Water', price: 60 },
+        { id: 'slushie', cat: 'Drinks', emoji: '🧊', name: 'Frozen Slushie', price: 140 },
+        { id: 'coffee', cat: 'Drinks', emoji: '☕', name: 'Hot Coffee', price: 100 },
     ];
 
     /* =========================================================
@@ -75,7 +75,7 @@
         // Load booking summary
         try {
             booking = JSON.parse(sessionStorage.getItem('bookingSummary'));
-        } catch (_) {}
+        } catch (_) { }
 
         if (!booking) {
             document.querySelector('.payment-page').innerHTML = `
@@ -339,20 +339,82 @@
             bookingNumber = booking.backendBookingId || generateBookingNumber();
 
             if (booking.backendBookingId) {
-                await confirmBackendBookingAndEmail();
-            } else {
-                // Legacy fallback for sessions that do not have a MongoDB booking.
+                const paymentSaved = await createBackendPayment();
+
+                // Fallback only if payment endpoint failed
+                if (!paymentSaved) {
+                    await confirmBackendBookingAndEmail();
+                }
+            }
+
+            // If payment/confirm didn't return QR tickets, try the dedicated ticket generation endpoint
+            if (!generatedTicketData || !generatedTicketData.tickets || generatedTicketData.tickets.length === 0) {
                 await generateTicketsFromBackend();
             }
 
-            // Save booking (includes tickets if generated)
+            // Save booking locally too
             saveBooking();
 
             // Navigate to confirmation step
             goToStep(3);
         }, 2000);
     }
+    async function createBackendPayment() {
+        const backendBookingId = booking?.backendBookingId;
+        if (!backendBookingId) return false;
 
+        const token = localStorage.getItem('authToken') || localStorage.getItem('userToken');
+        if (!token) {
+            console.warn('[Payment] Cannot save payment without auth token.');
+            return false;
+        }
+
+        const methodForDb = paymentMethod === 'card' ? 'visa' : 'fawry';
+
+        const transactionId =
+            methodForDb === 'visa'
+                ? `VISA-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+                : `FAWRY-${$('fawry-ref')?.textContent || generateFawryRef()}`;
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/payments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    booking_id: backendBookingId,
+                    payment_method: methodForDb,
+                    transaction_id: transactionId,
+                }),
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                console.warn('[Payment] Backend payment save failed:', response.status, data);
+                return false;
+            }
+
+            if (data.ticketData?.tickets?.length) {
+                backendConfirmation = data.ticketData;
+                generatedTicketData = data.ticketData;
+                bookingNumber = data.ticketData.bookingId || backendBookingId;
+            }
+
+            console.info('[Payment] Backend payment saved:', {
+                bookingId: backendBookingId,
+                method: methodForDb,
+                transactionId,
+            });
+
+            return true;
+        } catch (error) {
+            console.warn('[Payment] Backend payment unavailable:', error.message);
+            return false;
+        }
+    }
     async function confirmBackendBookingAndEmail() {
         const backendBookingId = booking?.backendBookingId;
         if (!backendBookingId) return false;
@@ -429,9 +491,13 @@
                 currency: booking.currency || 'EGP',
             };
 
+            const token = localStorage.getItem('authToken') || localStorage.getItem('userToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const response = await fetch(`${BACKEND_URL}/api/tickets/generate`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(payload),
             });
 
@@ -793,8 +859,8 @@
        ========================================================= */
     function saveBooking() {
         const backendBookingId = booking.backendBookingId;
-        if (backendBookingId) {
-            const token = localStorage.getItem('userToken');
+        if (backendBookingId && !backendConfirmation) {
+            const token = localStorage.getItem('authToken') || localStorage.getItem('userToken');
             if (token) {
                 fetch(`${BACKEND_URL}/api/bookings/${backendBookingId}/confirm`, {
                     method: 'PUT',
@@ -803,14 +869,14 @@
                         'Authorization': `Bearer ${token}`,
                     },
                 })
-                .then(res => {
-                    if (res.ok) {
-                        console.log('✅ Backend booking confirmed:', backendBookingId);
-                    } else {
-                        console.warn('⚠️ Backend booking confirm failed:', res.status);
-                    }
-                })
-                .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
+                    .then(res => {
+                        if (res.ok) {
+                            console.log('✅ Backend booking confirmed:', backendBookingId);
+                        } else {
+                            console.warn('⚠️ Backend booking confirm failed:', res.status);
+                        }
+                    })
+                    .catch(err => console.warn('⚠️ Backend confirm error:', err.message));
             }
         }
 
@@ -845,7 +911,7 @@
                 })) : null,
             });
             localStorage.setItem('thehall_bookings', JSON.stringify(bookings));
-        } catch (_) {}
+        } catch (_) { }
 
         // Clear session
         sessionStorage.removeItem('bookingSummary');
@@ -875,7 +941,7 @@
         const currentYear = new Date().getFullYear();
         const dateStr = booking.date || '';
         const timeStr = booking.showtime?.time || '';
-        
+
         // Attempt parsing "Wednesday, May 27" and "19:00"
         const cleanDateStr = dateStr.includes(',') ? dateStr.split(',')[1].trim() : dateStr;
         const parsedDate = new Date(`${cleanDateStr} ${currentYear} ${timeStr}`);

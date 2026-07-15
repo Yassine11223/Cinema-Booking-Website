@@ -7,11 +7,11 @@ const User = require('../models/User');
 
 const LOGIN_ACCOUNTS = [
     {
-        name: 'Cinema Customer',
-        email: 'customer@thehallcinema.com',
-        password: 'Customer2026!',
-        phone: '+20 100 111 2222',
-        role: 'customer',
+        name: 'Cinema Super Admin',
+        email: 'superadmin@thehallcinema.com',
+        password: 'SuperAdmin2026!',
+        phone: '+20 100 555 6666',
+        role: 'superadmin',
     },
     {
         name: 'Cinema Admin',
@@ -20,21 +20,13 @@ const LOGIN_ACCOUNTS = [
         phone: '+20 100 333 4444',
         role: 'admin',
     },
-    {
-        name: 'Cinema Super Admin',
-        email: 'superadmin@thehallcinema.com',
-        password: 'SuperAdmin2026!',
-        phone: '+20 100 555 6666',
-        role: 'superadmin',
-    },
 ];
 
 async function resetLoginAccounts() {
     await connectDB();
 
-    const deleteResult = await User.deleteMany({
-        role: { $in: ['customer', 'admin', 'superadmin'] },
-    });
+    // Delete ALL users
+    const deleteResult = await User.deleteMany({});
 
     await Promise.all(LOGIN_ACCOUNTS.map((account) => User.create(account)));
 

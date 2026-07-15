@@ -42,9 +42,8 @@
 
     // ── Quick action buttons (replaces old suggestions) ─
     const QUICK_ACTIONS = [
-        { icon: 'fas fa-ticket-alt', label: 'Book a ticket',       action: 'book' },
         { icon: 'fas fa-film',       label: 'Movies showing now',  action: 'movies' },
-        { icon: 'fas fa-clock',      label: "Today's showtimes",   action: 'showtimes' },
+        { icon: 'fas fa-clock',      label: 'Showtimes',           action: 'showtimes' },
         { icon: 'fas fa-utensils',   label: 'Food & drinks',       action: 'food' },
         { icon: 'fas fa-headset',    label: 'Contact support',     action: 'support' },
     ];
@@ -202,9 +201,10 @@
     // AUTH CHECK
     // ============================================
     function isLoggedIn() {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('userToken') || localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData') || localStorage.getItem('thehall_user');
-        return !!(token && userData);
+        const flag = localStorage.getItem('isUserLoggedIn');
+        return !!(token && userData) || flag === 'true';
     }
 
     // ============================================
@@ -246,7 +246,7 @@
             </div>
             <div class="chatbot-messages" id="chatbot-messages"></div>
             <div class="chatbot-suggestions" id="chatbot-suggestions"></div>
-            <div class="chatbot-input-area">
+            <div class="chatbot-input-area" style="display:none">
                 <input type="text" class="chatbot-input" id="chatbot-input"
                        placeholder="Ask me anything about cinema..."
                        autocomplete="off" maxlength="500">
@@ -514,6 +514,69 @@
         } catch (err) {
             console.warn('Booking API error:', err.message);
             return null;
+        }
+    }
+
+    /** Handle "Movies showing now" — browse-only mode (no booking, no login required) */
+    async function handleBrowseMovies() {
+        showTypingIndicator();
+
+        try {
+            const res = await fetch('http://localhost:5000/api/movies');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const movies = await res.json();
+            const nowShowing = movies.filter(m => m.status === 'now_showing');
+
+            await sleep(400);
+            hideTypingIndicator();
+
+            if (!nowShowing.length) {
+                addMessage('ai', "No movies are currently showing. Please check back later! 🎬", null);
+                renderQuickActions();
+                return;
+            }
+
+            // Build browse-only movie buttons HTML manually (with data-browse-only="true")
+            const msgEl = document.createElement('div');
+            msgEl.className = 'chatbot-msg ai';
+
+            const movieList = nowShowing.map((m, i) => `${i + 1}. **${m.title}**${m.genre ? ` (${m.genre})` : ''}`).join('\n');
+            const formatted = formatMessage(`Here are all movies currently showing — tap a movie for details:\n\n${movieList}`);
+
+            const buttonsHtml = `<div class="chatbot-movie-options">
+                ${nowShowing.map(m => `
+                    <button class="chatbot-movie-btn" data-movie-id="${m.tmdb_id || m._id}" data-browse-only="true">
+                        ${m.poster_url
+                            ? `<img class="chatbot-movie-poster" src="${escapeHTML(m.poster_url)}" alt="${escapeHTML(m.title)}" onerror="this.style.display='none'">`
+                            : `<div class="chatbot-movie-poster chatbot-movie-poster--placeholder"><i class="fas fa-film"></i></div>`
+                        }
+                        <div class="chatbot-movie-info">
+                            <div class="chatbot-movie-title">${escapeHTML(m.title)}</div>
+                            ${m.genre ? `<div class="chatbot-movie-meta">${escapeHTML(m.genre)}${m.duration ? ` • ${m.duration}min` : ''}</div>` : ''}
+                        </div>
+                        <i class="fas fa-chevron-right chatbot-movie-arrow"></i>
+                    </button>
+                `).join('')}
+            </div>`;
+
+            msgEl.innerHTML = `
+                <div class="chatbot-msg-avatar"><i class="fas fa-film"></i></div>
+                <div>
+                    <div class="chatbot-msg-bubble">${formatted}</div>
+                    ${buttonsHtml}
+                    <div class="chatbot-msg-source">🎯 THE HALL Assistant</div>
+                </div>
+            `;
+
+            DOM.messages.appendChild(msgEl);
+            scrollToBottom();
+            addToHistory('assistant', `Showing ${nowShowing.length} movies`);
+            renderQuickActions();
+
+        } catch (err) {
+            hideTypingIndicator();
+            addErrorMessage('Failed to load movies. Please try again.');
+            renderQuickActions();
         }
     }
 
@@ -880,7 +943,7 @@
         } finally {
             isWaiting = false;
             DOM.sendBtn.disabled = false;
-            DOM.input.focus();
+            // input hidden — no focus needed
         }
     }
 
@@ -934,28 +997,109 @@
         `;
     }
 
+    /** Handle "Today's showtimes" quick action — fetch movies with shows directly */
+    async function handleShowtimesAction() {
+        // Auth check first — booking requires login
+        if (!isLoggedIn()) {
+            const currentPage = encodeURIComponent(window.location.pathname + window.location.search);
+            addMessageWithButtons(
+                '🔒 You need to log in first before booking tickets!',
+                [{
+                    type: 'continue_booking',
+                    label: 'Log In',
+                    movieId: '',
+                    showId: '',
+                    movieTitle: '',
+                }],
+                null
+            );
+            const lastMsg = DOM.messages.lastElementChild;
+            const ctaWrap = lastMsg?.querySelector('.chatbot-cta-wrap');
+            if (ctaWrap) {
+                ctaWrap.innerHTML = `
+                    <a href="login.html?redirect=${currentPage}" class="chatbot-cta-btn chatbot-cta-btn--login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Log In to Book</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                `;
+            }
+            renderQuickActions();
+            return;
+        }
+
+        startBookingFlow();
+        showTypingIndicator();
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 12000);
+
+            const response = await fetch(CFG.API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: "What are today's showtimes?",
+                    currentPage: collectContext().currentPage,
+                    bookingContext: null,
+                    movieContext: null,
+                    conversationHistory: [],
+                }),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeout);
+            await sleep(400);
+            hideTypingIndicator();
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+
+            if (data.buttons && data.buttons.length) {
+                addMessageWithButtons(data.reply, data.buttons, data.source);
+                addToHistory('assistant', data.reply);
+
+                DOM.suggestions.innerHTML = `
+                    <button class="chatbot-suggestion-chip chatbot-cancel-booking">
+                        <i class="fas fa-times"></i> Cancel booking
+                    </button>
+                `;
+            } else {
+                addMessage('ai', data.reply || "No showtimes found right now.", data.source);
+                addToHistory('assistant', data.reply);
+                renderQuickActions();
+                resetBookingState();
+            }
+        } catch (err) {
+            hideTypingIndicator();
+            addErrorMessage('Failed to load showtimes. Please try again.');
+            renderQuickActions();
+            resetBookingState();
+        }
+    }
+
     async function handleQuickAction(action) {
         switch (action) {
-            case 'book':
-                addMessage('user', '🎟️ Book a ticket');
-                addToHistory('user', 'Book a ticket');
-                await handleBookMovies();
-                break;
-
-            case 'recommend':
-                sendMessage('Recommend me a movie');
-                break;
-
             case 'movies':
-                sendMessage('What movies are showing now?');
+                addMessage('user', '🎬 Movies showing now');
+                addToHistory('user', 'Movies showing now');
+                await handleBrowseMovies();
                 break;
 
             case 'showtimes':
-                sendMessage("What are today's showtimes?");
+                addMessage('user', '🕐 Showtimes');
+                addToHistory('user', 'Showtimes');
+                await handleShowtimesAction();
                 break;
 
             case 'food':
-                sendMessage('Tell me about food and drinks');
+                addMessage('user', '🍿 Food & drinks');
+                addToHistory('user', 'Food & drinks');
+                addMessage('ai',
+                    '🍿 **Food & Drinks at THE HALL**\n\nEnjoy our premium cinema snacks:\n• **Popcorn** — Classic butter, Caramel, Cheese\n• **Nachos** — With salsa & cheese dip\n• **Hot Dogs** — Classic & loaded\n• **Drinks** — Soda, juice, water, coffee\n• **Combos** — Great value meal deals!\n\nYou can order at the counter or pre-order during checkout. 🎬',
+                    null
+                );
+                renderQuickActions();
                 break;
 
             case 'support':
@@ -981,7 +1125,7 @@
         DOM.toggle.setAttribute('aria-label', 'Close cinema assistant');
 
         // Auto-focus input
-        setTimeout(() => DOM.input.focus(), 350);
+        // input hidden — no focus needed
     }
 
     function closeChat() {
@@ -1099,6 +1243,11 @@
             const movieBtn = e.target.closest('.chatbot-movie-btn');
             if (movieBtn) {
                 const movieId = movieBtn.dataset.movieId;
+                // Browse-only mode: redirect to movie detail page
+                if (movieBtn.dataset.browseOnly === 'true') {
+                    if (movieId) window.location.href = `movie-detail.html?id=${movieId}`;
+                    return;
+                }
                 if (movieId) handleMovieSelected(movieId);
                 return;
             }
@@ -1142,10 +1291,7 @@
             if (e.key === 'Escape' && isOpen) closeChat();
         });
 
-        // Prevent focus loss on mobile keyboard
-        DOM.input.addEventListener('focus', () => {
-            setTimeout(() => scrollToBottom(), 300);
-        });
+        // (input area hidden — no focus handler needed)
     }
 
     // ============================================

@@ -199,14 +199,14 @@ const userController = {
     async googleCallback(req, res, next) {
         try {
             const user = req.user;
-            const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5500';
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
 
             if (!user) {
-                return res.redirect(`${frontendUrl}/frontend/login.html?google=failed`);
+                return res.redirect(`${frontendUrl}/login.html?google=failed`);
             }
 
             if (user.role === 'admin' || user.role === 'superadmin') {
-                return res.redirect(`${frontendUrl}/frontend/login.html?google=admin_blocked`);
+                return res.redirect(`${frontendUrl}/login.html?google=admin_blocked`);
             }
 
             await User.recordLogin(user._id);
@@ -215,19 +215,19 @@ const userController = {
             const finalUser = freshUser || user;
             const token = generateToken(finalUser);
             const safeUser = {
-    id: finalUser._id,
-    name: finalUser.name,
-    email: finalUser.email,
-    phone: finalUser.phone,
-    role: finalUser.role,
-    profile_photo: finalUser.profile_photo,
-    auth_provider: finalUser.auth_provider,
-    last_login: finalUser.last_login,
-    login_count: finalUser.login_count,
-};
+                id: finalUser._id,
+                name: finalUser.name,
+                email: finalUser.email,
+                phone: finalUser.phone,
+                role: finalUser.role,
+                profile_photo: finalUser.profile_photo,
+                auth_provider: finalUser.auth_provider,
+                last_login: finalUser.last_login,
+                login_count: finalUser.login_count,
+            };
 
             const redirectUrl =
-                `${frontendUrl}/frontend/login.html?google=success` +
+                `${frontendUrl}/login.html?google=success` +
                 `&token=${encodeURIComponent(token)}` +
                 `&user=${encodeURIComponent(JSON.stringify(safeUser))}`;
 
